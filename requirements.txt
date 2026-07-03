@@ -1,0 +1,5 @@
+google-genai
+moviepy
+edge-tts
+requests
+python-dotenv
