@@ -38,7 +38,9 @@ class KeyRotator:
 gemini_keys = get_keys("GEMINI_API_KEYS")
 pexels_keys = get_keys("PEXELS_API_KEYS")
 pixabay_keys = get_keys("PIXABAY_API_KEYS")
+elevenlabs_keys = get_keys("ELEVENLABS_API_KEYS")
 
 gemini_rotator = KeyRotator(gemini_keys)
 pexels_rotator = KeyRotator(pexels_keys)
 pixabay_rotator = KeyRotator(pixabay_keys)
+elevenlabs_rotator = KeyRotator(elevenlabs_keys)

@@ -19,11 +19,20 @@ def generate_content() -> dict:
     Returns a dictionary with the generated content.
     """
     prompt = (
-        "Generate a short, powerful motivational quote (around 15-25 words) suitable for a short Facebook Reel. "
-        "Also provide a single search keyword to find a background video on Pexels (e.g., 'nature', 'city', 'workout', 'success'). "
-        "Provide a single search keyword to find background music on Pixabay (e.g., 'cinematic', 'lofi', 'epic'). "
-        "Provide an engaging caption for the Facebook post. "
-        "Finally, provide a string of relevant hashtags separated by spaces (e.g., '#motivation #success')."
+        "You are a top-tier short-form video scriptwriter for a motivational channel called NextGenThoughts. "
+        "Write a spoken script for a 30-50 second motivational reel. "
+        "Rules:\n"
+        "1. Start with a UNIQUE, punchy hook — never use 'Here is your motivation' or 'Today's quote'. "
+        "   Use varied openers like 'Stop waiting.', 'Nobody tells you this.', 'The truth is...', "
+        "   'Most people quit right before...', 'One decision changes everything.' etc.\n"
+        "2. Build with 3-4 short, punchy sentences. Use pauses naturally (commas, short sentences).\n"
+        "3. End with a powerful call to action — but vary it each time. "
+        "   Example endings: 'Now go do the work.', 'Are you going to act today?', "
+        "   'The clock is ticking.', 'Your future self is watching.' etc.\n"
+        "4. Total script: 35-55 words. Written to be SPOKEN aloud, not read.\n"
+        "5. Tone: direct, powerful, emotional — like a coach speaking face to face.\n"
+        "Also provide: a single Pexels video search keyword, a single Pixabay music keyword, "
+        "an engaging Facebook caption, and relevant hashtags."
     )
 
     while gemini_rotator.has_keys():

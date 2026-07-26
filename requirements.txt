@@ -1,5 +1,9 @@
 google-genai
-moviepy
+moviepy==1.0.3
 edge-tts
 requests
 python-dotenv
+elevenlabs
+numpy
+pillow
+pydantic

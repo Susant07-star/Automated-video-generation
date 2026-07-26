@@ -4,25 +4,24 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
-PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
-
 def upload_reel(video_path: str, caption: str, hashtags: str):
     """
     Uploads a video to a Facebook Page as a Reel using the Graph API.
     """
-    if not ACCESS_TOKEN or not PAGE_ID:
-        raise ValueError("Facebook credentials (FACEBOOK_PAGE_ACCESS_TOKEN, FACEBOOK_PAGE_ID) are missing.")
-        
+    access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
+    page_id = os.getenv("FACEBOOK_PAGE_ID")
+
+    if not access_token or not page_id or access_token == "your_fb_access_token_here" or page_id == "your_numeric_id_here":
+        raise ValueError("Facebook credentials (FACEBOOK_PAGE_ACCESS_TOKEN, FACEBOOK_PAGE_ID) are missing or invalid.")
     full_caption = f"{caption}\n\n{hashtags}"
     
     print("Initializing Reel upload session...")
     
     # 1. Initialize Upload (using v19.0 of Graph API)
-    init_url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_reels"
+    init_url = f"https://graph.facebook.com/v19.0/{page_id}/video_reels"
     init_payload = {
         "upload_phase": "start",
-        "access_token": ACCESS_TOKEN
+        "access_token": access_token
     }
     
     res = requests.post(init_url, data=init_payload)
@@ -38,7 +37,7 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
     
     # 2. Upload Video Data
     headers = {
-        "Authorization": f"OAuth {ACCESS_TOKEN}",
+        "Authorization": f"OAuth {access_token}",
         "offset": "0",
         "file_size": str(os.path.getsize(video_path))
     }
@@ -54,7 +53,7 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
         "video_id": video_id,
         "video_state": "PUBLISHED",
         "description": full_caption,
-        "access_token": ACCESS_TOKEN
+        "access_token": access_token
     }
     
     pub_res = requests.post(init_url, data=publish_payload)
