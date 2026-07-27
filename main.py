@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.content_generator import generate_content
-from src.media_fetcher import fetch_background_video, fetch_background_music, fetch_whoosh_sfx
+from src.media_fetcher import fetch_background_video, fetch_background_music, fetch_whoosh_sfx, fetch_impact_sfx
 from src.audio_generator import generate_voiceover
 from src.video_assembler import assemble_video
 from src.uploader import upload_reel, upload_to_youtube, upload_to_instagram
@@ -70,6 +70,7 @@ def main():
     music_path    = "temp_music.mp3"
     voice_path    = "temp_voice.mp3"
     whoosh_path   = "temp_whoosh.mp3"
+    impact_path   = "temp_impact.wav"
     final_path    = "final_reel.mp4"
 
     success = False
@@ -127,12 +128,13 @@ def main():
         video_paths = [f"temp_bg_{i+1}.mp4" for i in range(len(video_kws))]
 
         # ── STEP 2: Background video & SFX ────────────────────────
-        if state.get("video_done") and all(_file_ready(vp) for vp in video_paths) and _file_ready(whoosh_path):
+        if state.get("video_done") and all(_file_ready(vp) for vp in video_paths) and _file_ready(whoosh_path) and _file_ready(impact_path):
             print(f"\n⏭️  [Step 2/5] Skipping video download — background clips already exist")
         else:
             print(f"\n▶️  [Step 2/5] Downloading {len(video_kws)} background clips and SFX...")
             fetch_background_video(video_kws, video_paths)
             fetch_whoosh_sfx(whoosh_path)
+            fetch_impact_sfx(impact_path)
             state["video_done"] = True
             save_checkpoint(state)
             print("   ✅ Video and SFX saved to checkpoint.")
@@ -165,7 +167,7 @@ def main():
             print(f"\n▶️  [Step 5/5] Assembling cinematic multi-clip video...")
             print(f"   This step cannot be partially resumed — rendering from frame 0.")
             print(f"   (All media is already local, so this is the only long step)\n")
-            assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path)
+            assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path, impact_path)
             state["assembly_done"] = True
             save_checkpoint(state)
             print("   ✅ Assembly saved to checkpoint.")
@@ -240,7 +242,7 @@ def main():
         if success:
             # Full success — clean up ALL temp files and checkpoint
             print("\n🧹 Cleaning up temporary files...")
-            temp_files = video_paths + [music_path, whoosh_path, voice_path, voice_path + ".json"]
+            temp_files = video_paths + [music_path, whoosh_path, impact_path, voice_path, voice_path + ".json"]
             for f in temp_files:
                 if f and os.path.exists(f):
                     try:
@@ -255,6 +257,7 @@ def main():
             print(f"   {video_paths} : Background videos")
             print(f"   temp_music.mp3    : Background music")
             print(f"   temp_whoosh.mp3   : Transition SFX")
+            print(f"   temp_impact.wav   : Impact SFX")
             print(f"   temp_voice.mp3    : Voiceover audio")
             print(f"   pipeline_state.json: Checkpoint (resume marker)")
 

@@ -275,6 +275,43 @@ def fetch_whoosh_sfx(output_filename="temp_whoosh.wav"):
         
     return output_filename
 
+def fetch_impact_sfx(output_filename="temp_impact.wav"):
+    """
+    Generates a high-quality cinematic bass boom / impact sound effect locally using numpy.
+    100% reliable, no internet required, copyright-free.
+    Used for emphasizing key words in the script.
+    """
+    print("Generating local cinematic 'impact boom' SFX...")
+    sample_rate = 44100
+    duration = 1.5
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    
+    # Fast attack, very slow decay
+    envelope = np.exp(-t * 2.5)
+    
+    # Frequency sweep dropping from 150Hz down to 20Hz (a classic sub-bass drop)
+    freq_sweep = 150 * np.exp(-t * 8) + 20
+    
+    # Sine wave for the sub-bass boom
+    audio = np.sin(2 * np.pi * freq_sweep * t) * envelope
+    
+    # Add a tiny bit of noise at the very beginning for the "hit"
+    noise_hit = np.random.normal(0, 1, len(t)) * np.exp(-t * 30) * 0.3
+    audio += noise_hit
+    
+    # Normalize
+    peak = np.max(np.abs(audio))
+    if peak > 0:
+        audio = audio / peak * 0.9
+        
+    pcm = (audio * 32767).astype(np.int16)
+    with wave.open(output_filename, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm.tobytes())
+        
+    return output_filename
 
 if __name__ == "__main__":
     pass

@@ -64,7 +64,9 @@ def generate_content() -> dict:
         "   CRITICAL: #NextGenThoughts MUST be the first hashtag on every single platform.\n\n"
 
         "VIDEO ASSETS:\n"
-        "   - Provide 5 to 8 distinct Pexels video search keywords that visually match different moments of the script.\n"
+        "   - Provide 5 to 8 hyper-literal Pexels video search keywords. You MUST describe physical, visual things, NOT abstract concepts.\n"
+        "   - BAN abstract words: Do NOT use words like 'psychology', 'mindset', 'success', 'manipulation', 'sadness'.\n"
+        "   - INSTEAD use literal descriptions: If the script says 'You walk into a dark room', the keyword MUST be 'person walking dark room'. If it says 'Your brain', use 'eye close up macro' or 'silhouette person'.\n"
         "   - Provide one background music keyword. It MUST be calm and ambient (e.g., 'calm piano', 'cinematic ambient', 'lo-fi focus'). "
         "NEVER suggest intense, loud, or dramatic music.\n\n"
 

@@ -352,7 +352,7 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
 
 from moviepy.editor import concatenate_videoclips
 
-def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None):
+def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None):
     print("Assembling cinematic multi-clip video...")
     
     try:
@@ -367,6 +367,10 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         whoosh_audio = None
         if whoosh_path and os.path.exists(whoosh_path):
             whoosh_audio = AudioFileClip(whoosh_path).fx(afx.volumex, 0.4)
+            
+        impact_audio = None
+        if impact_path and os.path.exists(impact_path):
+            impact_audio = AudioFileClip(impact_path).fx(afx.volumex, 0.7)
     except Exception as e:
         print(f"Error loading media files: {e}")
         return
@@ -401,11 +405,21 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             
             # Apply 1.5x speed multiplier for faster, more dynamic visual pacing
             clip = clip.fx(vfx.speedx, 1.5)
-                    
+            
             if clip.duration < seg_dur:
                 clip = clip.fx(vfx.loop, duration=seg_dur)
             else:
                 clip = clip.subclip(0, seg_dur)
+                
+            # The Visual Hook Cut: Apply a quick cinematic zoom to the FIRST clip only
+            if i == 0:
+                print("   Applying visual hook (cinematic zoom) to the first clip...")
+                # Dynamically resize the frame over time, then crop back to TARGET_W x TARGET_H
+                clip = clip.resize(lambda t: 1 + 0.15 * (t / max(0.1, clip.duration)))
+                # Calculate center crop to keep it 1080x1920 (TARGET_W = 1080)
+                # Since clip.w/h change dynamically, we must use fx with a custom crop function or just let MoviePy's concatenate compose handle it
+                # Actually, `concatenate_videoclips(..., method="compose")` automatically centers and crops if we just pass clips that are larger than the canvas.
+                # So just resizing larger is perfect.
                 
             processed_clips.append(clip)
         except Exception as e:
@@ -447,6 +461,19 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         for i in range(num_clips - 1):
             current_time += segment_durations[i]
             audio_tracks.append(whoosh_audio.set_start(current_time - 0.2)) # Lead the transition slightly
+            
+    # Add impact sounds on high-impact keywords
+    if impact_audio and os.path.exists(audio_path + ".json"):
+        import json
+        with open(audio_path + ".json", 'r') as f:
+            words_data = json.load(f)
+            
+        impact_keywords = ["secret", "beware", "danger", "never", "always", "control", "hidden", "stop", "listen", "warning", "powerful", "manipulation", "instantly"]
+        for w in words_data:
+            word_clean = "".join(c for c in w['word'].lower() if c.isalnum())
+            if word_clean in impact_keywords:
+                print(f"   Adding impact SFX at word: '{word_clean}' (t={w['start']:.2f})")
+                audio_tracks.append(impact_audio.set_start(w['start'] + 0.5)) # 0.5 is voice_offset
             
     final_audio = CompositeAudioClip(audio_tracks)
     # Audio fade out at the end so it doesn't end abruptly (USER REQUESTED)
