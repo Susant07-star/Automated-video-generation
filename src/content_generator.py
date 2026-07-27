@@ -19,11 +19,13 @@ def generate_content() -> dict:
     Maintains a history of past generations to utilize the large context window and avoid repetition.
     Returns a dictionary with the generated content.
     """
+    # The history file stores ONLY the topic names, not full scripts.
+    # This keeps the forbidden list clean and scannable for Gemini.
     history_file = "generated_history.txt"
-    history_context = ""
+    used_topics = ""
     if os.path.exists(history_file):
         with open(history_file, "r", encoding="utf-8") as f:
-            history_context = f.read()
+            used_topics = f.read().strip()
 
     prompt = (
         "You are the scriptwriter for 'NextGenThoughts', one of the fastest-growing psychology channels on YouTube. "
@@ -71,8 +73,10 @@ def generate_content() -> dict:
         "NEVER suggest intense, loud, or dramatic music.\n\n"
 
         "OUTPUT FORMAT: Your ENTIRE response must be a single valid JSON object with this exact structure. "
+        "The 'topic_name' must be a short 3-7 word title for the psychological concept (e.g. 'Foot-in-the-Door Technique'). "
         "DO NOT wrap it in markdown or code blocks:\n"
         "{\n"
+        "  \"topic_name\": \"...\",\n"
         "  \"quote\": \"the full spoken script\",\n"
         "  \"video_search_keywords\": [\"keyword1\", \"keyword2\"],\n"
         "  \"music_search_keyword\": \"...\",\n"
@@ -86,13 +90,42 @@ def generate_content() -> dict:
         "}\n"
     )
 
-    if history_context:
-        prompt += (
-            "\n--- TOPICS ALREADY COVERED (NEVER REPEAT THESE) ---\n"
-            f"{history_context}\n"
-            "----------------------------------------------------\n"
-            "Now generate a completely fresh script on a DIFFERENT dark psychology, human behavior, or persuasion concept."
-        )
+    # ── Master Topic Universe ──────────────────────────────────────────────────
+    # A curated list of 80+ dark psychology, behavioral science, and persuasion
+    # topics. Gemini MUST pick from this list — never default to the most famous ones.
+    MASTER_TOPIC_LIST = """
+Dark Triad Traits | Narcissistic Abuse Cycle | Gaslighting Tactics | Love Bombing | Intermittent Reinforcement
+Trauma Bonding | Coercive Control | DARVO Technique | Silent Treatment as Punishment | Isolation Tactics
+Future Faking | Triangulation (jealousy tactic) | Flying Monkeys (social manipulation) | Smear Campaigns | Hoovering
+Bystander Effect | Diffusion of Responsibility | Mob Mentality / Deindividuation | Authority Bias | Milgram Obedience Experiments
+Stanford Prison Experiment Lessons | Conformity (Asch Line Experiments) | Social Proof as Manipulation | Fear of Ostracism | Social Exclusion Pain
+Sunk Cost Fallacy | Escalation of Commitment | Cognitive Dissonance (advanced) | Belief Perseverance | The Backfire Effect
+Choice Architecture | Nudge Theory | Default Effect | Status Quo Bias | IKEA Effect
+Framing Effect | Anchoring Bias | Decoy Effect | Contrast Effect | Peak-End Rule
+Narrative Transportation Theory | The Zeigarnik Effect (unfinished tasks) | Mere Exposure Effect | Propinquity Effect | Parasocial Relationships
+Emotional Contagion | Mirror Neuron Manipulation | Limbic Resonance | Pity Plays | Weaponized Vulnerability
+Victim Mentality as Control | Learned Helplessness | Emotional Blackmail | Stockholm Syndrome | Fawn Response
+Scapegoating | Projection (psychological) | Blame-Shifting | The JADE Trap (Justify Argue Defend Explain) | Gray Rock Method
+False Memory Implantation | Hindsight Bias | Illusory Superiority (Lake Wobegon Effect) | Dunning-Kruger Effect | Impostor Syndrome
+Self-Serving Bias | Fundamental Attribution Error | Just-World Hypothesis | Optimism Bias | Negativity Bias
+The Pratfall Effect | Paradox of Choice | Decision Fatigue | Ego Depletion | Hedonic Adaptation
+Reactance Theory | Forbidden Fruit Effect | Boomerang Effect | Reverse Psychology | The Ben Franklin Effect
+Rational Emotive Behavior | Cognitive Reframing | Thought-Stopping Technique | Mental Contrasting (WOOP) | Implementation Intentions
+Ambiguity Effect | Availability Heuristic | Representativeness Heuristic | Base Rate Neglect | Planning Fallacy
+Impression Management | Self-Handicapping | Self-Monitoring | Strategic Self-Presentation | Humblebrag Manipulation
+Secure vs Anxious vs Avoidant Attachment | Anxious Attachment Triggers | Fear of Abandonment | Push-Pull Dynamic | Breadcrumbing
+"""
+
+    prompt += (
+        "\n--- MASTER TOPIC LIST (pick ONLY from here) ---\n"
+        f"{MASTER_TOPIC_LIST}\n"
+        "\n--- TOPICS ALREADY USED (NEVER REPEAT OR CLOSELY OVERLAP THESE) ---\n"
+        + (used_topics if used_topics else "(none yet — you're free to start anywhere)")
+        + "\n----------------------------------------------\n"
+        "Your task: Pick ONE unused topic from the master list above. "
+        "Do NOT pick the most obvious or popular one. Explore the unusual, the surprising, and the counterintuitive corners of the list. "
+        "Now generate a completely fresh, original script on your chosen topic."
+    )
 
 
     max_retries = 3
@@ -123,10 +156,11 @@ def generate_content() -> dict:
             # Parse the JSON response
             content = json.loads(raw_text.strip())
             
-            # Save the new quote to history to leverage the massive context window next time
-            if "quote" in content:
-                with open(history_file, "a", encoding="utf-8") as f:
-                    f.write(f"- {content['quote']}\n")
+            # Save ONLY the topic name to history — not the full script.
+            # This keeps the anti-repetition list clean and readable for Gemini.
+            topic_name = content.get('topic_name', content.get('quote', '')[:60])
+            with open(history_file, "a", encoding="utf-8") as f:
+                    f.write(f"- {topic_name}\n")
                     
             return content
             
