@@ -1,6 +1,9 @@
 name: Auto-Post Daily Reel
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     # Runs every hour. The Python script checks schedule_config.json
     # to decide whether to actually post or exit early.
