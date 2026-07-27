@@ -92,7 +92,11 @@ def create_local_cinematic_music(output_filename="temp_music.wav", duration=60, 
     return output_filename
 
 
-def fetch_background_video(keyword: str, output_filename="temp_bg.mp4"):
+def fetch_background_video(keywords: list[str], output_filenames: list[str]):
+    for kw, out_file in zip(keywords, output_filenames):
+        _fetch_single_video(kw, out_file)
+
+def _fetch_single_video(keyword: str, output_filename: str):
     url = f"https://api.pexels.com/videos/search?query={quote_plus(keyword)}&orientation=portrait&size=large&per_page=15"
 
     while pexels_rotator.has_keys():
@@ -234,6 +238,42 @@ def fetch_background_music(keyword: str, output_filename: str = "temp_music.mp3"
     print("[Music] All CDN sources failed. Generating local ambient music...")
     local_output = os.path.splitext(output_filename)[0] + ".wav"
     return create_local_cinematic_music(local_output)
+
+def fetch_whoosh_sfx(output_filename="temp_whoosh.wav"):
+    """
+    Generates a high-quality cinematic whoosh sound effect locally using numpy.
+    100% reliable, no internet required, copyright-free.
+    """
+    print("Generating local cinematic 'whoosh' transition SFX...")
+    sample_rate = 44100
+    duration = 1.0
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    
+    # White noise base
+    noise = np.random.normal(0, 1, len(t))
+    
+    # Fast attack, slow decay envelope for the whoosh shape
+    envelope = (t * 5) * np.exp(-t * 6)
+    
+    # Apply a sweeping low-pass filter effect using a sine wave frequency modulation
+    # (Simulating a swoosh by changing pitch)
+    sweep = np.sin(2 * np.pi * (100 + 400 * t) * t)
+    
+    audio = noise * envelope * sweep
+    
+    # Normalize
+    peak = np.max(np.abs(audio))
+    if peak > 0:
+        audio = audio / peak * 0.8
+        
+    pcm = (audio * 32767).astype(np.int16)
+    with wave.open(output_filename, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm.tobytes())
+        
+    return output_filename
 
 
 if __name__ == "__main__":

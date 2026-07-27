@@ -1,7 +1,15 @@
 import os
+import time
 import requests
 from dotenv import load_dotenv
 
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+
+YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 load_dotenv()
 
 def upload_reel(video_path: str, caption: str, hashtags: str):
@@ -25,6 +33,8 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
     }
     
     res = requests.post(init_url, data=init_payload)
+    if not res.ok:
+        print(f"Facebook Init Error: {res.text}")
     res.raise_for_status()
     init_data = res.json()
     video_id = init_data.get("video_id")
@@ -43,11 +53,14 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
     }
     with open(video_path, 'rb') as f:
         upload_res = requests.post(upload_url, headers=headers, data=f)
+    if not upload_res.ok:
+        print(f"Facebook Upload Error: {upload_res.text}")
     upload_res.raise_for_status()
     
     print("Publishing Reel...")
     
     # 3. Publish Reel
+    publish_url = f"https://graph.facebook.com/v19.0/{page_id}/video_reels"
     publish_payload = {
         "upload_phase": "finish",
         "video_id": video_id,
@@ -56,10 +69,129 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
         "access_token": access_token
     }
     
-    pub_res = requests.post(init_url, data=publish_payload)
+    pub_res = requests.post(publish_url, data=publish_payload)
+    if not pub_res.ok:
+        print(f"Facebook Publish Error: {pub_res.text}")
     pub_res.raise_for_status()
     
     print("Reel published successfully!")
+    return pub_res.json()
+
+def get_youtube_service():
+    creds = None
+    if os.path.exists('youtube_token.json'):
+        creds = Credentials.from_authorized_user_file('youtube_token.json', YOUTUBE_SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not os.path.exists('client_secret.json'):
+                print("WARNING: client_secret.json not found in root directory.")
+                print("Please download it from Google Cloud Console (YouTube Data API v3 -> Credentials -> OAuth 2.0 Client IDs).")
+                print("Skipping YouTube upload.")
+                return None
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', YOUTUBE_SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open('youtube_token.json', 'w') as token:
+            token.write(creds.to_json())
+    return build('youtube', 'v3', credentials=creds)
+
+def upload_to_youtube(video_path: str, title: str, description: str, tags: list):
+    youtube = get_youtube_service()
+    if not youtube:
+        return
+        
+    print(f"Uploading {video_path} to YouTube Shorts...")
+    
+    # Ensure title is < 100 chars
+    title = title[:95] + "..." if len(title) > 95 else title
+    
+    body = {
+        "snippet": {
+            "title": title,
+            "description": description,
+            "tags": tags,
+            "categoryId": "27"  # Education
+        },
+        "status": {
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": False
+        }
+    }
+    
+    insert_request = youtube.videos().insert(
+        part=",".join(body.keys()),
+        body=body,
+        media_body=MediaFileUpload(video_path, chunksize=-1, resumable=True)
+    )
+    
+    response = insert_request.execute()
+    print(f"YouTube upload successful! Video ID: {response.get('id')}")
+    return response
+
+def upload_to_temporary_host(filepath: str):
+    print("Uploading to temporary host (catbox.moe) for Instagram Graph API...")
+    with open(filepath, 'rb') as f:
+        res = requests.post("https://catbox.moe/user/api.php", data={"reqtype": "fileupload"}, files={"fileToUpload": f})
+    res.raise_for_status()
+    direct_url = res.text.strip()
+    print(f"Temporary URL created: {direct_url}")
+    return direct_url
+
+def upload_to_instagram(video_path: str, caption: str, hashtags: str):
+    ig_user_id = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID")
+    access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
+    
+    if not ig_user_id or ig_user_id == "your_ig_business_id_here":
+        print("WARNING: INSTAGRAM_BUSINESS_ACCOUNT_ID missing. Skipping Instagram upload.")
+        return
+        
+    print("Starting Instagram Reels upload process...")
+    # 1. Host temporarily
+    video_url = upload_to_temporary_host(video_path)
+    
+    # 2. Create Media Container
+    create_url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media"
+    payload = {
+        "media_type": "REELS",
+        "video_url": video_url,
+        "caption": f"{caption}\n\n{hashtags}",
+        "access_token": access_token
+    }
+    print("Creating Instagram Media Container...")
+    res = requests.post(create_url, data=payload)
+    if not res.ok:
+        print(f"Failed to create IG Media: {res.text}")
+        res.raise_for_status()
+        
+    creation_id = res.json().get("id")
+    
+    # 3. Wait for processing & Publish
+    print("Waiting for Instagram to process video (can take up to 2 mins)...")
+    status_url = f"https://graph.facebook.com/v19.0/{creation_id}"
+    
+    max_retries = 30
+    for _ in range(max_retries):
+        status_res = requests.get(status_url, params={"fields": "status_code", "access_token": access_token})
+        status_data = status_res.json()
+        status_code = status_data.get("status_code")
+        print(f"IG Processing Status: {status_code}")
+        
+        if status_code == "FINISHED":
+            break
+        elif status_code == "ERROR":
+            raise Exception("Instagram failed to process the video.")
+            
+        time.sleep(10)
+        
+    print("Publishing Instagram Reel...")
+    publish_url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media_publish"
+    pub_res = requests.post(publish_url, data={"creation_id": creation_id, "access_token": access_token})
+    if not pub_res.ok:
+        print(f"Failed to publish IG Reel: {pub_res.text}")
+        pub_res.raise_for_status()
+        
+    print("Instagram Reel published successfully!")
     return pub_res.json()
 
 if __name__ == "__main__":

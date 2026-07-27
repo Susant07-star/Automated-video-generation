@@ -1,0 +1,65 @@
+name: Auto-Post Daily Reel
+
+on:
+  schedule:
+    # Default: Runs at 14:15 UTC (9:00 AM EST / 7:15 PM NPT) every day
+    # To change the default schedule, edit the cron expression below.
+    # Use https://crontab.guru to build cron expressions.
+    # Format: 'minute hour * * *'  (times are UTC)
+    - cron: '15 14 * * *'
+
+  # Allows you to trigger a run MANUALLY from the GitHub Actions tab at any time.
+  # You can also choose to SKIP posting (just generate) when triggering manually.
+  workflow_dispatch:
+    inputs:
+      skip_upload:
+        description: 'Skip the final upload? (type "yes" to only generate, not post)'
+        required: false
+        default: 'no'
+
+jobs:
+  build-and-post:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install System Dependencies (FFMPEG)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create Secrets Files
+      run: |
+        # Create .env from GitHub Secrets
+        echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
+        echo "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" >> .env
+        echo "GEMINI_API_KEYS=${{ secrets.GEMINI_API_KEYS }}" >> .env
+        echo "FACEBOOK_PAGE_ACCESS_TOKEN=${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}" >> .env
+        echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> .env
+
+        # Decode and create YouTube OAuth files from Base64 secrets
+        echo "${{ secrets.CLIENT_SECRET_JSON_B64 }}" | base64 --decode > client_secret.json
+        echo "${{ secrets.YOUTUBE_TOKEN_JSON_B64 }}" | base64 --decode > youtube_token.json
+
+    - name: Run Pipeline (Auto-Post)
+      if: github.event_name == 'schedule' || github.event.inputs.skip_upload != 'yes'
+      run: |
+        python main.py --headless
+
+    - name: Run Pipeline (Generate Only)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.skip_upload == 'yes'
+      run: |
+        python main.py

@@ -162,21 +162,7 @@ def _wrap_text(text, font, max_width):
 
     return lines if lines else [text]
 
-def create_watermark_image(W, H):
-    """Creates a semi-transparent channel handle watermark near the bottom."""
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    font = get_font(40)
-    
-    text = CHANNEL_HANDLE
-    bbox = draw.textbbox((0, 0), text, font=font)
-    text_w = bbox[2] - bbox[0]
-    
-    x = (W - text_w) / 2
-    y = H - 200  # 200px from the bottom
-    
-    draw.text((x, y), text, font=font, fill=(255, 255, 255, 180)) # Semi-transparent white
-    return np.array(img)
+
 
 def apply_ken_burns(clip, zoom_ratio=1.1):
     """Applies a smooth zoom-in effect over the clip duration."""
@@ -264,11 +250,12 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
 
     return clips
 
-def assemble_video(bg_video_path, audio_path, text, output_path="final_reel.mp4", bg_music_path=None):
-    print("Assembling cinematic video...")
+from moviepy.editor import concatenate_videoclips
+
+def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None):
+    print("Assembling cinematic multi-clip video...")
     
     try:
-        bg_video = VideoFileClip(bg_video_path)
         voice_audio = AudioFileClip(audio_path)
         
         music_audio = None
@@ -276,107 +263,139 @@ def assemble_video(bg_video_path, audio_path, text, output_path="final_reel.mp4"
             music_audio = AudioFileClip(bg_music_path)
         else:
             print("Warning: No background music loaded.")
+            
+        whoosh_audio = None
+        if whoosh_path and os.path.exists(whoosh_path):
+            whoosh_audio = AudioFileClip(whoosh_path).fx(afx.volumex, 0.4)
     except Exception as e:
         print(f"Error loading media files: {e}")
         return
 
     # Calculate target duration (must be at least MIN_DURATION)
     audio_duration = voice_audio.duration
-    # Ensure target_duration is at least the audio duration, plus a small buffer, and also not less than MIN_DURATION
-    target_duration = max(MIN_DURATION, audio_duration + 1.0) # Reduced padding to 1 second
+    target_duration = max(MIN_DURATION, audio_duration + 1.0) # 1 second padding
 
-    # Loop or trim background video
-    if bg_video.duration < target_duration:
-        bg_video = bg_video.fx(vfx.loop, duration=target_duration)
-    else:
-        bg_video = bg_video.subclip(0, target_duration)
+    # Process all video clips
+    import random
+    processed_clips = []
+    num_clips = len(bg_video_paths)
+    
+    # Calculate randomized segment durations proportionally
+    # This guarantees the target_duration is distributed smoothly among ANY number of clips
+    raw_weights = [random.uniform(0.7, 1.3) for _ in range(num_clips)]
+    total_weight = sum(raw_weights)
+    segment_durations = [(w / total_weight) * target_duration for w in raw_weights]
+    
+    for i, vp in enumerate(bg_video_paths):
+        seg_dur = segment_durations[i]
+        try:
+            preprocessed_path = vp + ".processed.mp4"
+            ffmpeg_ok = preprocess_video_ffmpeg(vp, preprocessed_path)
+            
+            if ffmpeg_ok and os.path.exists(preprocessed_path):
+                clip = VideoFileClip(preprocessed_path)
+            else:
+                clip = VideoFileClip(vp)
+                if clip.w > TARGET_W:
+                    clip = clip.resize(width=TARGET_W)
+                    
+            if clip.duration < seg_dur:
+                clip = clip.fx(vfx.loop, duration=seg_dur)
+            else:
+                clip = clip.subclip(0, seg_dur)
+                
+            processed_clips.append(clip)
+        except Exception as e:
+            print(f"Error processing video {vp}: {e}")
 
-    # ── Speed Optimization: pre-process with ffmpeg (C-speed resize/crop) ───────
-    # This converts the source video to exact 1080x1920 BEFORE MoviePy touches it.
-    # MoviePy then reads a perfectly-sized video with no further scaling needed.
-    preprocessed_path = bg_video_path + ".processed.mp4"
-    ffmpeg_ok = preprocess_video_ffmpeg(bg_video_path, preprocessed_path)
-    if ffmpeg_ok and os.path.exists(preprocessed_path):
-        bg_video = VideoFileClip(preprocessed_path)  # Already the right size!
-    # else: bg_video was already loaded above; apply Python fallback resize
-    elif bg_video.w > TARGET_W:
-        bg_video = bg_video.resize(width=TARGET_W)
+    if not processed_clips:
+        print("Failed to load any video clips. Aborting.")
+        return
 
-    W, H = bg_video.w, bg_video.h
+    # Add random visual transitions between clips
+    for i in range(1, len(processed_clips)):
+        transition_type = random.choice(["hard_cut", "dip_to_black", "flash_white"])
+        print(f"   Applying transition: {transition_type} between clip {i} and {i+1}")
+        if transition_type == "dip_to_black":
+            processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.4, final_color=[0, 0, 0])
+            processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.4, initial_color=[0, 0, 0])
+        elif transition_type == "flash_white":
+            processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.3, final_color=[255, 255, 255])
+            processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.3, initial_color=[255, 255, 255])
 
-    # Ken Burns removed — it computed every frame in Python (major bottleneck).
-    # The video looks clean and fast without it.
-    base_clip = bg_video
+    base_clip = concatenate_videoclips(processed_clips, method="compose")
 
-    # 2. Audio Mix
+    # Audio Mix
+    audio_tracks = []
+    
     if music_audio:
         if music_audio.duration < target_duration:
             music_audio = music_audio.fx(afx.audio_loop, duration=target_duration)
         else:
             music_audio = music_audio.subclip(0, target_duration)
-        music_audio = music_audio.fx(afx.volumex, 0.10)
-        final_audio = CompositeAudioClip([music_audio, voice_audio.set_start(0.5)])
-    else:
-        final_audio = voice_audio.set_start(0.5)
-
+        music_audio = music_audio.fx(afx.volumex, 0.05) # Lowered from 0.10 to 0.05 so music stays in the background
+        audio_tracks.append(music_audio)
+        
+    audio_tracks.append(voice_audio.set_start(0.5))
+    
+    # Add whoosh sound at transition points
+    if whoosh_audio:
+        current_time = 0
+        for i in range(num_clips - 1):
+            current_time += segment_durations[i]
+            audio_tracks.append(whoosh_audio.set_start(current_time - 0.2)) # Lead the transition slightly
+            
+    final_audio = CompositeAudioClip(audio_tracks)
+    # Audio fade out at the end so it doesn't end abruptly (USER REQUESTED)
+    final_audio = final_audio.fx(afx.audio_fadeout, 0.2)
+    
     base_clip = base_clip.set_audio(final_audio)
     layers = [base_clip]
 
-    # 3. Cinematic Color Grading (Teal overlay)
-    color_overlay = (ColorClip(size=(W, H), color=(0, 20, 50))
+    # Cinematic Color Grading (Teal overlay)
+    color_overlay = (ColorClip(size=(TARGET_W, TARGET_H), color=(0, 20, 50))
                      .set_opacity(0.3)
                      .set_duration(target_duration))
     layers.append(color_overlay)
 
-    # 4. Vignette
-    vignette_arr = make_vignette(W, H)
+    # Vignette
+    vignette_arr = make_vignette(TARGET_W, TARGET_H)
     vignette_clip = ImageClip(vignette_arr).set_duration(target_duration)
     layers.append(vignette_clip)
 
-    # 5. Dynamic Subtitles
-    # voice_offset=0.5 matches the 0.5s audio lead-in set above.
-    # The function now handles the shift internally — no double-shifting.
+    # Dynamic Subtitles
     timestamps_file = audio_path + ".json"
     subtitle_clips = create_dynamic_subtitles(
-        timestamps_file, W, H, target_duration, voice_offset=0.5
+        timestamps_file, TARGET_W, TARGET_H, target_duration, voice_offset=0.5
     )
 
     if subtitle_clips:
         for c in subtitle_clips:
-            layers.append(c)   # already correctly timed, no extra shift needed
+            layers.append(c)
     else:
-        # Fallback: static text if no timestamps available
-        text_img = create_text_image(textwrap.fill(text, width=25), W, H)
+        text_img = create_text_image(textwrap.fill(text, width=25), TARGET_W, TARGET_H)
         txt_clip = (ImageClip(text_img)
                     .set_duration(target_duration)
                     .set_position('center')
                     .crossfadein(1.2))
         layers.append(txt_clip)
 
-    # 6. Branding Watermark
-    watermark_img = create_watermark_image(W, H)
-    watermark_clip = ImageClip(watermark_img).set_duration(target_duration)
-    layers.append(watermark_clip)
 
-    # 7. Progress Bar
-    # Draws a red bar at the bottom growing over time.
-    # NOTE: A plain VideoClip's make_frame must return an RGB (H, W, 3) array.
-    # Transparency (the unfilled portion of the bar) must come from a SEPARATE
-    # mask clip (ismask=True, single-channel 0-1 float array), otherwise moviepy
-    # throws "could not broadcast input array from shape (10,1080,4) into shape (10,1080,3)".
+
+    # Progress Bar
     bar_height = 10
 
     def make_progress_bar_frame(t):
         progress = min(1.0, t / target_duration)
-        w = max(1, int(W * progress))
-        img = np.zeros((bar_height, W, 3), dtype=np.uint8)
+        w = max(1, int(TARGET_W * progress))
+        img = np.zeros((bar_height, TARGET_W, 3), dtype=np.uint8)
         img[:, :w] = [255, 50, 50]  # Red bar
         return img
 
     def make_progress_bar_mask(t):
         progress = min(1.0, t / target_duration)
-        w = max(1, int(W * progress))
-        mask = np.zeros((bar_height, W))
+        w = max(1, int(TARGET_W * progress))
+        mask = np.zeros((bar_height, TARGET_W))
         mask[:, :w] = 1.0
         return mask
 
@@ -391,11 +410,11 @@ def assemble_video(bg_video_path, audio_path, text, output_path="final_reel.mp4"
     # Composite everything
     final_video = CompositeVideoClip(layers)
 
-    # Subtle fade in/out
+    # Subtle video fade in/out
     final_video = final_video.fadein(0.5).fadeout(0.8)
 
     print(f"\n   🖥️  Rendering on {CPU_THREADS} CPU threads @ 24fps...")
-    print(f"   Resolution : {W}x{H}   Duration : {target_duration:.1f}s")
+    print(f"   Resolution : {TARGET_W}x{TARGET_H}   Duration : {target_duration:.1f}s")
     print(f"   Estimated time : ~{int(target_duration * 24 / 60 / 1.5)} min (varies by CPU)\n")
 
     final_video.write_videofile(
@@ -409,11 +428,13 @@ def assemble_video(bg_video_path, audio_path, text, output_path="final_reel.mp4"
         logger="bar"
     )
 
-    # Clean up the ffmpeg-preprocessed temp video
-    if os.path.exists(preprocessed_path):
-        try:
-            os.remove(preprocessed_path)
-        except Exception:
-            pass
+    # Clean up the ffmpeg-preprocessed temp videos
+    for vp in bg_video_paths:
+        preprocessed_path = vp + ".processed.mp4"
+        if os.path.exists(preprocessed_path):
+            try:
+                os.remove(preprocessed_path)
+            except Exception:
+                pass
 
-    print(f"\n✅ Video saved: {output_path} ({target_duration:.1f}s @ 24fps, {W}x{H})")
+    print(f"\n✅ Video saved: {output_path} ({target_duration:.1f}s @ 24fps, {TARGET_W}x{TARGET_H})")

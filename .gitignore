@@ -2,3 +2,13 @@
 __pycache__/
 *.mp4
 *.mp3
+
+# Sensitive OAuth & secret files - NEVER commit these
+client_secret.json
+youtube_token.json
+
+# Runtime / temp files
+pipeline_state.json
+final_reel_metadata.json
+temp_*.mp4
+*.processed.mp4

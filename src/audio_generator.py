@@ -77,14 +77,14 @@ def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str) -> 
 
         data = {
             "text": full_script,
-            "model_id": "eleven_multilingual_v2",
+            "model_id": "eleven_turbo_v2_5",  # Turbo v2.5 is much more conversational and human-like
             "voice_settings": {
-                # Lower stability = more expressive, less robotic delivery
-                "stability": 0.30,
-                # High similarity = stays true to Adam's authentic voice
-                "similarity_boost": 0.90,
-                # Higher style = more emotional emphasis and variation
-                "style": 0.50,
+                # Very low stability = highly expressive, natural human variations (not robotic)
+                "stability": 0.20,
+                # Lower similarity allows the AI to adapt its tone dynamically
+                "similarity_boost": 0.75,
+                # High style = strong emotional emphasis
+                "style": 0.70,
                 "use_speaker_boost": True
             }
         }
