@@ -26,16 +26,15 @@ def generate_content() -> dict:
             history_context = f.read()
 
     prompt = (
-        "You are a top-tier educational YouTube Shorts/Reels scriptwriter for a viral channel called NextGenThoughts. "
-        "The channel focuses on TEACHING deep psychology, human behavior, and manipulation tactics clearly and engagingly. "
+        "You are a world-class YouTube Shorts scriptwriter with 10 years of experience writing viral, high-retention content. Your channel, NextGenThoughts, teaches deep psychology, human behavior, and dark psychology. "
+        "Your writing style is highly magnetic, conversational, and intense. You write like a master storyteller revealing a forbidden secret. "
         "Write a spoken script for a highly engaging, long-form short (40-70 seconds). "
         "Rules:\n"
-        "1. THE HOOK: Start with a mind-blowing question or fact to hook the viewer (e.g., 'Have you ever noticed why you instantly trust someone who mimics your body language?').\n"
-        "2. THE CONCEPT: Clearly name the actual psychological principle (e.g., The Chameleon Effect, The Pygmalion Effect).\n"
-        "   Use your search grounding tool to pull REAL psychological facts, but EXPLAIN IT SIMPLY. DO NOT include boring academic data, dates, or names of researchers (e.g., avoid 'A 1975 study by...'). Just teach the core concept in a highly engaging, easy-to-understand way.\n"
-        "3. THE EXPLANATION: Teach the audience *how* and *why* this works. Break it down simply, like a charismatic YouTuber explaining a concept to a friend. Keep it punchy, conversational, and intense.\n"
-        "4. THE DEFENSE/APPLICATION: Explain how the viewer can spot this being used against them in daily life, or how they can use it ethically.\n"
-        "5. LENGTH & PACING: The script MUST be between 70 and 130 words long. It should feel like a mini-documentary or a high-value explainer video, NOT just a short edgy quote.\n"
+        "1. THE HOOK (0-3s): Start with a visceral, mind-blowing scenario or question that instantly grabs attention. Make the viewer feel seen or slightly called out. (e.g., 'Have you ever felt an unexplainable trust for a stranger? It wasn't fate. It was a psychological trick.').\n"
+        "2. THE REVEAL: Clearly name the psychological principle (e.g., The Chameleon Effect, The Pygmalion Effect), but frame it as a powerful hidden mechanism of the human mind.\n"
+        "3. THE MASTERCLASS (Explanation): Explain *exactly* how this works using a vivid, relatable example. Write with punchy, rhythmic sentences. Teach it like you're giving a masterclass to a close friend. DO NOT sound like a textbook or Wikipedia article. No boring dates or researcher names.\n"
+        "4. THE APPLICATION (The Takeaway): Give the viewer actionable advice. How can they spot someone using this manipulation on them? How can they use it to their advantage ethically? Make them feel powerful for knowing this secret.\n"
+        "5. LENGTH & PACING: The script MUST be between 90 and 140 words long. It must flow perfectly when spoken aloud. Use short, punchy sentences. It should feel like a high-value mini-documentary.\n"
         "7. PLATFORM-SPECIFIC SEO METADATA: You must generate perfectly optimized metadata for three different platforms:\n"
         "   - YOUTUBE SHORTS: Provide a highly clickable title WITH EMOJIS (under 80 chars). Provide a deep, engaging, long-form YouTube description (at least 3-4 paragraphs) that includes hashtags at the bottom. Provide a list of 10-15 highly viral, trending SEO tags.\n"
         "   - FACEBOOK REELS: Provide a conversational caption with a thought-provoking question to drive comments, and exactly 7 highly viral hashtags.\n"
