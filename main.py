@@ -80,8 +80,6 @@ def main():
             quote    = state["quote"]
             video_kws = state["video_kws"]
             music_kw = state["music_kw"]
-            caption  = state["caption"]
-            hashtags = state["hashtags"]
             print(f"\n⏭️  [Step 1/5] Skipping content generation (resumed from checkpoint)")
             print(f"   Quote    : {quote}")
             print(f"   Video kws: {video_kws}")
