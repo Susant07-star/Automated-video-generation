@@ -82,12 +82,15 @@ def generate_content() -> dict:
             )
             
             raw_text = response.text.strip()
-            if raw_text.startswith("```json"):
-                raw_text = raw_text[7:]
-            elif raw_text.startswith("```"):
-                raw_text = raw_text[3:]
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3]
+            
+            # Find the first '{' and the last '}' to handle any text output before/after the JSON
+            start_idx = raw_text.find('{')
+            end_idx = raw_text.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                raw_text = raw_text[start_idx:end_idx+1]
+            else:
+                raise json.JSONDecodeError("No JSON object could be found in the response.", raw_text, 0)
                 
             # Parse the JSON response
             content = json.loads(raw_text.strip())
