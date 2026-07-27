@@ -188,7 +188,7 @@ def fetch_background_music(keyword: str, output_filename: str = "temp_music.mp3"
         url = (
             f"https://api.jamendo.com/v3.0/tracks/?client_id={jamendo_client_id}"
             f"&format=json&limit=10&audiodlformat=mp32"
-            f"&tags={tags}&order=popularity_total"
+            f"&tags={tags}&order=popularity_total&vocalinstrumental=instrumental"
         )
         try:
             resp = requests.get(url, headers=REQUEST_HEADERS, timeout=15)
