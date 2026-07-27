@@ -1,32 +1,31 @@
 # NextGenThoughts Automation Roadmap
 
-This document outlines the strategic upgrades for the `Automated-video-generation` pipeline. The goal is to evolve the current single-video Facebook publisher into a highly engaging, fully automated, cross-platform viral video factory.
+This document outlines the strategic upgrades for the `Automated-video-generation` pipeline. We have successfully evolved the project from a simple local script into a fully autonomous, serverless cloud pipeline!
 
-## Phase 1: High-Retention Video Editing (B-Roll Sync)
+## ✅ Phase 1: High-Retention Video Editing (Completed)
 * **Goal:** Maximize viewer retention and watch time by keeping the visuals dynamic.
-* **Implementation:** 
-  * Update `content_generator.py` to request an array of 3 distinct video search keywords (e.g., `["dark gym", "sunrise", "running"]`) based on the sentence topics.
-  * Update `media_fetcher.py` to download all 3 clips.
-  * Update `video_assembler.py` to stitch the clips together so the background video changes exactly when the topic of the voiceover changes.
-  * Add a cinematic "whoosh" or "impact" transition sound effect exactly on the cuts.
+* **Status:** Finished! The script now stitches 4-8 different videos together matching the spoken topics, overlaid with cinematic 'whoosh' transitions and ducked background music.
 
-## Phase 2: Omnichannel Auto-Posting
+## ✅ Phase 2: Omnichannel Auto-Posting (Completed / Partially Active)
 * **Goal:** Triple the reach of every generated video by publishing it to all major short-form platforms simultaneously.
-* **Implementation:**
-  * **Instagram Reels:** Utilize the Instagram Graph API (which shares the same Meta developer app) to instantly cross-post the `final_reel.mp4`.
-  * **YouTube Shorts:** Integrate the YouTube Data API v3 to upload the video with the `#shorts` tag and YouTube-optimized descriptions.
-  * *Optional:* TikTok integration (if API access is acquired).
+* **Status:** Finished! 
+  * **YouTube Shorts:** Integrated and active via OAuth.
+  * **Facebook Reels:** Integrated and active via Graph API.
+  * **Instagram Reels:** Code structure exists; waiting on the user to create the Instagram account to link it.
 
-## Phase 3: Cloud Cron Scheduling (100% Hands-Free)
+## ✅ Phase 3: Cloud Cron Scheduling (Completed)
 * **Goal:** Remove the need to manually run `python main.py` or leave a local PC turned on.
-* **Implementation:**
-  * Dockerize the application so it can run consistently on a Linux server.
-  * Deploy to a cloud provider like **Render** or **GitHub Actions**.
-  * Set up a Cron Job (e.g., `0 9,18 * * *`) to automatically trigger the pipeline twice a day (9 AM and 6 PM) at peak engagement times.
+* **Status:** Finished! The pipeline runs 100% free via **GitHub Actions**, triggered hourly. A beautiful **Netlify Control Dashboard** allows the user to select the exact posting hours dynamically without touching code.
 
-## Phase 4: Visual Branding & Watermarking
-* **Goal:** Build brand authority and prevent content theft.
+## 🔄 Phase 4: Visual Branding & Advanced Editing (Up Next)
+* **Goal:** Build brand authority and make the videos feel premium.
 * **Implementation:**
   * Prepare a transparent `.png` logo for `NextGenThoughts`.
-  * Update MoviePy in `video_assembler.py` to overlay this logo in the top-right corner of the video at 50% opacity.
-  * Add a subtle progress bar or custom subtitle animations to make the video visually distinct from generic AI content.
+  * Conditionally overlay the logo (e.g. only for Facebook/Instagram, disabling it for YouTube Shorts to prevent demonetization issues).
+  * Integrate advanced word-by-word subtitle animations (like Hormozi style) rather than block subtitles.
+
+## 🚀 Phase 5: Voice Cloning & Advanced AI
+* **Goal:** Create a consistent, recognizable "brand voice".
+* **Implementation:**
+  * Clone a custom voice in ElevenLabs to replace the standard "Adam" voice.
+  * Implement an AI Image generation fallback if Pexels doesn't have good stock footage for highly abstract psychological concepts.
