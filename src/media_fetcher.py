@@ -3,6 +3,7 @@ import requests
 import random
 import wave
 from urllib.parse import quote_plus
+import time
 import numpy as np
 from src.api_manager import pexels_rotator, pixabay_rotator
 
@@ -27,7 +28,18 @@ def download_file(url: str, dest_path: str):
         if bytes_written < 1024:
             raise ValueError(f"Downloaded file from {url} was unexpectedly small ({bytes_written} bytes).")
 
-        os.replace(temp_path, dest_path)
+        # Windows sometimes locks the file briefly (e.g. antivirus scan) right after writing.
+        # We retry os.replace a few times.
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                os.replace(temp_path, dest_path)
+                break
+            except OSError as e:
+                if attempt < max_retries - 1:
+                    time.sleep(0.5)
+                else:
+                    raise e
     except Exception:
         if os.path.exists(temp_path):
             os.remove(temp_path)
