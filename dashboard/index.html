@@ -478,6 +478,8 @@
   async function init() {
     buildHourGrid();
     await Promise.allSettled([ loadSchedule(), loadRuns() ]);
+    // Auto-refresh the activity feed every 30 seconds
+    setInterval(() => { if(document.visibilityState === 'visible') loadRuns(); }, 30000);
   }
 
   // ─── SCHEDULE ─────────────────────────────────────────────────────────────
