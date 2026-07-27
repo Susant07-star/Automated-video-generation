@@ -26,27 +26,53 @@ def generate_content() -> dict:
             history_context = f.read()
 
     prompt = (
-        "You are a world-class YouTube Shorts scriptwriter with 10 years of experience writing viral, high-retention content. Your channel, NextGenThoughts, teaches deep psychology, human behavior, and dark psychology. "
-        "Your writing style is highly magnetic, conversational, and intense. You write like a master storyteller revealing a forbidden secret. "
-        "Write a spoken script for a highly engaging, long-form short (40-70 seconds). "
-        "Rules:\n"
-        "1. THE HOOK (0-3s): Start with a visceral, mind-blowing scenario or question that instantly grabs attention. Make the viewer feel seen or slightly called out. (e.g., 'Have you ever felt an unexplainable trust for a stranger? It wasn't fate. It was a psychological trick.').\n"
-        "2. THE REVEAL: Clearly name the psychological principle (e.g., The Chameleon Effect, The Pygmalion Effect), but frame it as a powerful hidden mechanism of the human mind.\n"
-        "3. THE MASTERCLASS (Explanation): Explain *exactly* how this works using a vivid, relatable example. Write with punchy, rhythmic sentences. Teach it like you're giving a masterclass to a close friend. DO NOT sound like a textbook or Wikipedia article. No boring dates or researcher names.\n"
-        "4. THE APPLICATION (The Takeaway): Give the viewer actionable advice. How can they spot someone using this manipulation on them? How can they use it to their advantage ethically? Make them feel powerful for knowing this secret.\n"
-        "5. LENGTH & PACING: The script MUST be between 90 and 140 words long. It must flow perfectly when spoken aloud. Use short, punchy sentences. It should feel like a high-value mini-documentary.\n"
-        "6. NO FORMATTING: Do NOT use markdown like asterisks (**) or underscores. Do NOT use any special characters. This script will be used directly for text-to-speech and on-screen subtitles, so it must contain ONLY plain, spoken English words and basic punctuation.\n"
-        "7. PLATFORM-SPECIFIC SEO METADATA: You must generate perfectly optimized metadata for three different platforms:\n"
-        "   - YOUTUBE SHORTS: Provide a highly clickable title WITH EMOJIS (under 80 chars). Provide a deep, engaging, long-form YouTube description (at least 3-4 paragraphs) that includes hashtags at the bottom. Provide a list of 10-15 highly viral, trending SEO tags.\n"
-        "   - FACEBOOK REELS: Provide a conversational caption with a thought-provoking question to drive comments, and exactly 7 highly viral hashtags.\n"
-        "   - INSTAGRAM REELS: Provide a highly aesthetic, minimalistic caption with 2-3 emojis, and 5-7 deeply targeted niche hashtags (e.g., #DarkPsychology, #Mindset).\n"
-        "   **CRITICAL:** You MUST include #NextGenThoughts as the first hashtag on every platform.\n"
-        "8. VIDEO ASSETS: Because this is a longer script, provide a randomized number of distinct Pexels video search keywords (between 4 and 8 keywords, spaced out to match the topics in the script). "
-        "Also provide a single background music keyword. **CRITICAL:** The music keyword MUST be for clean, ambient, cinematic, or calm lo-fi music (e.g., 'ambient piano', 'cinematic calm', 'deep focus'). DO NOT request noisy, intense, or loud music like 'urgent tension' or 'heavy beats', as it ruins the voiceover.\n\n"
-        "IMPORTANT: Your ENTIRE response MUST be valid JSON matching this exact structure:\n"
+        "You are the scriptwriter for 'NextGenThoughts', one of the fastest-growing psychology channels on YouTube. "
+        "Your job is to write a script that feels like a brilliant, passionate teacher is sitting across from the viewer and revealing a life-changing secret. "
+        "You do NOT present facts. You TELL STORIES. You make the viewer feel something. "
+        "Think of the best teacher you ever had — the one who made you lean forward, forget to check your phone, and feel genuinely smarter after the lesson. That is your voice.\n\n"
+
+        "SCRIPT STRUCTURE (follow this exact emotional arc):\n"
+        "1. THE HOOK — A vivid, relatable real-life scenario (NOT a question like 'Have you ever...'). "
+        "Drop the viewer into a moment. Example: 'You walk into a room full of strangers. Five minutes later, one person already feels like an old friend. You have no idea why.' "
+        "Make it feel personal. Make them feel seen. 2-3 sentences MAX.\n"
+
+        "2. THE REVEAL — Name the psychological concept immediately after the hook. "
+        "Frame it like a secret: 'That feeling has a name. Scientists call it the Mere Exposure Effect. And once you understand it, you will never see social situations the same way again.'\n"
+
+        "3. THE TEACHING — This is your masterclass. Explain HOW and WHY this works using a second vivid, relatable real-world example. "
+        "Write in short, punchy sentences with rhythm. Vary sentence length for dramatic effect. "
+        "Use 'you' and 'your' to speak directly to ONE person. "
+        "BANNED phrases (NEVER use these): 'cognitive bias', 'research shows', 'studies have found', 'it is important to note', 'this phenomenon', 'in conclusion', 'psychologists say'. "
+        "Teach it like you are explaining to your smartest friend over coffee.\n"
+
+        "4. THE POWER MOVE — End with one actionable, empowering takeaway. "
+        "How can they use this or spot it being used on them? Make the viewer feel like they just unlocked a cheat code for life. "
+        "End with a single powerful closing sentence that hits like a punch. Example: 'Familiarity is not love. But your brain cannot tell the difference.'\n"
+
+        "5. LANGUAGE RULES:\n"
+        "   - NO markdown: no **, no __, no #. Plain spoken English only.\n"
+        "   - NO special characters or symbols.\n"
+        "   - Script length: 100 to 150 words. Every single word must earn its place.\n"
+        "   - Read it aloud in your head. If it sounds like a robot or a textbook, rewrite it.\n\n"
+
+        "PLATFORM SEO METADATA (generate after the script):\n"
+        "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, make it feel urgent or forbidden). "
+        "A rich, multi-paragraph YouTube description that expands on the concept with more depth (minimum 150 words), ending with hashtags. "
+        "A list of 12-15 highly viral, trending tags.\n"
+        "   - FACEBOOK REELS: A warm, conversational caption that ends with a thought-provoking question to drive comments. Exactly 7 viral hashtags.\n"
+        "   - INSTAGRAM REELS: A short, minimalistic, aesthetic caption. Max 2 lines. 2-3 emojis. 6-8 niche hashtags.\n"
+        "   CRITICAL: #NextGenThoughts MUST be the first hashtag on every single platform.\n\n"
+
+        "VIDEO ASSETS:\n"
+        "   - Provide 5 to 8 distinct Pexels video search keywords that visually match different moments of the script.\n"
+        "   - Provide one background music keyword. It MUST be calm and ambient (e.g., 'calm piano', 'cinematic ambient', 'lo-fi focus'). "
+        "NEVER suggest intense, loud, or dramatic music.\n\n"
+
+        "OUTPUT FORMAT: Your ENTIRE response must be a single valid JSON object with this exact structure. "
+        "DO NOT wrap it in markdown or code blocks:\n"
         "{\n"
-        "  \"quote\": \"...\",\n"
-        "  \"video_search_keywords\": [\"...\"],\n"
+        "  \"quote\": \"the full spoken script\",\n"
+        "  \"video_search_keywords\": [\"keyword1\", \"keyword2\"],\n"
         "  \"music_search_keyword\": \"...\",\n"
         "  \"yt_title\": \"...\",\n"
         "  \"yt_description\": \"...\",\n"
@@ -56,16 +82,16 @@ def generate_content() -> dict:
         "  \"ig_caption\": \"...\",\n"
         "  \"ig_hashtags\": \"...\"\n"
         "}\n"
-        "Do NOT wrap the response in markdown blocks like ```json."
     )
-    
+
     if history_context:
         prompt += (
-            "--- PAST GENERATED SCRIPTS (CRITICAL: DO NOT REPEAT THESE TOPICS OR CONCEPTS) ---\n"
+            "\n--- TOPICS ALREADY COVERED (NEVER REPEAT THESE) ---\n"
             f"{history_context}\n"
-            "----------------------------------------------------------------------------------\n"
-            "Now, generate a completely NEW script covering a different dark psychology or human behavior concept."
+            "----------------------------------------------------\n"
+            "Now generate a completely fresh script on a DIFFERENT dark psychology, human behavior, or persuasion concept."
         )
+
 
     max_retries = 3
     while gemini_rotator.has_keys() and max_retries > 0:
