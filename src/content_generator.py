@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import time
 from google import genai
 from google.genai import errors
@@ -13,14 +14,50 @@ class ContentResponse(BaseModel):
     caption: str
     hashtags: str
 
+
+def _is_topic_duplicate(new_topic: str, used_topics_text: str) -> bool:
+    """
+    Hard programmatic guard against topic repetition.
+    Uses word-level fuzzy matching to catch near-duplicates.
+    """
+    if not used_topics_text or not new_topic:
+        return False
+
+    def normalize(text):
+        text = text.lower()
+        text = re.sub(r'[^a-z0-9\s]', ' ', text)
+        return set(text.split())
+
+    STOP_WORDS = {'the', 'a', 'an', 'of', 'and', 'or', 'in', 'on', 'at', 'to',
+                  'as', 'is', 'it', 'its', 'be', 'by', 'for', 'with', 'vs', 'effect',
+                  'principle', 'theory', 'technique', 'bias', 'syndrome', 'method',
+                  'law', 'laws', 'art', 'power', 'human', 'nature'}
+
+    new_words = normalize(new_topic) - STOP_WORDS
+    if not new_words:
+        return False
+
+    for line in used_topics_text.splitlines():
+        line = line.strip().lstrip('- ').strip()
+        if not line:
+            continue
+        old_words = normalize(line) - STOP_WORDS
+        if not old_words:
+            continue
+        overlap = new_words & old_words
+        overlap_ratio = len(overlap) / min(len(new_words), len(old_words))
+        if overlap_ratio >= 0.6:
+            return True
+
+    return False
+
+
 def generate_content() -> dict:
     """
     Generates a motivational quote, search keywords, caption, and hashtags using Gemini API.
-    Maintains a history of past generations to utilize the large context window and avoid repetition.
+    Draws from a curated library of dark psychology books and concepts.
     Returns a dictionary with the generated content.
     """
-    # The history file stores ONLY the topic names, not full scripts.
-    # This keeps the forbidden list clean and scannable for Gemini.
     history_file = "generated_history.txt"
     used_topics = ""
     if os.path.exists(history_file):
@@ -29,27 +66,36 @@ def generate_content() -> dict:
 
     prompt = (
         "You are the scriptwriter for 'NextGenThoughts', one of the fastest-growing psychology channels on YouTube. "
-        "Your job is to write a script that feels like a brilliant, passionate teacher is sitting across from the viewer and revealing a life-changing secret. "
-        "You do NOT present facts. You TELL STORIES. You make the viewer feel something. "
-        "Think of the best teacher you ever had — the one who made you lean forward, forget to check your phone, and feel genuinely smarter after the lesson. That is your voice.\n\n"
+        "Your scripts are inspired by the greatest books ever written on human behavior, power, and dark psychology. "
+        "You have deeply studied: '48 Laws of Power', 'The Laws of Human Nature', 'The Art of Seduction', "
+        "'The 33 Strategies of War', 'Mastery' by Robert Greene; 'Influence' and 'Pre-Suasion' by Robert Cialdini; "
+        "'Thinking, Fast and Slow' by Daniel Kahneman; 'Predictably Irrational' by Dan Ariely; "
+        "'The Prince' by Machiavelli; 'Games People Play' by Eric Berne; 'In Sheep's Clothing' by George Simon; "
+        "'Never Split the Difference' by Chris Voss; 'The Righteous Mind' by Jonathan Haidt; "
+        "'Without Conscience' by Robert Hare; 'The Sociopath Next Door' by Martha Stout; "
+        "and 'Why Does He Do That?' by Lundy Bancroft. "
+        "Your job is to take a specific law, chapter, or concept from these books and transform it into a short, "
+        "electrifying script that feels like a brilliant, passionate teacher is revealing a forbidden life-changing secret. "
+        "You do NOT summarize the book. You TELL A STORY. You make the viewer feel something.\n\n"
 
         "SCRIPT STRUCTURE (follow this exact emotional arc):\n"
         "1. THE HOOK — A vivid, relatable real-life scenario (NOT a question like 'Have you ever...'). "
-        "Drop the viewer into a moment. Example: 'You walk into a room full of strangers. Five minutes later, one person already feels like an old friend. You have no idea why.' "
-        "Make it feel personal. Make them feel seen. 2-3 sentences MAX.\n"
+        "Drop the viewer into a moment. Make it feel personal. Make them feel seen. 2-3 sentences MAX.\n"
 
-        "2. THE REVEAL — Name the psychological concept immediately after the hook. "
-        "Frame it like a secret: 'That feeling has a name. Scientists call it the Mere Exposure Effect. And once you understand it, you will never see social situations the same way again.'\n"
+        "2. THE REVEAL — Name the psychological concept or law immediately after the hook. "
+        "Frame it like a secret: 'That tactic has a name. Robert Greene calls it Law 3: Conceal Your Intentions. "
+        "And once you see it, you will spot it everywhere.'\n"
 
-        "3. THE TEACHING — This is your masterclass. Explain HOW and WHY this works using a second vivid, relatable real-world example. "
-        "Write in short, punchy sentences with rhythm. Vary sentence length for dramatic effect. "
+        "3. THE TEACHING — This is your masterclass. Explain HOW and WHY this works using a second vivid example. "
+        "Write in short, punchy sentences. Vary sentence length for dramatic effect. "
         "Use 'you' and 'your' to speak directly to ONE person. "
-        "BANNED phrases (NEVER use these): 'cognitive bias', 'research shows', 'studies have found', 'it is important to note', 'this phenomenon', 'in conclusion', 'psychologists say'. "
+        "BANNED phrases: 'cognitive bias', 'research shows', 'studies have found', 'it is important to note', "
+        "'this phenomenon', 'in conclusion', 'psychologists say', 'according to'. "
         "Teach it like you are explaining to your smartest friend over coffee.\n"
 
         "4. THE POWER MOVE — End with one actionable, empowering takeaway. "
-        "How can they use this or spot it being used on them? Make the viewer feel like they just unlocked a cheat code for life. "
-        "End with a single powerful closing sentence that hits like a punch. Example: 'Familiarity is not love. But your brain cannot tell the difference.'\n"
+        "How can they use this or spot it being used on them? "
+        "End with a single powerful closing sentence that hits like a punch.\n"
 
         "5. LANGUAGE RULES:\n"
         "   - NO markdown: no **, no __, no #. Plain spoken English only.\n"
@@ -58,23 +104,22 @@ def generate_content() -> dict:
         "   - Read it aloud in your head. If it sounds like a robot or a textbook, rewrite it.\n\n"
 
         "PLATFORM SEO METADATA (generate after the script):\n"
-        "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, make it feel urgent or forbidden). "
-        "A rich, multi-paragraph YouTube description that expands on the concept with more depth (minimum 150 words), ending with hashtags. "
+        "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, urgent or forbidden feeling). "
+        "A rich, multi-paragraph YouTube description (minimum 150 words), ending with hashtags. "
         "A list of 12-15 highly viral, trending tags.\n"
-        "   - FACEBOOK REELS: A warm, conversational caption that ends with a thought-provoking question to drive comments. Exactly 7 viral hashtags.\n"
+        "   - FACEBOOK REELS: A warm, conversational caption ending with a thought-provoking question. Exactly 7 viral hashtags.\n"
         "   - INSTAGRAM REELS: A short, minimalistic, aesthetic caption. Max 2 lines. 2-3 emojis. 6-8 niche hashtags.\n"
         "   CRITICAL: #NextGenThoughts MUST be the first hashtag on every single platform.\n\n"
 
         "VIDEO ASSETS:\n"
-        "   - Provide 5 to 8 hyper-literal Pexels video search keywords. You MUST describe physical, visual things, NOT abstract concepts.\n"
-        "   - BAN abstract words: Do NOT use words like 'psychology', 'mindset', 'success', 'manipulation', 'sadness'.\n"
-        "   - INSTEAD use literal descriptions: If the script says 'You walk into a dark room', the keyword MUST be 'person walking dark room'. If it says 'Your brain', use 'eye close up macro' or 'silhouette person'.\n"
-        "   - Provide one background music keyword. It MUST be calm and ambient (e.g., 'calm piano', 'cinematic ambient', 'lo-fi focus'). "
-        "NEVER suggest intense, loud, or dramatic music.\n\n"
+        "   - Provide 5 to 8 hyper-literal Pexels video search keywords. Describe PHYSICAL, VISUAL things, NOT abstract concepts.\n"
+        "   - BAN abstract words: 'psychology', 'mindset', 'success', 'manipulation', 'power', 'sadness'.\n"
+        "   - INSTEAD: 'person walking dark room', 'eye close up macro', 'chess pieces hand', 'two people arguing office'.\n"
+        "   - One background music keyword: calm and ambient ONLY (e.g., 'calm piano', 'cinematic ambient', 'lo-fi focus').\n\n"
 
-        "OUTPUT FORMAT: Your ENTIRE response must be a single valid JSON object with this exact structure. "
-        "The 'topic_name' must be a short 3-7 word title for the psychological concept (e.g. 'Foot-in-the-Door Technique'). "
-        "DO NOT wrap it in markdown or code blocks:\n"
+        "OUTPUT FORMAT: Single valid JSON object. NO markdown wrapping.\n"
+        "The 'topic_name' must be: [Book Title] — [Specific Law/Concept Name]. "
+        "Example: '48 Laws of Power — Law 3: Conceal Your Intentions'\n"
         "{\n"
         "  \"topic_name\": \"...\",\n"
         "  \"quote\": \"the full spoken script\",\n"
@@ -90,48 +135,82 @@ def generate_content() -> dict:
         "}\n"
     )
 
-    # ── Master Topic Universe ──────────────────────────────────────────────────
-    # A curated list of 80+ dark psychology, behavioral science, and persuasion
-    # topics. Gemini MUST pick from this list — never default to the most famous ones.
+    # ── Master Book + Psychology Topic Universe ────────────────────────────────
     MASTER_TOPIC_LIST = """
+=== 48 Laws of Power (Robert Greene) ===
+Law 1: Never Outshine the Master | Law 2: Never Put Too Much Trust in Friends | Law 3: Conceal Your Intentions
+Law 4: Always Say Less Than Necessary | Law 6: Court Attention at All Cost | Law 7: Get Others to Do the Work
+Law 9: Win Through Your Actions, Never Through Argument | Law 11: Learn to Keep People Dependent on You
+Law 12: Use Selective Honesty to Disarm Your Victim | Law 15: Crush Your Enemy Totally
+Law 16: Use Absence to Increase Respect | Law 17: Keep Others in Suspended Terror
+Law 18: Do Not Build Fortresses | Law 19: Know Who You Are Dealing With | Law 20: Do Not Commit to Anyone
+Law 21: Play a Sucker to Catch a Sucker | Law 22: Use the Surrender Tactic | Law 25: Re-Create Yourself
+Law 26: Keep Your Hands Clean | Law 27: Play on People's Need to Believe | Law 28: Enter Action with Boldness
+Law 29: Plan All the Way to the End | Law 31: Control the Options | Law 32: Play to People's Fantasies
+Law 33: Discover Each Man's Thumbscrew | Law 34: Be Royal in Your Own Fashion | Law 38: Think as You Like, But Behave Like Others
+Law 43: Work on the Hearts and Minds of Others | Law 44: Disarm and Infuriate with the Mirror Effect
+Law 45: Preach the Need for Change, But Never Reform Too Much | Law 48: Assume Formlessness
+
+=== The Laws of Human Nature (Robert Greene) ===
+Law 1: Master Your Emotional Self | Law 2: Transform Self-Love into Empathy | Law 3: See Through People's Masks
+Law 4: Determine the Strength of People's Character | Law 5: Become an Elusive Object of Desire
+Law 6: Elevate Your Perspective | Law 7: Soften People's Resistance by Confirming Their Self-Opinion
+Law 8: Change Your Circumstances by Changing Your Attitude | Law 9: Confront Your Dark Side
+Law 10: Beware the Fragile Ego | Law 11: Know Your Limits | Law 12: Reconnect to the Masculine or Feminine Within You
+Law 13: Advance With a Sense of Purpose | Law 14: Resist the Downward Pull of the Group
+Law 15: Make Them Want to Follow You | Law 16: See the Hostility Behind the Friendly Facade
+Law 17: Seize the Historical Moment | Law 18: Meditate on Our Common Mortality
+
+=== Influence (Robert Cialdini) ===
+Cialdini: Reciprocity as Weapon | Cialdini: Commitment and Consistency Trap | Cialdini: Social Proof Manipulation
+Cialdini: Authority Illusion | Cialdini: Liking and the Halo Effect | Cialdini: Scarcity and FOMO
+Cialdini: Unity — The We Principle | Pre-Suasion: Channeling Attention Before the Ask
+
+=== The Art of Seduction (Robert Greene) ===
+Seduction: The Siren | Seduction: The Rake | Seduction: The Ideal Lover | Seduction: The Dandy
+Seduction: The Natural | Seduction: The Coquette | Seduction: The Charmer | Seduction: The Charismatic
+Seduction: Creating Mystery and Lure | Seduction: Sending Mixed Signals | Seduction: Appear to Be an Object of Desire
+Seduction: The Isolation Tactic | Seduction: Spiritual Lure
+
+=== Thinking Fast and Slow (Kahneman) ===
+System 1 vs System 2 Thinking | The Availability Heuristic | Anchoring Effect | Overconfidence Illusion
+The Halo Effect | What You See Is All There Is (WYSIATI) | Loss Aversion | Endowment Effect | Framing Decisions
+
+=== Other Landmark Books ===
+Machiavelli: The Prince — It Is Better to Be Feared Than Loved | Machiavelli: Ends Justify the Means
+Games People Play (Berne): The Victim-Rescuer-Persecutor Triangle | Berne: "Yes But" Game | Berne: "Kick Me" Game
+In Sheep's Clothing (Simon): Covert Aggression | Simon: Guilt-Tripping as Control | Simon: Minimizing and Denying
+Never Split the Difference (Voss): Tactical Empathy | Voss: Mirroring in Negotiation | Voss: Calibrated Questions
+The Sociopath Next Door: Conscience-Free Predators | Without Conscience (Hare): The Psychopathy Checklist
+Predictably Irrational (Ariely): The Zero Price Effect | Ariely: The Power of Free | Ariely: Relativity Trap
+Why Does He Do That (Bancroft): Abuser Mentality | Bancroft: The Entitlement Mindset
+
+=== Dark Psychology Concepts (No Specific Book) ===
 Dark Triad Traits | Narcissistic Abuse Cycle | Gaslighting Tactics | Love Bombing | Intermittent Reinforcement
-Trauma Bonding | Coercive Control | DARVO Technique | Silent Treatment as Punishment | Isolation Tactics
-Future Faking | Triangulation (jealousy tactic) | Flying Monkeys (social manipulation) | Smear Campaigns | Hoovering
-Bystander Effect | Diffusion of Responsibility | Mob Mentality / Deindividuation | Authority Bias | Milgram Obedience Experiments
-Stanford Prison Experiment Lessons | Conformity (Asch Line Experiments) | Social Proof as Manipulation | Fear of Ostracism | Social Exclusion Pain
-Sunk Cost Fallacy | Escalation of Commitment | Cognitive Dissonance (advanced) | Belief Perseverance | The Backfire Effect
-Choice Architecture | Nudge Theory | Default Effect | Status Quo Bias | IKEA Effect
-Framing Effect | Anchoring Bias | Decoy Effect | Contrast Effect | Peak-End Rule
-Narrative Transportation Theory | The Zeigarnik Effect (unfinished tasks) | Mere Exposure Effect | Propinquity Effect | Parasocial Relationships
-Emotional Contagion | Mirror Neuron Manipulation | Limbic Resonance | Pity Plays | Weaponized Vulnerability
-Victim Mentality as Control | Learned Helplessness | Emotional Blackmail | Stockholm Syndrome | Fawn Response
-Scapegoating | Projection (psychological) | Blame-Shifting | The JADE Trap (Justify Argue Defend Explain) | Gray Rock Method
-False Memory Implantation | Hindsight Bias | Illusory Superiority (Lake Wobegon Effect) | Dunning-Kruger Effect | Impostor Syndrome
-Self-Serving Bias | Fundamental Attribution Error | Just-World Hypothesis | Optimism Bias | Negativity Bias
-The Pratfall Effect | Paradox of Choice | Decision Fatigue | Ego Depletion | Hedonic Adaptation
-Reactance Theory | Forbidden Fruit Effect | Boomerang Effect | Reverse Psychology | The Ben Franklin Effect
-Rational Emotive Behavior | Cognitive Reframing | Thought-Stopping Technique | Mental Contrasting (WOOP) | Implementation Intentions
-Ambiguity Effect | Availability Heuristic | Representativeness Heuristic | Base Rate Neglect | Planning Fallacy
-Impression Management | Self-Handicapping | Self-Monitoring | Strategic Self-Presentation | Humblebrag Manipulation
-Secure vs Anxious vs Avoidant Attachment | Anxious Attachment Triggers | Fear of Abandonment | Push-Pull Dynamic | Breadcrumbing
+Trauma Bonding | DARVO Technique | Flying Monkeys | Hoovering | Future Faking | Triangulation
+Bystander Effect | Mob Mentality | Sunk Cost Fallacy | The Backfire Effect | Zeigarnik Effect
+Learned Helplessness | Emotional Blackmail | Stockholm Syndrome | Fawn Response | Gray Rock Method
+Dunning-Kruger Effect | Impostor Syndrome | Negativity Bias | Pratfall Effect | Hedonic Adaptation
+Reactance Theory | Forbidden Fruit Effect | The Ben Franklin Effect | Decision Fatigue | Ego Depletion
+Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationships | Pity Plays
 """
 
     prompt += (
-        "\n--- MASTER TOPIC LIST (your primary menu) ---\n"
+        "\n--- MASTER CONTENT LIBRARY (your primary source material) ---\n"
         f"{MASTER_TOPIC_LIST}\n"
         "\n--- TOPICS ALREADY USED (NEVER REPEAT OR CLOSELY OVERLAP THESE) ---\n"
         + (used_topics if used_topics else "(none yet — you're free to start anywhere)")
         + "\n----------------------------------------------\n"
-        "Your task: FIRST, check if any unused topics remain in the master list above. "
-        "If yes, pick one of the unused topics — preferring the unusual, surprising, and counterintuitive ones over the well-known ones. "
-        "If ALL topics in the master list have been used, you are free to explore the wider universe of dark psychology, behavioral science, "
-        "human manipulation, cognitive biases, and persuasion — but the topic MUST be equally niche, rare, and surprising. "
-        "Never default back to famous or simple concepts. Always push into unexplored territory. "
-        "Now generate a completely fresh, original script on your chosen topic."
+        "Your task: FIRST scan the master library above for any unused topic. "
+        "Strongly prefer specific BOOK LAWS (e.g., '48 Laws of Power — Law 3') over generic psychology concepts — "
+        "they make the most compelling, unique content. "
+        "Pick the most surprising, counterintuitive, or rarely-discussed unused entry. "
+        "If ALL entries in the library have been used, invent a new niche dark psychology concept with the same depth. "
+        "The topic_name MUST follow the format: '[Book Title] — [Law/Concept]' for book-based topics. "
+        "Now generate a completely fresh, original script."
     )
 
-
-    max_retries = 3
+    max_retries = 5
     while gemini_rotator.has_keys() and max_retries > 0:
         max_retries -= 1
         current_key = gemini_rotator.get_random_key()
@@ -144,49 +223,53 @@ Secure vs Anxious vs Avoidant Attachment | Anxious Attachment Triggers | Fear of
                     'tools': [{'google_search': {}}],
                 }
             )
-            
+
             raw_text = response.text.strip()
-            
-            # Find the first '{' and the last '}' to handle any text output before/after the JSON
+
             start_idx = raw_text.find('{')
             end_idx = raw_text.rfind('}')
-            
+
             if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
                 raw_text = raw_text[start_idx:end_idx+1]
             else:
                 raise json.JSONDecodeError("No JSON object could be found in the response.", raw_text, 0)
-                
-            # Parse the JSON response
+
             content = json.loads(raw_text.strip())
-            
-            # Save ONLY the topic name to history — not the full script.
-            # This keeps the anti-repetition list clean and readable for Gemini.
+
             topic_name = content.get('topic_name', content.get('quote', '')[:60])
+
+            # ── HARD DUPLICATE GUARD ──────────────────────────────────────────────
+            # Programmatically reject duplicates — never trust Gemini alone.
+            if _is_topic_duplicate(topic_name, used_topics):
+                print(f"⚠️  Duplicate topic detected ('{topic_name}'). Forcing retry...")
+                max_retries += 1  # Don't waste a retry on Gemini's mistake
+                continue
+            # ─────────────────────────────────────────────────────────────────────
+
+            # Save ONLY the topic name to history — not the full script.
             with open(history_file, "a", encoding="utf-8") as f:
-                    f.write(f"- {topic_name}\n")
-                    
+                f.write(f"- {topic_name}\n")
+
+            print(f"✅ Fresh topic selected: '{topic_name}'")
             return content
-            
+
         except errors.APIError as e:
             print(f"Gemini API Error with key {current_key[:5]}...: {e}")
-            # If rate limited (429) or quota exceeded, remove the key and try again
             if e.code in [429, 403]:
                 print(f"Key {current_key[:5]}... hit limit. Rotating...")
                 gemini_rotator.remove_key(current_key)
             else:
-                # Some other error, maybe still rotate or fail
                 print("Unknown API error, rotating key anyway.")
                 gemini_rotator.remove_key(current_key)
         except json.JSONDecodeError:
             print("Failed to decode JSON from Gemini response. Raw output was:")
             print(raw_text)
             print("Retrying generation...")
-            # We don't remove the key since it's a prompt/model issue, not an auth issue
             continue
         except Exception as e:
             print(f"Unexpected error: {e}")
             gemini_rotator.remove_key(current_key)
-            
+
     print("All Gemini API keys exhausted.")
     return {}
 
