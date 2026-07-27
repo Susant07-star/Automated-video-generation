@@ -398,6 +398,9 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
                 clip = VideoFileClip(vp)
                 if clip.w > TARGET_W:
                     clip = clip.resize(width=TARGET_W)
+            
+            # Apply 1.5x speed multiplier for faster, more dynamic visual pacing
+            clip = clip.fx(vfx.speedx, 1.5)
                     
             if clip.duration < seg_dur:
                 clip = clip.fx(vfx.loop, duration=seg_dur)
