@@ -88,7 +88,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-        git pull --rebase origin main
         git add generated_history.txt 2>/dev/null || true
         git diff --staged --quiet || git commit -m "chore: update generated history [skip ci]"
+        git pull --rebase origin main
         git push
