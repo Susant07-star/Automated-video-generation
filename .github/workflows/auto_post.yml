@@ -17,10 +17,15 @@ on:
 jobs:
   build-and-post:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Needed to commit generated_history.txt back to repo
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -28,10 +33,10 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
 
-    - name: Install System Dependencies (FFMPEG)
+    - name: Install System Dependencies (FFMPEG + Fonts)
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg fonts-liberation fonts-dejavu-core
 
     - name: Install Python Dependencies
       run: |
@@ -66,6 +71,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add generated_history.txt
-        git diff --staged --quiet || git commit -m "chore: update generated_history [skip ci]"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git add generated_history.txt queued_content.json 2>/dev/null || true
+        git diff --staged --quiet || git commit -m "chore: update generated history [skip ci]"
         git push

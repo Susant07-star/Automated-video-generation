@@ -57,9 +57,32 @@ def preprocess_video_ffmpeg(input_path: str, output_path: str):
     return True
 
 def get_font(size=70):
+    """
+    Tries multiple common bold font paths so the video renders correctly
+    on Windows (Arial), Linux/GitHub Actions (Liberation/DejaVu), and macOS.
+    """
+    font_candidates = [
+        # Windows
+        "arialbd.ttf",
+        "C:/Windows/Fonts/arialbd.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+        # Linux / GitHub Actions (install fonts-liberation in workflow)
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        # macOS
+        "/System/Library/Fonts/Helvetica.ttc",
+        "/Library/Fonts/Arial Bold.ttf",
+    ]
+    for path in font_candidates:
+        try:
+            return ImageFont.truetype(path, size)
+        except (IOError, OSError):
+            continue
+    # Absolute last resort - load_default supports size in Pillow 10+
     try:
-        return ImageFont.truetype("arialbd.ttf", size)
-    except IOError:
+        return ImageFont.load_default(size=max(size, 30))
+    except TypeError:
         return ImageFont.load_default()
 
 def create_text_image(text, W, H, fontsize=85):
