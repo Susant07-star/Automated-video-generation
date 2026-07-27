@@ -37,7 +37,7 @@ def generate_content() -> dict:
         "4. THE DEFENSE/APPLICATION: Explain how the viewer can spot this being used against them in daily life, or how they can use it ethically.\n"
         "5. LENGTH & PACING: The script MUST be between 70 and 130 words long. It should feel like a mini-documentary or a high-value explainer video, NOT just a short edgy quote.\n"
         "7. PLATFORM-SPECIFIC SEO METADATA: You must generate perfectly optimized metadata for three different platforms:\n"
-        "   - YOUTUBE SHORTS: Provide a highly clickable title (under 80 chars), a rich description, and a list of 5-8 SEO tags.\n"
+        "   - YOUTUBE SHORTS: Provide a highly clickable title WITH EMOJIS (under 80 chars). Provide a deep, engaging, long-form YouTube description (at least 3-4 paragraphs) that includes hashtags at the bottom. Provide a list of 10-15 highly viral, trending SEO tags.\n"
         "   - FACEBOOK REELS: Provide a conversational caption with a thought-provoking question to drive comments, and exactly 7 highly viral hashtags.\n"
         "   - INSTAGRAM REELS: Provide a highly aesthetic, minimalistic caption with 2-3 emojis, and 5-7 deeply targeted niche hashtags (e.g., #DarkPsychology, #Mindset).\n"
         "   **CRITICAL:** You MUST include #NextGenThoughts as the first hashtag on every platform.\n"
