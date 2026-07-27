@@ -31,11 +31,11 @@ jobs:
       id: schedule_check
       run: |
         CURRENT_HOUR=$(date -u +%-H)
-        SCHEDULED=$(python3 -c "import json; c=json.load(open('schedule_config.json')); print(c['post_hour_utc'])")
+        IN_SCHEDULE=$(python3 -c "import json; c=json.load(open('schedule_config.json')); print('yes' if int($CURRENT_HOUR) in c.get('post_hours_utc', []) else 'no')")
         ENABLED=$(python3 -c "import json; c=json.load(open('schedule_config.json')); print(c.get('enabled', True))")
-        echo "Current UTC hour: $CURRENT_HOUR | Scheduled hour: $SCHEDULED | Enabled: $ENABLED"
+        echo "Current UTC hour: $CURRENT_HOUR | In schedule: $IN_SCHEDULE | Enabled: $ENABLED"
         FORCE="${{ github.event.inputs.force_post }}"
-        if [ "$FORCE" = "yes" ] || ([ "$CURRENT_HOUR" = "$SCHEDULED" ] && [ "$ENABLED" = "True" ]); then
+        if [ "$FORCE" = "yes" ] || ([ "$IN_SCHEDULE" = "yes" ] && [ "$ENABLED" = "True" ]); then
           echo "should_post=true" >> $GITHUB_OUTPUT
           echo "✅ Proceeding with pipeline."
         else

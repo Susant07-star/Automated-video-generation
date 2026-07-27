@@ -421,8 +421,8 @@
   const WORKFLOW = 'auto_post.yml';
   const API      = 'https://api.github.com';
 
-  let selectedHour = 13; // default
-  let scheduleConfig = { post_hour_utc: 13, enabled: true };
+  let selectedHours = [13]; // default
+  let scheduleConfig = { post_hours_utc: [13], enabled: true };
   let countdownInterval = null;
 
   // ─── PAT MANAGEMENT ───────────────────────────────────────────────────────
@@ -485,7 +485,7 @@
     try {
       const { content } = await getFileContent('schedule_config.json');
       scheduleConfig = content;
-      selectedHour = content.post_hour_utc;
+      selectedHours = content.post_hours_utc || [];
       updateHourGrid();
       document.getElementById('enabled-toggle').checked = content.enabled !== false;
       document.getElementById('toggle-label').textContent = content.enabled !== false ? 'Enabled' : 'Disabled';
@@ -505,8 +505,8 @@
     btn.textContent = 'Saving...';
     try {
       const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
-      const newConfig = { ...scheduleConfig, post_hour_utc: selectedHour };
-      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update post schedule to ${selectedHour}:00 UTC [skip ci]`);
+      const newConfig = { ...scheduleConfig, post_hours_utc: selectedHours };
+      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update post schedule to ${selectedHours.join(', ')} UTC [skip ci]`);
       scheduleConfig = newConfig;
       updateScheduleDisplay();
       btn.textContent = '✅ Saved!';
@@ -536,7 +536,7 @@
     grid.innerHTML = '';
     for (let h = 0; h < 24; h++) {
       const btn = document.createElement('div');
-      btn.className = 'hour-btn' + (h === selectedHour ? ' selected' : '');
+      btn.className = 'hour-btn' + (selectedHours.includes(h) ? ' selected' : '');
       btn.id = `hour-${h}`;
       btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${localLabel(h)}</span>`;
       btn.onclick = () => selectHour(h);
@@ -546,19 +546,30 @@
 
   function updateHourGrid() {
     document.querySelectorAll('.hour-btn').forEach(b => b.classList.remove('selected'));
-    const el = document.getElementById(`hour-${selectedHour}`);
-    if (el) el.classList.add('selected');
+    selectedHours.forEach(h => {
+      const el = document.getElementById(`hour-${h}`);
+      if (el) el.classList.add('selected');
+    });
     updateSelectedDisplay();
   }
 
   function selectHour(h) {
-    selectedHour = h;
+    if (selectedHours.includes(h)) {
+      selectedHours = selectedHours.filter(x => x !== h);
+    } else {
+      selectedHours.push(h);
+      selectedHours.sort((a,b) => a - b);
+    }
     updateHourGrid();
   }
 
   function updateSelectedDisplay() {
-    document.getElementById('selected-time-display').innerHTML =
-      `Selected: <strong>${selectedHour}:00 UTC</strong> · ${localLabel(selectedHour)} local · ${nptLabel(selectedHour)} NPT`;
+    if (selectedHours.length === 0) {
+      document.getElementById('selected-time-display').innerHTML = `Select at least one time above`;
+    } else {
+      document.getElementById('selected-time-display').innerHTML =
+        `Selected: <strong>${selectedHours.join(', ')} UTC</strong> (${selectedHours.length} times/day)`;
+    }
   }
 
   // ─── TIME UTILS ───────────────────────────────────────────────────────────
@@ -576,20 +587,42 @@
   }
 
   function updateScheduleDisplay() {
-    const h = scheduleConfig.post_hour_utc;
-    document.getElementById('scheduled-display').textContent = `${h}:00 UTC`;
-    document.getElementById('npt-display').textContent = `${nptLabel(h)} Nepal Time`;
-    document.getElementById('next-post-time').textContent = `${localLabel(h)} your time`;
+    const hs = scheduleConfig.post_hours_utc || [];
+    if (hs.length === 0) {
+      document.getElementById('scheduled-display').textContent = `None`;
+      document.getElementById('npt-display').textContent = `No times set`;
+      document.getElementById('next-post-time').textContent = `Schedule paused`;
+    } else {
+      document.getElementById('scheduled-display').textContent = `${hs.join(', ')} UTC`;
+      document.getElementById('npt-display').textContent = `${hs.length} times/day`;
+      document.getElementById('next-post-time').textContent = `Multiple posts enabled`;
+    }
   }
 
   function updateCountdown() {
     if (countdownInterval) clearInterval(countdownInterval);
     countdownInterval = setInterval(() => {
       const now = new Date();
-      const targetH = scheduleConfig.post_hour_utc;
-      const next = new Date();
-      next.setUTCHours(targetH, 0, 0, 0);
-      if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+      const hs = scheduleConfig.post_hours_utc || [];
+      if (hs.length === 0) {
+         document.getElementById('countdown').textContent = `--:--`;
+         return;
+      }
+      
+      let next = null;
+      for (let h of hs) {
+        let test = new Date();
+        test.setUTCHours(h, 0, 0, 0);
+        if (test > now) {
+          if (!next || test < next) next = test;
+        }
+      }
+      if (!next) {
+        next = new Date();
+        next.setUTCDate(next.getUTCDate() + 1);
+        next.setUTCHours(hs[0], 0, 0, 0);
+      }
+      
       const diff = Math.max(0, next - now);
       const hh = Math.floor(diff / 3600000);
       const mm = Math.floor((diff % 3600000) / 60000);
