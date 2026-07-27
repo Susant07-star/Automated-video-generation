@@ -1,9 +1,6 @@
 name: Auto-Post Daily Reel
 
 on:
-  push:
-    branches:
-      - main
   schedule:
     # Runs at minute 7 of the hour. We avoid minute 0 to bypass GitHub's massive global queue delays.
     # The Python script checks schedule_config.json to decide whether to actually post.
@@ -90,5 +87,6 @@ jobs:
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
         git add generated_history.txt 2>/dev/null || true
         git diff --staged --quiet || git commit -m "chore: update generated history [skip ci]"
-        git pull --rebase origin main
+        # --autostash: auto-saves any leftover temp files before pulling, restores after
+        git pull --rebase --autostash origin main
         git push
