@@ -25,25 +25,22 @@ This document outlines the strategic upgrades for the `Automated-video-generatio
 
 ---
 
-## 🔄 Phase 4: Content Quality — The Teacher Upgrade (IN PROGRESS — Top Priority)
+## ✅ Phase 4: Content Quality — The Teacher Upgrade (Completed)
 * **Goal:** Stop sounding like a fact-presenter and start sounding like a passionate, relatable teacher. This is the #1 lever for audience growth.
-* **Why:** Top psychology channels don't just present facts. They tell stories, use real-life relatable examples, and make the viewer feel like they are being taught a secret by a brilliant friend.
-* **Implementation:**
-  * **Storytelling Prompt Rewrite:** Completely rewrite the Gemini AI prompt to start every script with a relatable real-life scenario (e.g., "Imagine your friend just watched ONE YouTube video and now thinks he knows everything about investing...") before naming the concept.
-  * **Emotional Arc:** Every script must follow: Hook → Relatable Story → Reveal the Concept → Why it Happens → How to Use/Spot it → Powerful Closing Line.
-  * **Banned Phrases:** The AI will be explicitly forbidden from using robotic phrases like "This cognitive bias...", "Research shows...", "Studies have found...", "It's important to note...".
-  * **Conversational Language:** Force the AI to write as if speaking to one specific person, not a crowd. Use "you", "your", "imagine", "think about it".
+* **Status:** Finished! The Gemini prompt has been completely rewritten to follow the emotional arc: Hook (vivid scene) → Reveal (name the concept) → Masterclass (relatable story) → Power Move (closing punch line). Robotic phrases are explicitly banned.
 
 ---
 
-## 🔄 Phase 5: Karaoke Word-by-Word Subtitles (IN PROGRESS — Visual Upgrade)
+## 🔄 Phase 5: Karaoke Word-by-Word Subtitles (Implemented — Pending Test)
 * **Goal:** Replace the current static block text with dynamic, word-by-word highlighted subtitles (like Alex Hormozi and top viral channels use).
 * **Why:** This is the #1 visual feature that increases watch time. When words pop up one at a time, the viewer's eyes have something to follow, keeping them locked in.
-* **Implementation:**
-  * Use the ElevenLabs word-level timestamp data (already being fetched!) to know the exact start and end time of every single word.
-  * In `video_assembler.py`, instead of drawing one big text block, draw each word individually at its exact timestamp.
-  * Highlight the current speaking word in a bright accent color (yellow or white) while the previous words fade to grey.
-  * 3-4 words visible at a time, centered on screen, large and bold.
+* **Status:** Code implemented in `video_assembler.py`. Next video generated will use this system.
+* **How it works:**
+  * Words are grouped into chunks of 4 at a time on screen.
+  * As each word is spoken, it turns **bright yellow**.
+  * Words already spoken turn **light grey**.
+  * Upcoming words stay **white**.
+  * Powered by ElevenLabs word-level timestamps (exact millisecond accuracy).
 
 ---
 

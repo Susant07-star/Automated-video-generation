@@ -213,13 +213,83 @@ def make_vignette(W, H):
     # Color is black
     return img
 
+def create_karaoke_subtitle_image(words_in_chunk, active_idx, W, H, fontsize=90):
+    """
+    Creates a single RGBA image showing a chunk of words side by side.
+    - Words spoken BEFORE active_idx: light grey
+    - Word AT active_idx: bright yellow (highlighted)
+    - Words AFTER active_idx: white (upcoming)
+    This is the Hormozi/viral karaoke style.
+    """
+    font = get_font(fontsize)
+    SAFE_PADDING = 80
+    max_text_w = W - (SAFE_PADDING * 2)
+
+    # Auto-shrink font until all words fit in one line
+    while fontsize >= 30:
+        font = get_font(fontsize)
+        full_line = " ".join(words_in_chunk)
+        tmp_img = Image.new('RGBA', (1, 1))
+        tmp_draw = ImageDraw.Draw(tmp_img)
+        bbox = tmp_draw.textbbox((0, 0), full_line, font=font)
+        if (bbox[2] - bbox[0]) <= max_text_w:
+            break
+        fontsize -= 5
+
+    font = get_font(fontsize)
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Measure each word's width to compute total line width
+    tmp_img2 = Image.new('RGBA', (1, 1))
+    tmp_draw2 = ImageDraw.Draw(tmp_img2)
+    space_bbox = tmp_draw2.textbbox((0, 0), " ", font=font)
+    space_w = space_bbox[2] - space_bbox[0]
+
+    word_widths = []
+    word_heights = []
+    for w in words_in_chunk:
+        bbox = tmp_draw2.textbbox((0, 0), w, font=font)
+        word_widths.append(bbox[2] - bbox[0])
+        word_heights.append(bbox[3] - bbox[1])
+
+    total_w = sum(word_widths) + space_w * (len(words_in_chunk) - 1)
+    line_h = max(word_heights) if word_heights else fontsize
+
+    # Center the whole line horizontally, position at 58% of screen height
+    x_start = (W - total_w) / 2
+    y = int(H * 0.58) - line_h // 2
+
+    stroke_width = 5
+    stroke_color = (0, 0, 0)
+
+    x_cursor = x_start
+    for i, word in enumerate(words_in_chunk):
+        if i < active_idx:
+            fill_color = (180, 180, 180)   # light grey — already spoken
+        elif i == active_idx:
+            fill_color = (255, 230, 0)     # bright yellow — currently speaking
+        else:
+            fill_color = (255, 255, 255)   # white — upcoming
+
+        # Draw thick black stroke for legibility
+        for dx in range(-stroke_width, stroke_width + 1):
+            for dy in range(-stroke_width, stroke_width + 1):
+                draw.text((x_cursor + dx, y + dy), word, font=font, fill=stroke_color)
+        # Draw the word
+        draw.text((x_cursor, y), word, font=font, fill=fill_color)
+        x_cursor += word_widths[i] + space_w
+
+    return np.array(img)
+
+
 def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offset=0.5):
     """
-    Reads ElevenLabs word timestamps and generates non-overlapping subtitle clips.
-    - Words are grouped into chunks of 3.
-    - Each chunk's end time is hard-capped at the NEXT chunk's start time so
-      there is zero overlap between consecutive text blocks.
-    - voice_offset shifts all timestamps by the same amount the audio was delayed.
+    Karaoke-style subtitles using ElevenLabs word timestamps.
+    - Words are grouped into chunks of 4.
+    - Within each chunk, the currently-speaking word is highlighted yellow.
+    - Previous words turn grey. Next words are white.
+    - Each highlighted word gets its own ImageClip at its exact timestamp.
     """
     if not os.path.exists(timestamps_file):
         return []
@@ -230,48 +300,55 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
     if not words:
         return []
 
-    chunk_size = 3
+    CHUNK_SIZE = 4
+    GAP = 0.05  # 50ms gap between chunks
 
-    # ── Step 1: build all chunks ────────────────────────────────────────────────
+    # Build chunks of 4 words
     chunks = []
-    for i in range(0, len(words), chunk_size):
-        chunk = words[i:i + chunk_size]
-        text  = " ".join(w['word'] for w in chunk)
-        start = chunk[0]['start']
-        end   = chunk[-1]['end']
-        chunks.append({'text': text, 'start': start, 'end': end})
+    for i in range(0, len(words), CHUNK_SIZE):
+        chunk_words = words[i:i + CHUNK_SIZE]
+        chunks.append(chunk_words)
 
-    # ── Step 2: cap each chunk's end at the NEXT chunk's start ─────────────────
-    # This is what prevents overlap — no 0.3s fudge that bleeds into next chunk.
-    GAP = 0.05   # 50ms silence gap between chunks
-    for idx in range(len(chunks) - 1):
-        next_start = chunks[idx + 1]['start']
-        chunks[idx]['end'] = min(chunks[idx]['end'], next_start - GAP)
-
-    # ── Step 3: apply voice offset and build ImageClips ───────────────────────
     clips = []
-    for ch in chunks:
-        # Shift by voice_offset to align with when audio actually starts
-        start_t = ch['start'] + voice_offset
-        end_t   = ch['end']   + voice_offset
 
-        # Skip anything that exceeds total video duration
-        if start_t >= target_duration:
-            break
-        end_t = min(end_t, target_duration)
+    for chunk_idx, chunk_words in enumerate(chunks):
+        word_texts = [w['word'] for w in chunk_words]
 
-        # Skip degenerate clips
-        if end_t - start_t < 0.05:
-            continue
+        # Cap the last word of this chunk at the start of the next chunk
+        if chunk_idx < len(chunks) - 1:
+            next_chunk_start = chunks[chunk_idx + 1][0]['start']
+            # Fix the end time of the last word in this chunk
+            chunk_words[-1]['end'] = min(chunk_words[-1]['end'], next_chunk_start - GAP)
 
-        text_img = create_text_image(ch['text'], W, H, fontsize=85)
-        clip = (ImageClip(text_img)
-                .set_start(start_t)
-                .set_end(end_t)
-                .set_position(('center', 'center')))
-        clips.append(clip)
+        # For each word in the chunk, render the full chunk with that word highlighted
+        for active_idx, word_data in enumerate(chunk_words):
+            start_t = word_data['start'] + voice_offset
+            # End time = next word's start OR end of word + small buffer
+            if active_idx < len(chunk_words) - 1:
+                end_t = chunk_words[active_idx + 1]['start'] + voice_offset - GAP
+            else:
+                # Last word in chunk — show until next chunk begins (or video ends)
+                if chunk_idx < len(chunks) - 1:
+                    end_t = chunks[chunk_idx + 1][0]['start'] + voice_offset - GAP
+                else:
+                    end_t = word_data['end'] + voice_offset + 0.3
+
+            if start_t >= target_duration:
+                break
+            end_t = min(end_t, target_duration)
+
+            if end_t - start_t < 0.04:
+                continue
+
+            text_img = create_karaoke_subtitle_image(word_texts, active_idx, W, H, fontsize=90)
+            clip = (ImageClip(text_img)
+                    .set_start(start_t)
+                    .set_end(end_t)
+                    .set_position(('center', 'center')))
+            clips.append(clip)
 
     return clips
+
 
 from moviepy.editor import concatenate_videoclips
 
