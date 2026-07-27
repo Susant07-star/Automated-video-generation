@@ -283,6 +283,33 @@ def create_karaoke_subtitle_image(words_in_chunk, active_idx, W, H, fontsize=90)
     return np.array(img)
 
 
+def create_cta_image(text, W, H, fontsize=70):
+    """Creates a transparent image with CTA text near the bottom."""
+    font = get_font(fontsize)
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    
+    tmp_img = Image.new('RGBA', (1, 1))
+    tmp_draw = ImageDraw.Draw(tmp_img)
+    bbox = tmp_draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    x = (W - text_w) / 2
+    y = int(H * 0.68) - text_h // 2  # Place it underneath the subtitles
+    
+    # Draw stroke
+    stroke_width = 5
+    for dx in range(-stroke_width, stroke_width + 1):
+        for dy in range(-stroke_width, stroke_width + 1):
+            draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
+            
+    # Draw text
+    draw.text((x, y), text, font=font, fill=(255, 255, 255))
+    return np.array(img)
+
+
+
 def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offset=0.5):
     """
     Karaoke-style subtitles using ElevenLabs word timestamps.
@@ -450,7 +477,34 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             music_audio = music_audio.fx(afx.audio_loop, duration=target_duration)
         else:
             music_audio = music_audio.subclip(0, target_duration)
-        music_audio = music_audio.fx(afx.volumex, 0.05) # Lowered from 0.10 to 0.05 so music stays in the background
+            
+        # Idea A: Dynamic Audio Ducking (Swell music during silence gaps)
+        swells = []
+        if os.path.exists(audio_path + ".json"):
+            import json
+            with open(audio_path + ".json", 'r') as f:
+                words_data = json.load(f)
+            
+            for i in range(len(words_data) - 1):
+                gap = words_data[i+1]['start'] - words_data[i]['end']
+                if gap > 0.4:
+                    # +0.5 is voice_offset. Add tiny buffer
+                    swells.append((words_data[i]['end'] + 0.1 + 0.5, words_data[i+1]['start'] - 0.1 + 0.5))
+                    
+        def volume_envelope(t):
+            import numpy as np
+            is_scalar = np.isscalar(t)
+            t_arr = np.atleast_1d(t)
+            vol = np.full(t_arr.shape, 0.03) # Ducked volume (very quiet when talking)
+            
+            for start, end in swells:
+                mask = (t_arr > start) & (t_arr < end)
+                vol[mask] = 0.20 # Swell volume (loud cinematic fill)
+                
+            vol = vol[:, np.newaxis] # Expand dims for stereo broadcasting
+            return vol[0, 0] if is_scalar else vol
+
+        music_audio = music_audio.fl(lambda gf, t: gf(t) * volume_envelope(t), keep_duration=True)
         audio_tracks.append(music_audio)
         
     audio_tracks.append(voice_audio.set_start(0.5))
@@ -535,6 +589,18 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
                       .set_mask(progress_bar_mask)
                       .set_position(('center', 'bottom')))
     layers.append(progress_clip)
+
+    # Idea C: Save For Later CTA Overlay (Last 3 seconds)
+    try:
+        cta_img = create_cta_image("📌 Save this video for later", TARGET_W, TARGET_H, fontsize=85)
+        cta_clip = (ImageClip(cta_img)
+                    .set_duration(3.0)
+                    .set_start(max(0, target_duration - 3.0))
+                    .set_position('center')
+                    .crossfadein(0.5))
+        layers.append(cta_clip)
+    except Exception as e:
+        print(f"Error creating CTA overlay: {e}")
 
 
     # Composite everything

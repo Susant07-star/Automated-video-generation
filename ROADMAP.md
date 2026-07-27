@@ -31,20 +31,32 @@ This document outlines the strategic upgrades for the `Automated-video-generatio
 
 ---
 
-## 🔄 Phase 5: Karaoke Word-by-Word Subtitles (Implemented — Pending Test)
+## ✅ Phase 5: Karaoke Word-by-Word Subtitles (Completed)
 * **Goal:** Replace the current static block text with dynamic, word-by-word highlighted subtitles (like Alex Hormozi and top viral channels use).
-* **Why:** This is the #1 visual feature that increases watch time. When words pop up one at a time, the viewer's eyes have something to follow, keeping them locked in.
-* **Status:** Code implemented in `video_assembler.py`. Next video generated will use this system.
-* **How it works:**
-  * Words are grouped into chunks of 4 at a time on screen.
-  * As each word is spoken, it turns **bright yellow**.
-  * Words already spoken turn **light grey**.
-  * Upcoming words stay **white**.
-  * Powered by ElevenLabs word-level timestamps (exact millisecond accuracy).
+* **Status:** Finished! The script renders word-by-word karaoke subtitles using exact millisecond timestamps from ElevenLabs.
 
 ---
 
-## 📋 Phase 6: Hindi Language Channel (PLANNED)
+## ✅ Phase 6: Cinematic Polish (Completed)
+* **Goal:** Increase the production value to match top 1% editing teams.
+* **Status:** Finished!
+  * **Visual Hook:** Added a Ken Burns zoom to the very first clip.
+  * **Impact SFX:** Automatically detects power words ("secret", "danger", etc.) and inserts a deep cinematic bass boom underneath them.
+  * **Context-Aware B-Roll:** Gemini now generates hyper-literal visual search terms instead of abstract psychological concepts.
+  * **Instrumental Music:** Forced Jamendo API to only return instrumental music to prevent vocal clashing.
+
+---
+
+## 🔄 Phase 7: Advanced Retention & Voice Design (IN PROGRESS)
+* **Goal:** Implement Hollywood-style audio ducking, a CTA overlay for saves, and a custom viral AI voice.
+* **Status:** Planning phase.
+  * **Idea A (Dynamic Ducking):** Music swells between sentences and ducks during speech.
+  * **Idea C (CTA Overlay):** A "Save this for later" graphic pops up in the last 3 seconds.
+  * **Idea D (Custom Voice):** Shift from the default "Adam" voice to a custom, highly-unique ElevenLabs voice clone (e.g., Robert Greene style).
+
+---
+
+## 📋 Phase 8: Hindi Language Channel (PLANNED)
 * **Goal:** Launch a second, dedicated Hindi psychology channel to tap into the massive 500M+ Hindi-speaking YouTube audience where competition is significantly lower.
 * **Strategy — Two Separate Channels (NOT the same channel):**
   * Mixing Hindi and English on one channel confuses the YouTube algorithm and splits your audience. Each channel must have a 100% focused identity.
