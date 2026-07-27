@@ -117,13 +117,16 @@ Secure vs Anxious vs Avoidant Attachment | Anxious Attachment Triggers | Fear of
 """
 
     prompt += (
-        "\n--- MASTER TOPIC LIST (pick ONLY from here) ---\n"
+        "\n--- MASTER TOPIC LIST (your primary menu) ---\n"
         f"{MASTER_TOPIC_LIST}\n"
         "\n--- TOPICS ALREADY USED (NEVER REPEAT OR CLOSELY OVERLAP THESE) ---\n"
         + (used_topics if used_topics else "(none yet — you're free to start anywhere)")
         + "\n----------------------------------------------\n"
-        "Your task: Pick ONE unused topic from the master list above. "
-        "Do NOT pick the most obvious or popular one. Explore the unusual, the surprising, and the counterintuitive corners of the list. "
+        "Your task: FIRST, check if any unused topics remain in the master list above. "
+        "If yes, pick one of the unused topics — preferring the unusual, surprising, and counterintuitive ones over the well-known ones. "
+        "If ALL topics in the master list have been used, you are free to explore the wider universe of dark psychology, behavioral science, "
+        "human manipulation, cognitive biases, and persuasion — but the topic MUST be equally niche, rare, and surprising. "
+        "Never default back to famous or simple concepts. Always push into unexplored territory. "
         "Now generate a completely fresh, original script on your chosen topic."
     )
 
