@@ -3,13 +3,10 @@ name: Auto-Post Daily Reel
 on:
   schedule:
     # Default: Runs at 14:15 UTC (9:00 AM EST / 7:15 PM NPT) every day
-    # To change the default schedule, edit the cron expression below.
-    # Use https://crontab.guru to build cron expressions.
-    # Format: 'minute hour * * *'  (times are UTC)
+    # To change: edit the cron expression. Use https://crontab.guru
     - cron: '15 14 * * *'
 
-  # Allows you to trigger a run MANUALLY from the GitHub Actions tab at any time.
-  # You can also choose to SKIP posting (just generate) when triggering manually.
+  # Manual trigger from the GitHub Actions tab
   workflow_dispatch:
     inputs:
       skip_upload:
@@ -43,9 +40,10 @@ jobs:
 
     - name: Create Secrets Files
       run: |
-        # Create .env from GitHub Secrets
-        echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
-        echo "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" >> .env
+        # Create .env — variable names MUST match what api_manager.py reads
+        echo "PEXELS_API_KEYS=${{ secrets.PEXELS_API_KEYS }}" >> .env
+        echo "PIXABAY_API_KEYS=${{ secrets.PIXABAY_API_KEYS }}" >> .env
+        echo "ELEVENLABS_API_KEYS=${{ secrets.ELEVENLABS_API_KEYS }}" >> .env
         echo "GEMINI_API_KEYS=${{ secrets.GEMINI_API_KEYS }}" >> .env
         echo "FACEBOOK_PAGE_ACCESS_TOKEN=${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}" >> .env
         echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> .env
@@ -56,10 +54,18 @@ jobs:
 
     - name: Run Pipeline (Auto-Post)
       if: github.event_name == 'schedule' || github.event.inputs.skip_upload != 'yes'
-      run: |
-        python main.py --headless
+      run: python main.py --headless
 
-    - name: Run Pipeline (Generate Only)
+    - name: Run Pipeline (Generate Only - No Upload)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.skip_upload == 'yes'
+      run: python main.py
+
+    - name: Save History Back to Repo
+      # Runs even if the pipeline step failed, so partial history is still saved
+      if: always()
       run: |
-        python main.py
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add generated_history.txt
+        git diff --staged --quiet || git commit -m "chore: update generated_history [skip ci]"
+        git push
