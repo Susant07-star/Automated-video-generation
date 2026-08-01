@@ -598,7 +598,8 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
 
     # Idea C: Save For Later CTA Overlay (Last 3 seconds)
     try:
-        cta_img = create_cta_image("📌 Save this video for later", TARGET_W, TARGET_H, fontsize=85)
+        # Remove emoji since standard fonts don't support them (they render as square boxes)
+        cta_img = create_cta_image("Save this video for later", TARGET_W, TARGET_H, fontsize=85)
         cta_clip = (ImageClip(cta_img)
                     .set_duration(3.0)
                     .set_start(max(0, target_duration - 3.0))
