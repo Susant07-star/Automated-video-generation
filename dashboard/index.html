@@ -589,8 +589,11 @@
     btn.textContent = 'Saving...';
     try {
       const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
+      // Always save as HH:MM strings to preserve any minutes in the backend
       const genTimes = selectedHours.map(h => `${String(h).padStart(2,'0')}:00`);
-      const newConfig = { ...scheduleConfig, generation_times: genTimes, post_hours_utc: selectedHours };
+      // Preserve existing publish_times (don't overwrite them here)
+      const existingPubTimes = scheduleConfig.publish_times || publishTimes.map(h => `${String(h).padStart(2,'0')}:00`);
+      const newConfig = { ...scheduleConfig, generation_times: genTimes, post_hours_utc: selectedHours, publish_times: existingPubTimes };
       await updateFileContent('schedule_config.json', newConfig, sha, `chore: update generation times to ${genTimes.join(', ')} [skip ci]`);
       scheduleConfig = newConfig;
       btn.textContent = '✅ Saved!';
@@ -652,8 +655,10 @@
     btn.textContent = 'Saving...';
     try {
       const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
-      const newConfig = { ...scheduleConfig, publish_times: [...publishTimes].sort() };
-      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update publish times to ${publishTimes.join(', ')} [skip ci]`);
+      // Always save as sorted HH:MM strings — NEVER as raw integers
+      const pubTimesStr = [...publishTimes].sort((a,b)=>a-b).map(h => `${String(h).padStart(2,'0')}:00`);
+      const newConfig = { ...scheduleConfig, publish_times: pubTimesStr };
+      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update publish times to ${pubTimesStr.join(', ')} [skip ci]`);
       scheduleConfig = newConfig;
       btn.textContent = '✅ Saved!';
       setTimeout(() => { btn.textContent = '💾 Save Publish Times'; btn.disabled = false; }, 2000);
@@ -757,67 +762,69 @@
     countdownInterval = setInterval(() => {
       const now = new Date();
 
-      // --- Generation countdown (UTC hours) ---
-      const hs = scheduleConfig.post_hours_utc || [];
-      if (hs.length === 0) {
-        document.getElementById('countdown').textContent = `--:--`;
+      // ── Generation countdown ──────────────────────────────────────────────
+      const rawGen = scheduleConfig.generation_times || [];
+      const genTimesStr = rawGen.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+      if (genTimesStr.length === 0) {
+        document.getElementById('countdown').textContent = '--:--';
       } else {
-        let next = null;
-        for (let h of hs) {
-          let test = new Date();
-          test.setUTCHours(h, 0, 0, 0);
-          if (test > now) { if (!next || test < next) next = test; }
+        // Use Intl to get the current NPT hour+minute, then build a real UTC Date for target
+        const nptParts = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kathmandu',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false, year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(now);
+        const p = Object.fromEntries(nptParts.map(x => [x.type, x.value]));
+        const nowNPTms = Date.UTC(
+          +p.year, +p.month - 1, +p.day,
+          +p.hour % 24, +p.minute, +p.second
+        );
+        let nextGenMs = null;
+        for (let t of genTimesStr) {
+          const [gh, gm] = t.split(':').map(Number);
+          // Build the target in NPT = same date, set h/m
+          let targetMs = Date.UTC(+p.year, +p.month - 1, +p.day, gh, gm, 0);
+          if (targetMs <= nowNPTms) targetMs += 86400000; // push to tomorrow
+          if (nextGenMs === null || targetMs < nextGenMs) nextGenMs = targetMs;
         }
-        if (!next) {
-          let minTimeGen = null;
-          for (let h of hs) {
-            let test = new Date();
-            test.setUTCDate(test.getUTCDate() + 1);
-            test.setUTCHours(h, 0, 0, 0);
-            if (!minTimeGen || test < minTimeGen) minTimeGen = test;
-          }
-          next = minTimeGen;
-        }
-        const diff = Math.max(0, next - now);
-        const hh = Math.floor(diff / 3600000);
-        const mm = Math.floor((diff % 3600000) / 60000);
-        const ss = Math.floor((diff % 60000) / 1000);
-        document.getElementById('countdown').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+        const diffG = Math.max(0, nextGenMs - nowNPTms);
+        const hhG = Math.floor(diffG / 3600000);
+        const mmG = Math.floor((diffG % 3600000) / 60000);
+        const ssG = Math.floor((diffG % 60000) / 1000);
+        document.getElementById('countdown').textContent =
+          `${String(hhG).padStart(2,'0')}:${String(mmG).padStart(2,'0')}:${String(ssG).padStart(2,'0')}`;
       }
 
-      // --- Publish (public) countdown (HH:MM local Nepal time) ---
-      const pts = scheduleConfig.publish_times || [];
-      if (pts.length === 0) {
-        document.getElementById('publish-countdown').textContent = `--:--`;
+      // ── Publish countdown ─────────────────────────────────────────────────
+      const rawPub = scheduleConfig.publish_times || [];
+      const pubTimesStr = rawPub.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+      if (pubTimesStr.length === 0) {
+        document.getElementById('publish-countdown').textContent = '--:--';
       } else {
-        // Calculate accurate Nepal Time (NPT) regardless of user's browser timezone
-        const nptString = now.toLocaleString("en-US", { timeZone: "Asia/Kathmandu" });
-        const nowNPT = new Date(nptString);
-        let nextPub = null;
-        const normalizedPts = pts.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
-        for (let t of normalizedPts) {
+        // Same reliable Intl approach — get current NPT moment as UTC epoch
+        const nptParts2 = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kathmandu',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false, year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(now);
+        const p2 = Object.fromEntries(nptParts2.map(x => [x.type, x.value]));
+        const nowNPTms2 = Date.UTC(
+          +p2.year, +p2.month - 1, +p2.day,
+          +p2.hour % 24, +p2.minute, +p2.second
+        );
+        let nextPubMs = null;
+        for (let t of pubTimesStr) {
           const [ph, pm] = t.split(':').map(Number);
-          let test = new Date(nowNPT);
-          test.setHours(ph, pm, 0, 0);
-          if (test > nowNPT) { if (!nextPub || test < nextPub) nextPub = test; }
+          let targetMs = Date.UTC(+p2.year, +p2.month - 1, +p2.day, ph, pm, 0);
+          if (targetMs <= nowNPTms2) targetMs += 86400000; // push to tomorrow
+          if (nextPubMs === null || targetMs < nextPubMs) nextPubMs = targetMs;
         }
-        if (!nextPub) {
-          // If no times left today, find the earliest time tomorrow
-          let minTime = null;
-          for (let t of normalizedPts) {
-            const [ph, pm] = t.split(':').map(Number);
-            let test = new Date(nowNPT);
-            test.setDate(test.getDate() + 1);
-            test.setHours(ph, pm, 0, 0);
-            if (!minTime || test < minTime) minTime = test;
-          }
-          nextPub = minTime;
-        }
-        const diffP = Math.max(0, nextPub - nowNPT);
+        const diffP = Math.max(0, nextPubMs - nowNPTms2);
         const hhP = Math.floor(diffP / 3600000);
         const mmP = Math.floor((diffP % 3600000) / 60000);
         const ssP = Math.floor((diffP % 60000) / 1000);
-        document.getElementById('publish-countdown').textContent = `${String(hhP).padStart(2,'0')}:${String(mmP).padStart(2,'0')}:${String(ssP).padStart(2,'0')}`;
+        document.getElementById('publish-countdown').textContent =
+          `${String(hhP).padStart(2,'0')}:${String(mmP).padStart(2,'0')}:${String(ssP).padStart(2,'0')}`;
       }
 
     }, 1000);
