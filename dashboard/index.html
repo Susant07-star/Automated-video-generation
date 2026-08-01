@@ -733,13 +733,18 @@
   }
 
   function updateScheduleDisplay() {
-    const genTimes = scheduleConfig.generation_times || (scheduleConfig.post_hours_utc || []).map(h => `${String(h).padStart(2,'0')}:00`);
+    const rawGen = scheduleConfig.generation_times || scheduleConfig.post_hours_utc || [];
+    const genTimes = rawGen.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+    
     if (genTimes.length === 0) {
       document.getElementById('next-post-time').textContent = `No generation times set`;
     } else {
       document.getElementById('next-post-time').textContent = `Daily at: ${genTimes.join(' & ')}`;
     }
-    const pubTimeStrs = (scheduleConfig.publish_times || []);
+    
+    const rawPub = scheduleConfig.publish_times || [];
+    const pubTimeStrs = rawPub.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+    
     if (pubTimeStrs.length === 0) {
       document.getElementById('next-public-time').textContent = `No publish times set`;
     } else {
@@ -784,14 +789,15 @@
         const NPT_OFFSET_MS = 345 * 60 * 1000;
         const nowNPT = new Date(now.getTime() + NPT_OFFSET_MS - now.getTimezoneOffset() * 60000);
         let nextPub = null;
-        for (let t of pts) {
+        const normalizedPts = pts.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+        for (let t of normalizedPts) {
           const [ph, pm] = t.split(':').map(Number);
           let test = new Date(nowNPT);
           test.setHours(ph, pm, 0, 0);
           if (test > nowNPT) { if (!nextPub || test < nextPub) nextPub = test; }
         }
         if (!nextPub) {
-          const [ph, pm] = pts[0].split(':').map(Number);
+          const [ph, pm] = normalizedPts[0].split(':').map(Number);
           nextPub = new Date(nowNPT);
           nextPub.setDate(nextPub.getDate() + 1);
           nextPub.setHours(ph, pm, 0, 0);
