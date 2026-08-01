@@ -256,31 +256,20 @@
     .selected-time-display { font-size: 13px; color: var(--text-dim); }
     .selected-time-display strong { color: var(--text); }
 
-    /* Publish time tag pills */
-    .time-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; min-height: 32px; }
-    .time-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--orange-glow); border: 1px solid var(--orange-bright);
-      color: var(--orange-bright); font-size: 12px; font-weight: 700;
-      padding: 4px 10px; border-radius: 20px;
-    }
-    .time-tag button { background: none; border: none; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.7; }
-    .time-tag button:hover { opacity: 1; }
-    .time-tag-empty { font-size: 12px; color: var(--text-muted); font-style: italic; padding: 4px 0; }
+    /* Publish time hour grid - orange variant */
+    .hour-btn.selected-publish { background: var(--orange-glow); border-color: var(--orange-bright); color: var(--orange-bright); font-weight: 700; box-shadow: 0 0 12px var(--orange-glow); }
 
-    .add-time-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
-    .add-time-row input[type=time] {
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border-strong);
-      border-radius: 8px; padding: 8px 12px; color: var(--text);
-      font-family: 'Inter', monospace; font-size: 13px; outline: none;
-      transition: border-color 0.2s;
+    /* How It Works note panel */
+    .note-panel {
+      background: rgba(124,58,237,0.06);
+      border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 16px; padding: 20px;
+      margin-top: 16px;
     }
-    .add-time-row input[type=time]:focus { border-color: var(--orange-bright); }
-    .btn-orange {
-      background: linear-gradient(135deg, var(--orange), #c2410c);
-      color: #fff; box-shadow: 0 4px 20px rgba(249,115,22,0.4);
-    }
-    .btn-orange:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(249,115,22,0.5); }
+    .note-panel .note-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .note-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+    .note-row:last-child { margin-bottom: 0; }
+    .note-row .note-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
     /* ─── ACTIVITY ─── */
     .activity-card { padding: 0; overflow: hidden; }
@@ -393,15 +382,26 @@
     <!-- Action Grid -->
     <div class="action-grid">
 
-      <!-- Post Now -->
-      <div class="card post-now-card">
-        <div class="card-title">🚀 Post Now</div>
-        <p class="post-now-desc">Instantly trigger a new video generation and post it to YouTube and Facebook, bypassing the schedule.</p>
-        <div class="post-btn">
-          <button class="btn btn-primary btn-lg btn-full" id="post-now-btn" onclick="triggerNow()">
-            🎬 Generate &amp; Post Now
-          </button>
-          <div class="post-status" id="post-status"></div>
+      <!-- Post Now + Note -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Post Now -->
+        <div class="card post-now-card">
+          <div class="card-title">🚀 Post Now</div>
+          <p class="post-now-desc">Instantly trigger a new video generation and post it to YouTube and Facebook, bypassing the schedule.</p>
+          <div class="post-btn">
+            <button class="btn btn-primary btn-lg btn-full" id="post-now-btn" onclick="triggerNow()">
+              🎬 Generate &amp; Post Now
+            </button>
+            <div class="post-status" id="post-status"></div>
+          </div>
+        </div>
+
+        <!-- How It Works note -->
+        <div class="note-panel">
+          <div class="note-title">📖 How It Works</div>
+          <div class="note-row"><span class="note-icon">🎬</span><div><strong style="color:var(--text)">Generation</strong> — Server creates a video &amp; uploads it to YouTube as <strong>Private</strong> at your set times.</div></div>
+          <div class="note-row"><span class="note-icon">⏳</span><div><strong style="color:var(--text)">Waiting</strong> — Video stays Private. All videos between two publish times queue for the next slot.</div></div>
+          <div class="note-row"><span class="note-icon">📺</span><div><strong style="color:var(--text)">Goes Public</strong> — YouTube releases it at your exact publish time. Your PC can be off!</div></div>
         </div>
       </div>
 
@@ -426,48 +426,22 @@
 
     </div>
 
-    <!-- Publish Schedule Row -->
-    <div class="schedule-row">
-
-      <!-- Publish Times Card -->
-      <div class="card">
-        <div class="card-title" style="color: var(--orange-bright)">📺 YouTube Publish Times</div>
-        <p class="schedule-info">Videos are uploaded as <strong>Private</strong> immediately after generation. Set the times here for when they automatically go <strong>Public</strong> on YouTube.</p>
-
-        <div class="time-tags" id="publish-tags">
-          <span class="time-tag-empty">No publish times set yet.</span>
+    <!-- Publish Times Row (same style as generation) -->
+    <div style="margin-bottom:28px">
+      <div class="card" style="border-color:rgba(249,115,22,0.2); background:rgba(249,115,22,0.02)">
+        <div class="card-title" style="justify-content:space-between">
+          <span style="color:var(--orange-bright)">📺 YouTube Publish Times</span>
+          <span style="font-size:12px;color:var(--text-muted);font-weight:400">Videos stay Private until these times</span>
         </div>
-
-        <div class="add-time-row">
-          <input type="time" id="new-publish-time" value="20:00">
-          <button class="btn btn-orange" onclick="addPublishTime()">+ Add Time</button>
+        <p class="schedule-info">Click the hours below to set when your Private videos automatically go <strong style="color:var(--orange-bright)">Public</strong> on YouTube. Works exactly the same as the generation grid above.</p>
+        <div class="hour-grid" id="publish-hour-grid">
+          <!-- generated by JS -->
         </div>
-
         <div class="schedule-footer">
-          <div class="selected-time-display" id="publish-time-display">Set the exact time videos go Public</div>
+          <div class="selected-time-display" id="publish-time-display">Select publish hours above</div>
           <button class="btn btn-orange" id="save-publish-btn" onclick="savePublishTimes()">💾 Save Publish Times</button>
         </div>
       </div>
-
-      <!-- How it Works Card -->
-      <div class="card">
-        <div class="card-title">📖 How It Works</div>
-        <div style="font-size:13px; color:var(--text-dim); line-height:1.8; display:flex; flex-direction:column; gap:12px;">
-          <div style="display:flex;gap:12px;align-items:flex-start">
-            <span style="font-size:22px">🎬</span>
-            <div><strong style="color:var(--text)">Video Generation</strong><br>At the times you set in the left card, the server wakes up and automatically creates a brand new video and uploads it to YouTube as <strong>Private</strong>.</div>
-          </div>
-          <div style="display:flex;gap:12px;align-items:flex-start">
-            <span style="font-size:22px">⏳</span>
-            <div><strong style="color:var(--text)">Waiting Period</strong><br>The video sits safely as Private on YouTube. Videos generated between <em>any two publish times</em> will all be queued for the next available publish slot.</div>
-          </div>
-          <div style="display:flex;gap:12px;align-items:flex-start">
-            <span style="font-size:22px">📺</span>
-            <div><strong style="color:var(--text)">Goes Public</strong><br>At your exact Publish Time, YouTube automatically makes the video Public — hitting the algorithm at your channel's peak engagement hours.</div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- Activity Feed -->
@@ -586,11 +560,15 @@
         selectedHours = [];
       }
 
-      // Load publish times
-      publishTimes = content.publish_times || [];
+      // Load publish times (as hour numbers)
+      if (content.publish_times && content.publish_times.length > 0) {
+        publishTimes = content.publish_times.map(t => parseInt(t.split(':')[0]));
+      } else {
+        publishTimes = [];
+      }
 
       updateHourGrid();
-      renderPublishTags();
+      updatePublishHourGrid();
       document.getElementById('enabled-toggle').checked = content.enabled !== false;
       document.getElementById('toggle-label').textContent = content.enabled !== false ? 'Enabled' : 'Disabled';
       updateScheduleDisplay();
@@ -609,12 +587,10 @@
     btn.textContent = 'Saving...';
     try {
       const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
-      // Save hours as HH:00 strings for the new format
       const genTimes = selectedHours.map(h => `${String(h).padStart(2,'0')}:00`);
       const newConfig = { ...scheduleConfig, generation_times: genTimes, post_hours_utc: selectedHours };
       await updateFileContent('schedule_config.json', newConfig, sha, `chore: update generation times to ${genTimes.join(', ')} [skip ci]`);
       scheduleConfig = newConfig;
-      updateScheduleDisplay();
       btn.textContent = '✅ Saved!';
       setTimeout(() => { btn.textContent = '💾 Save Generation Times'; btn.disabled = false; }, 2000);
     } catch(e) {
@@ -624,48 +600,48 @@
     }
   }
 
-  // ─── PUBLISH TIMES ─────────────────────────────────────────────────────────
+  // ─── PUBLISH TIMES (hour grid, orange) ───────────────────────────────────
   function buildPublishGrid() {
-    renderPublishTags();
-  }
-
-  function renderPublishTags() {
-    const container = document.getElementById('publish-tags');
-    if (!publishTimes || publishTimes.length === 0) {
-      container.innerHTML = '<span class="time-tag-empty">No publish times set. Add one below.</span>';
-      document.getElementById('publish-time-display').textContent = 'Add times to schedule your public releases';
-      return;
+    const grid = document.getElementById('publish-hour-grid');
+    grid.innerHTML = '';
+    for (let h = 0; h < 24; h++) {
+      const btn = document.createElement('div');
+      btn.className = 'hour-btn' + (publishTimes.includes(h) ? ' selected-publish' : '');
+      btn.id = `pub-hour-${h}`;
+      btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${localLabel(h)}</span>`;
+      btn.onclick = () => selectPublishHour(h);
+      grid.appendChild(btn);
     }
-    const sorted = [...publishTimes].sort();
-    container.innerHTML = sorted.map(t => `
-      <span class="time-tag">
-        🕐 ${t}
-        <button onclick="removePublishTime('${t}')" title="Remove">✕</button>
-      </span>`).join('');
-    document.getElementById('publish-time-display').innerHTML =
-      `${sorted.length} publish time${sorted.length > 1 ? 's' : ''} set: <strong>${sorted.join(', ')}</strong>`;
+    updatePublishDisplay();
   }
 
-  function addPublishTime() {
-    const input = document.getElementById('new-publish-time');
-    const val = input.value.trim(); // HH:MM
-    if (!val) return;
-    // Normalize to HH:MM
-    const [h, m] = val.split(':').map(Number);
-    const normalized = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    if (publishTimes.includes(normalized)) {
-      input.style.borderColor = 'var(--red)';
-      setTimeout(() => input.style.borderColor = '', 800);
-      return;
+  function updatePublishHourGrid() {
+    document.querySelectorAll('[id^="pub-hour-"]').forEach(b => b.classList.remove('selected-publish'));
+    publishTimes.forEach(h => {
+      const el = document.getElementById(`pub-hour-${h}`);
+      if (el) el.classList.add('selected-publish');
+    });
+    updatePublishDisplay();
+  }
+
+  function selectPublishHour(h) {
+    if (publishTimes.includes(h)) {
+      publishTimes = publishTimes.filter(x => x !== h);
+    } else {
+      publishTimes.push(h);
+      publishTimes.sort((a,b) => a-b);
     }
-    publishTimes.push(normalized);
-    publishTimes.sort();
-    renderPublishTags();
+    updatePublishHourGrid();
   }
 
-  function removePublishTime(t) {
-    publishTimes = publishTimes.filter(x => x !== t);
-    renderPublishTags();
+  function updatePublishDisplay() {
+    const el = document.getElementById('publish-time-display');
+    if (!el) return;
+    if (publishTimes.length === 0) {
+      el.innerHTML = 'Select at least one publish hour above';
+    } else {
+      el.innerHTML = `Selected: <strong>${publishTimes.map(h => h+':00').join(', ')}</strong> (${publishTimes.length} time${publishTimes.length>1?'s':''}/day)`;
+    }
   }
 
   async function savePublishTimes() {
@@ -761,11 +737,11 @@
     } else {
       document.getElementById('next-post-time').textContent = `Daily at: ${genTimes.join(' & ')}`;
     }
-    const pts = scheduleConfig.publish_times || [];
-    if (pts.length === 0) {
+    const pubTimeStrs = (scheduleConfig.publish_times || []);
+    if (pubTimeStrs.length === 0) {
       document.getElementById('next-public-time').textContent = `No publish times set`;
     } else {
-      document.getElementById('next-public-time').textContent = `Goes public at: ${pts.join(' & ')}`;
+      document.getElementById('next-public-time').textContent = `Goes public at: ${pubTimeStrs.join(' & ')}`;
     }
   }
 
