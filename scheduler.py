@@ -40,30 +40,35 @@ def get_current_time_in_tz(tz_name):
     return datetime.now(tz)
 
 def start_scheduler():
-    config = load_config()
-    tz_name = config.get("timezone", "Asia/Kathmandu")
-    generation_times = config.get("generation_times", ["08:00", "18:45"])
-    
-    print(f"🕒 Scheduler started. Timezone: {tz_name}")
-    print(f"🎥 Scheduled Generation Times: {generation_times}")
-    print(f"📺 Scheduled Publish Times: {config.get('publish_times', ['12:00', '20:00'])}")
-    
-    # We can't easily use the `schedule` library with strict timezones out-of-the-box 
-    # without doing custom math, so we'll just implement a simple timezone-aware loop.
+    print("🚀 Scheduler thread started. Reading config dynamically every cycle.")
+    last_config_log = None
     
     while True:
+        # Re-read config every loop so dashboard changes apply without redeployment
+        config = load_config()
+        tz_name = config.get("timezone", "Asia/Kathmandu")
+        generation_times = config.get("generation_times", ["08:00", "18:45"])
+        
+        # Log config once whenever it changes
+        config_key = str(generation_times)
+        if config_key != last_config_log:
+            print(f"\n🔄 Config loaded. Timezone: {tz_name}")
+            print(f"   🎬 Generation Times (NPT): {generation_times}")
+            print(f"   📺 Publish Times (NPT): {config.get('publish_times', ['12:00', '20:00'])}")
+            last_config_log = config_key
+        
         now = get_current_time_in_tz(tz_name)
         current_time_str = now.strftime("%H:%M")
         
         # Check if the current minute matches a generation time
-        # We only want to trigger it once during that minute.
+        # Only trigger in the first 10 seconds of that minute to avoid double-trigger
         if current_time_str in generation_times and now.second < 10:
-            print(f"⏰ Time matched ({current_time_str})! Starting generation job...")
+            print(f"\n⏰ Time matched ({current_time_str} {tz_name})! Starting generation job...")
             run_video_generation()
-            # Sleep for 60 seconds to avoid triggering again in the same minute
-            time.sleep(60)
+            # Sleep 65s so we don't trigger again in the same minute
+            time.sleep(65)
+            continue
             
-        # Sleep for a few seconds before checking again
         time.sleep(5)
 
 # --- Render Dummy Web Server ---
