@@ -2,6 +2,7 @@ import os
 import time
 import requests
 import datetime
+import pytz
 from dotenv import load_dotenv
 
 from googleapiclient.discovery import build
@@ -99,21 +100,56 @@ def get_youtube_service():
 
 def get_next_publish_time_iso():
     """
-    Returns an ISO 8601 string for the next available 2:00 PM or 8:00 PM slot in local time.
-    Requires UTC offset for the API (uses astimezone).
+    Returns an ISO 8601 string for the next available slot based on schedule_config.json.
+    Strictly uses the configured timezone.
     """
-    now = datetime.datetime.now().astimezone()
+    # Default config
+    config_tz = "Asia/Kathmandu"
+    publish_times_str = ["12:00", "20:00"]
     
-    # Define slots
-    slot1 = now.replace(hour=14, minute=0, second=0, microsecond=0) # 2:00 PM
-    slot2 = now.replace(hour=20, minute=0, second=0, microsecond=0) # 8:00 PM
+    try:
+        if os.path.exists("schedule_config.json"):
+            with open("schedule_config.json", "r") as f:
+                config = json.load(f)
+                config_tz = config.get("timezone", config_tz)
+                if "publish_times" in config and isinstance(config["publish_times"], list):
+                    if len(config["publish_times"]) > 0:
+                        publish_times_str = config["publish_times"]
+    except Exception as e:
+        print(f"Warning: Could not read schedule_config.json ({e}). Using defaults.")
+        
+    try:
+        tz = pytz.timezone(config_tz)
+    except pytz.UnknownTimeZoneError:
+        print(f"Warning: Unknown timezone {config_tz}. Defaulting to UTC.")
+        tz = pytz.UTC
+        
+    now = datetime.datetime.now(tz)
     
-    if now < slot1:
-        target = slot1
-    elif now < slot2:
-        target = slot2
-    else:
-        target = slot1 + datetime.timedelta(days=1)
+    # Convert string times "HH:MM" to datetime objects for today in configured TZ
+    slots = []
+    for t_str in publish_times_str:
+        try:
+            h, m = map(int, t_str.split(":"))
+            slots.append(now.replace(hour=h, minute=m, second=0, microsecond=0))
+        except ValueError:
+            print(f"Warning: Invalid time format '{t_str}' in schedule_config.json. Expected HH:MM.")
+            
+    if not slots:
+        slots = [now.replace(hour=12, minute=0, second=0, microsecond=0)]
+        
+    slots.sort()
+    
+    # Find the next available slot today
+    target = None
+    for slot in slots:
+        if now < slot:
+            target = slot
+            break
+            
+    # If no slots left today, pick the first slot of tomorrow
+    if target is None:
+        target = slots[0] + datetime.timedelta(days=1)
         
     return target.isoformat()
 

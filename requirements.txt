@@ -9,4 +9,7 @@ pillow
 pydantic
 google-api-python-client
 google-auth-oauthlib
-google-auth-httplib2
+google-auth-httplib2pytz
+schedule
+flask
+gunicorn
