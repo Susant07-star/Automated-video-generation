@@ -769,9 +769,14 @@
           if (test > now) { if (!next || test < next) next = test; }
         }
         if (!next) {
-          next = new Date();
-          next.setUTCDate(next.getUTCDate() + 1);
-          next.setUTCHours(hs[0], 0, 0, 0);
+          let minTimeGen = null;
+          for (let h of hs) {
+            let test = new Date();
+            test.setUTCDate(test.getUTCDate() + 1);
+            test.setUTCHours(h, 0, 0, 0);
+            if (!minTimeGen || test < minTimeGen) minTimeGen = test;
+          }
+          next = minTimeGen;
         }
         const diff = Math.max(0, next - now);
         const hh = Math.floor(diff / 3600000);
@@ -797,10 +802,16 @@
           if (test > nowNPT) { if (!nextPub || test < nextPub) nextPub = test; }
         }
         if (!nextPub) {
-          const [ph, pm] = normalizedPts[0].split(':').map(Number);
-          nextPub = new Date(nowNPT);
-          nextPub.setDate(nextPub.getDate() + 1);
-          nextPub.setHours(ph, pm, 0, 0);
+          // If no times left today, find the earliest time tomorrow
+          let minTime = null;
+          for (let t of normalizedPts) {
+            const [ph, pm] = t.split(':').map(Number);
+            let test = new Date(nowNPT);
+            test.setDate(test.getDate() + 1);
+            test.setHours(ph, pm, 0, 0);
+            if (!minTime || test < minTime) minTime = test;
+          }
+          nextPub = minTime;
         }
         const diffP = Math.max(0, nextPub - nowNPT);
         const hhP = Math.floor(diffP / 3600000);
