@@ -19,7 +19,7 @@ def load_config():
             "generation_times": ["08:00", "18:45"],
             "publish_times": ["12:00", "20:00"]
         }
-    with open(CONFIG_FILE, "r") as f:
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def run_video_generation():

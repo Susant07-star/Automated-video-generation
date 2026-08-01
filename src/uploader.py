@@ -109,7 +109,7 @@ def get_next_publish_time_iso():
     
     try:
         if os.path.exists("schedule_config.json"):
-            with open("schedule_config.json", "r") as f:
+            with open("schedule_config.json", "r", encoding="utf-8") as f:
                 config = json.load(f)
                 config_tz = config.get("timezone", config_tz)
                 if "publish_times" in config and isinstance(config["publish_times"], list):
