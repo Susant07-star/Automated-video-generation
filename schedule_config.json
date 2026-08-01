@@ -1,5 +1,15 @@
 {
   "timezone": "Asia/Kathmandu",
-  "generation_times": ["08:00", "18:45"],
-  "publish_times": ["12:00", "20:00"]
+  "generation_times": [
+    "08:00",
+    "18:00"
+  ],
+  "publish_times": [
+    "12:00",
+    "20:00"
+  ],
+  "post_hours_utc": [
+    8,
+    18
+  ]
 }
