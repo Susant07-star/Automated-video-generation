@@ -1,12 +1,14 @@
 {
   "timezone": "Asia/Kathmandu",
   "generation_times": [
+    "00:00",
     "13:00"
   ],
   "publish_times": [
     14
   ],
   "post_hours_utc": [
+    0,
     13
   ]
 }
