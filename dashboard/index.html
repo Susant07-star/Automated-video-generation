@@ -415,11 +415,15 @@
             <span class="toggle-label" id="toggle-label">Enabled</span>
           </div>
         </div>
-        <p class="schedule-info">Set exact Nepal Time (NPT) for automatic daily video generation. Add as many times as you want.</p>
+        <p class="schedule-info">Click the hours below to set NPT top-of-the-hour times, or add custom exact minutes below.</p>
+        
+        <!-- Re-added Grid -->
+        <div class="hour-grid" id="hour-grid" style="margin-bottom:14px"></div>
+
         <div id="gen-time-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input type="time" id="gen-time-input" value="19:45" style="background:#1a1a2e;border:1px solid var(--border-strong);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
-          <button class="btn btn-ghost" onclick="addGenTime()" style="padding:8px 16px">+ Add Time</button>
+          <button class="btn btn-ghost" onclick="addGenTime()" style="padding:8px 16px">+ Add Custom Time</button>
         </div>
         <div class="schedule-footer" style="margin-top:14px">
           <div class="selected-time-display" id="selected-time-display">Times shown above (NPT)</div>
@@ -436,11 +440,15 @@
           <span style="color:var(--orange-bright)">📺 YouTube Publish Times</span>
           <span style="font-size:12px;color:var(--text-muted);font-weight:400">Videos stay Private until these times</span>
         </div>
-        <p class="schedule-info">Set exact Nepal Time (NPT) for when your Private videos automatically go <strong style="color:var(--orange-bright)">Public</strong>. Add as many as you like.</p>
+        <p class="schedule-info">Click the hours below to set when your Private videos automatically go <strong style="color:var(--orange-bright)">Public</strong>, or add exact minutes below.</p>
+        
+        <!-- Re-added Grid -->
+        <div class="hour-grid" id="publish-hour-grid" style="margin-bottom:14px"></div>
+
         <div id="pub-time-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input type="time" id="pub-time-input" value="20:45" style="background:#1a1a2e;border:1px solid rgba(249,115,22,0.4);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
-          <button class="btn btn-ghost" onclick="addPubTime()" style="padding:8px 16px;border-color:var(--orange)">+ Add Time</button>
+          <button class="btn btn-ghost" onclick="addPubTime()" style="padding:8px 16px;border-color:var(--orange)">+ Add Custom Time</button>
         </div>
         <div class="schedule-footer" style="margin-top:14px">
           <div class="selected-time-display" id="publish-time-display">Times shown above (NPT)</div>
@@ -543,6 +551,8 @@
 
   // ─── INIT ─────────────────────────────────────────────────────────────────
   async function init() {
+    buildHourGrid();
+    buildPublishGrid();
     await Promise.allSettled([ loadSchedule(), loadRuns() ]);
     setInterval(() => { if(document.visibilityState === 'visible') loadRuns(); }, 30000);
   }
@@ -565,6 +575,8 @@
       genTimesArr = normalize(content.generation_times || content.post_hours_utc || []);
       pubTimesArr = normalize(content.publish_times || []);
 
+      updateHourGrid();
+      updatePublishHourGrid();
       renderGenTags();
       renderPubTags();
       document.getElementById('enabled-toggle').checked = content.enabled !== false;
@@ -603,17 +615,17 @@
     const val = document.getElementById('gen-time-input').value;
     if (!val) return;
     if (!genTimesArr.includes(val)) { genTimesArr.push(val); genTimesArr.sort(); }
-    renderGenTags();
+    renderGenTags(); updateHourGrid();
   }
-  function removeGenTime(t) { genTimesArr = genTimesArr.filter(x => x !== t); renderGenTags(); }
+  function removeGenTime(t) { genTimesArr = genTimesArr.filter(x => x !== t); renderGenTags(); updateHourGrid(); }
 
   function addPubTime() {
     const val = document.getElementById('pub-time-input').value;
     if (!val) return;
     if (!pubTimesArr.includes(val)) { pubTimesArr.push(val); pubTimesArr.sort(); }
-    renderPubTags();
+    renderPubTags(); updatePublishHourGrid();
   }
-  function removePubTime(t) { pubTimesArr = pubTimesArr.filter(x => x !== t); renderPubTags(); }
+  function removePubTime(t) { pubTimesArr = pubTimesArr.filter(x => x !== t); renderPubTags(); updatePublishHourGrid(); }
 
   async function saveSchedule() {
     const btn = document.getElementById('save-schedule-btn');
@@ -659,6 +671,89 @@
       const { sha } = await getFileContent('schedule_config.json');
       await updateFileContent('schedule_config.json', { ...scheduleConfig, enabled }, sha, `chore: ${enabled ? 'enable' : 'disable'} auto-posting [skip ci]`);
     } catch(e) { console.error('Toggle save failed:', e); }
+  }
+
+  // ─── RE-ADDED HOUR GRIDS ──────────────────────────────────────────────────
+  function localLabel(utcH) {
+    const d = new Date(); d.setUTCHours(utcH, 0, 0, 0);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
+
+  function nptLabel(h) {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    return `${h % 12 || 12}:00 ${ampm}`;
+  }
+
+  function buildHourGrid() {
+    const grid = document.getElementById('hour-grid');
+    grid.innerHTML = '';
+    for (let h = 0; h < 24; h++) {
+      const btn = document.createElement('div');
+      btn.className = 'hour-btn';
+      btn.id = `hour-${h}`;
+      btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${nptLabel(h)}</span>`;
+      btn.onclick = () => selectHour(h);
+      grid.appendChild(btn);
+    }
+  }
+
+  function updateHourGrid() {
+    document.querySelectorAll('.hour-btn').forEach(b => b.classList.remove('selected'));
+    genTimesArr.forEach(t => {
+      const [gh, gm] = t.split(':').map(Number);
+      if (gm === 0) {
+        const el = document.getElementById(`hour-${gh}`);
+        if (el) el.classList.add('selected');
+      }
+    });
+  }
+
+  function selectHour(h) {
+    const tStr = `${String(h).padStart(2,'0')}:00`;
+    if (genTimesArr.includes(tStr)) {
+      genTimesArr = genTimesArr.filter(x => x !== tStr);
+    } else {
+      genTimesArr.push(tStr);
+      genTimesArr.sort();
+    }
+    updateHourGrid();
+    renderGenTags();
+  }
+
+  function buildPublishGrid() {
+    const grid = document.getElementById('publish-hour-grid');
+    grid.innerHTML = '';
+    for (let h = 0; h < 24; h++) {
+      const btn = document.createElement('div');
+      btn.className = 'hour-btn';
+      btn.id = `pub-hour-${h}`;
+      btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${nptLabel(h)}</span>`;
+      btn.onclick = () => selectPublishHour(h);
+      grid.appendChild(btn);
+    }
+  }
+
+  function updatePublishHourGrid() {
+    document.querySelectorAll('[id^="pub-hour-"]').forEach(b => b.classList.remove('selected-publish'));
+    pubTimesArr.forEach(t => {
+      const [ph, pm] = t.split(':').map(Number);
+      if (pm === 0) {
+        const el = document.getElementById(`pub-hour-${ph}`);
+        if (el) el.classList.add('selected-publish');
+      }
+    });
+  }
+
+  function selectPublishHour(h) {
+    const tStr = `${String(h).padStart(2,'0')}:00`;
+    if (pubTimesArr.includes(tStr)) {
+      pubTimesArr = pubTimesArr.filter(x => x !== tStr);
+    } else {
+      pubTimesArr.push(tStr);
+      pubTimesArr.sort();
+    }
+    updatePublishHourGrid();
+    renderPubTags();
   }
 
   // ─── TIME UTILS ───────────────────────────────────────────────────────────
