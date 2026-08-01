@@ -554,17 +554,17 @@
 
       // Load generation times (support legacy post_hours_utc)
       if (content.generation_times && content.generation_times.length > 0) {
-        // New format: HH:MM strings
-        selectedHours = content.generation_times.map(t => parseInt(t.split(':')[0]));
+        // New format: HH:MM strings or numbers
+        selectedHours = content.generation_times.map(t => typeof t === 'number' ? t : parseInt(t.split(':')[0]));
       } else if (content.post_hours_utc) {
         selectedHours = content.post_hours_utc;
       } else {
         selectedHours = [];
       }
 
-      // Load publish times (as hour numbers)
+      // Load publish times (robust to strings or numbers)
       if (content.publish_times && content.publish_times.length > 0) {
-        publishTimes = content.publish_times.map(t => parseInt(t.split(':')[0]));
+        publishTimes = content.publish_times.map(t => typeof t === 'number' ? t : parseInt(t.split(':')[0]));
       } else {
         publishTimes = [];
       }
