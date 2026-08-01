@@ -379,7 +379,7 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
 
 from moviepy.editor import concatenate_videoclips
 
-def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None):
+def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None, fomo_overlay=None):
     print("Assembling cinematic multi-clip video...")
     
     try:
@@ -438,15 +438,21 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             else:
                 clip = clip.subclip(0, seg_dur)
                 
-            # The Visual Hook Cut: Apply a quick cinematic zoom to the FIRST clip only
+            # Idea: Ken Burns effect on the VERY FIRST clip
             if i == 0:
-                print("   Applying visual hook (cinematic zoom) to the first clip...")
-                # Dynamically resize the frame over time, then crop back to TARGET_W x TARGET_H
-                clip = clip.resize(lambda t: 1 + 0.15 * (t / max(0.1, clip.duration)))
-                # Calculate center crop to keep it 1080x1920 (TARGET_W = 1080)
-                # Since clip.w/h change dynamically, we must use fx with a custom crop function or just let MoviePy's concatenate compose handle it
-                # Actually, `concatenate_videoclips(..., method="compose")` automatically centers and crops if we just pass clips that are larger than the canvas.
-                # So just resizing larger is perfect.
+                print("   Applying Ken Burns zoom effect to the opening clip...")
+                # We will handle thumbnail generation via AI later in the process
+                def zoom(t):
+                    # 1.0 -> 1.15 over the duration
+                    factor = 1.0 + 0.15 * (t / seg_dur)
+                    return factor
+                
+                # We need to explicitly size it back to TARGET_W/TARGET_H after scaling
+                # because MoviePy's resize with a function changes the clip dimensions
+                # We then crop from the center
+                clip = (clip.resize(zoom)
+                           .crop(x_center=TARGET_W/2, y_center=TARGET_H/2, 
+                                 width=TARGET_W, height=TARGET_H))
                 
             processed_clips.append(clip)
         except Exception as e:
@@ -601,6 +607,33 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         layers.append(cta_clip)
     except Exception as e:
         print(f"Error creating CTA overlay: {e}")
+            
+    # Viral FOMO Overlay (Top of screen for entire video)
+    if fomo_overlay:
+        try:
+            fomo_img = Image.new('RGBA', (TARGET_W, TARGET_H), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(fomo_img)
+            font = get_font(75)
+            
+            tmp_img = Image.new('RGBA', (1, 1))
+            tmp_draw = ImageDraw.Draw(tmp_img)
+            bbox = tmp_draw.textbbox((0, 0), fomo_overlay, font=font)
+            text_w = bbox[2] - bbox[0]
+            
+            x = (TARGET_W - text_w) / 2
+            y = int(TARGET_H * 0.15) # Top 15% of the screen
+            
+            # Yellow text with strong stroke
+            stroke_width = 4
+            for dx in range(-stroke_width, stroke_width + 1):
+                for dy in range(-stroke_width, stroke_width + 1):
+                    draw.text((x + dx, y + dy), fomo_overlay, font=font, fill=(0, 0, 0, 255))
+            draw.text((x, y), fomo_overlay, font=font, fill=(255, 230, 0, 255))
+            
+            fomo_clip = ImageClip(np.array(fomo_img)).set_duration(target_duration).set_position('center')
+            layers.append(fomo_clip)
+        except Exception as e:
+            print(f"Error creating FOMO overlay: {e}")
 
 
     # Composite everything

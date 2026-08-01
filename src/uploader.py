@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import datetime
 from dotenv import load_dotenv
 
 from googleapiclient.discovery import build
@@ -96,6 +97,26 @@ def get_youtube_service():
             token.write(creds.to_json())
     return build('youtube', 'v3', credentials=creds)
 
+def get_next_publish_time_iso():
+    """
+    Returns an ISO 8601 string for the next available 2:00 PM or 8:00 PM slot in local time.
+    Requires UTC offset for the API (uses astimezone).
+    """
+    now = datetime.datetime.now().astimezone()
+    
+    # Define slots
+    slot1 = now.replace(hour=14, minute=0, second=0, microsecond=0) # 2:00 PM
+    slot2 = now.replace(hour=20, minute=0, second=0, microsecond=0) # 8:00 PM
+    
+    if now < slot1:
+        target = slot1
+    elif now < slot2:
+        target = slot2
+    else:
+        target = slot1 + datetime.timedelta(days=1)
+        
+    return target.isoformat()
+
 def upload_to_youtube(video_path: str, title: str, description: str, tags: list):
     youtube = get_youtube_service()
     if not youtube:
@@ -106,6 +127,9 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
     # Ensure title is < 100 chars
     title = title[:95] + "..." if len(title) > 95 else title
     
+    publish_at_iso = get_next_publish_time_iso()
+    print(f"   Scheduling publishAt for: {publish_at_iso}")
+    
     body = {
         "snippet": {
             "title": title,
@@ -114,7 +138,8 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
             "categoryId": "27"  # Education
         },
         "status": {
-            "privacyStatus": "public",
+            "privacyStatus": "private",  # Must be private to use publishAt
+            "publishAt": publish_at_iso,
             "selfDeclaredMadeForKids": False
         }
     }
@@ -126,8 +151,10 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
     )
     
     response = insert_request.execute()
-    print(f"YouTube upload successful! Video ID: {response.get('id')}")
+    video_id = response.get('id')
+    print(f"YouTube upload successful! Video ID: {video_id}")
     return response
+
 
 def upload_to_temporary_host(filepath: str):
     print("Uploading to temporary host (catbox.moe) for Instagram Graph API...")

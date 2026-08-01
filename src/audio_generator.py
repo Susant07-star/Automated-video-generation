@@ -11,11 +11,10 @@ load_dotenv()
 
 # ============================================================
 # BRAND VOICE — DO NOT CHANGE
-# "Adam" by ElevenLabs: deep, authoritative, human, motivational.
-# This is the permanent voice identity of the channel.
-# Voice ID: pNInz6obpgDQGcFmaJgB
+# This is the custom iconic voice of the channel.
+# Voice ID: qeVMjfAnyqoR0DeCeeXL
 # ============================================================
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "qeVMjfAnyqoR0DeCeeXL")
 
 # edge-tts fallback voice
 FALLBACK_VOICE = "en-US-GuyNeural"
@@ -57,14 +56,88 @@ def _extract_word_timestamps(alignment: dict) -> list:
         
     return words
 
+VOICE_MAP_FILE = "elevenlabs_voice_map.json"
 
-def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str) -> bool:
+def ensure_iconic_voice_exists(api_key: str) -> str:
+    """
+    Checks if the API key already has the 'NextGenThoughts voice' mapped.
+    If not, checks ElevenLabs if it exists. If not, clones it using reference_voice.mp3.
+    Returns the voice_id.
+    """
+    key_last4 = api_key[-4:]
+    
+    # 1. Check local map
+    if os.path.exists(VOICE_MAP_FILE):
+        with open(VOICE_MAP_FILE, "r") as f:
+            voice_map = json.load(f)
+    else:
+        voice_map = {}
+        
+    if key_last4 in voice_map:
+        return voice_map[key_last4]
+        
+    # 2. Check ElevenLabs account for existing voice
+    headers = {"xi-api-key": api_key}
+    print(f"   🔍 Checking ElevenLabs account (key ...{key_last4}) for 'NextGenThoughts voice'...")
+    try:
+        resp = requests.get("https://api.elevenlabs.io/v1/voices", headers=headers, timeout=15)
+        resp.raise_for_status()
+        voices = resp.json().get("voices", [])
+        for v in voices:
+            if v.get("name") == "NextGenThoughts voice" or v.get("voice_id") == ELEVENLABS_VOICE_ID:
+                vid = v.get("voice_id")
+                voice_map[key_last4] = vid
+                with open(VOICE_MAP_FILE, "w") as f:
+                    json.dump(voice_map, f, indent=2)
+                print(f"   ✅ Found existing voice: {vid}")
+                return vid
+    except Exception as e:
+        print(f"   ⚠️ Failed to get voices for key {key_last4}: {e}")
+        
+    # 3. Clone the voice
+    print(f"   🚀 'NextGenThoughts voice' not found on key ...{key_last4}. Cloning from reference_voice.mp3...")
+    if not os.path.exists("reference_voice.mp3"):
+        print("   ❌ reference_voice.mp3 missing! Cannot clone voice. Falling back to default.")
+        return ELEVENLABS_VOICE_ID
+        
+    url = "https://api.elevenlabs.io/v1/voices/add"
+    headers = {
+        "xi-api-key": api_key,
+        "Accept": "application/json"
+    }
+    data = {
+        "name": "NextGenThoughts voice",
+        "description": "Auto-cloned iconic channel voice"
+    }
+    
+    try:
+        with open("reference_voice.mp3", "rb") as f:
+            files = [
+                ("files", ("reference_voice.mp3", f, "audio/mpeg"))
+            ]
+            resp = requests.post(url, headers=headers, data=data, files=files, timeout=60)
+            resp.raise_for_status()
+            vid = resp.json().get("voice_id")
+            
+            voice_map[key_last4] = vid
+            with open(VOICE_MAP_FILE, "w") as f:
+                json.dump(voice_map, f, indent=2)
+                
+            print(f"   ✅ Voice successfully cloned! New Voice ID: {vid}")
+            return vid
+    except Exception as e:
+        print(f"   ❌ Failed to clone voice for key {key_last4}: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"   Details: {e.response.text}")
+        return ELEVENLABS_VOICE_ID
+
+def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str, voice_id: str) -> bool:
     """
     Generates voiceover using ElevenLabs API with timestamps.
     Saves audio to `output_filename` and timestamps to `output_filename.json`.
     """
     try:
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}/with-timestamps"
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps"
         
         headers = {
             "Content-Type": "application/json",
@@ -148,8 +221,12 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3") -> str:
     # Try ElevenLabs first
     while elevenlabs_rotator.has_keys():
         current_key = elevenlabs_rotator.get_random_key()
-        print(f"Generating voiceover with ElevenLabs (Adam, with timestamps)...")
-        success = _generate_with_elevenlabs(text, output_filename, current_key)
+        
+        # Ensure voice exists and get its ID
+        voice_id = ensure_iconic_voice_exists(current_key)
+        
+        print(f"Generating voiceover with ElevenLabs (Voice: {voice_id}, with timestamps)...")
+        success = _generate_with_elevenlabs(text, output_filename, current_key, voice_id)
         if success:
             return output_filename
         else:

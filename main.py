@@ -100,6 +100,8 @@ def main():
             generic_caption = content.get("caption", "Keep pushing forward!")
             generic_hashtags = content.get("hashtags", "#motivation")
             
+            fomo_overlay = content.get("fomo_overlay", "Wait for the end...")
+            
             yt_title = content.get("yt_title", generic_caption.split('\n')[0])
             yt_description = content.get("yt_description", f"{generic_caption}\n\n{generic_hashtags}")
             yt_tags = content.get("yt_tags", [t.strip('#') for t in generic_hashtags.split()])
@@ -117,6 +119,7 @@ def main():
             state.update({
                 "content_done": True,
                 "quote": quote, "video_kws": video_kws, "music_kw": music_kw,
+                "fomo_overlay": fomo_overlay,
                 "yt_title": yt_title, "yt_description": yt_description, "yt_tags": yt_tags,
                 "fb_caption": fb_caption, "fb_hashtags": fb_hashtags,
                 "ig_caption": ig_caption, "ig_hashtags": ig_hashtags
@@ -167,7 +170,10 @@ def main():
             print(f"\n▶️  [Step 5/5] Assembling cinematic multi-clip video...")
             print(f"   This step cannot be partially resumed — rendering from frame 0.")
             print(f"   (All media is already local, so this is the only long step)\n")
-            assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path, impact_path)
+            
+            fomo_overlay = state.get("fomo_overlay", "Wait for the end...")
+            assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path, impact_path, fomo_overlay=fomo_overlay)
+            
             state["assembly_done"] = True
             save_checkpoint(state)
             print("   ✅ Assembly saved to checkpoint.")
