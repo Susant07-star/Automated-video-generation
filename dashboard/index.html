@@ -175,6 +175,11 @@
       transition: border-color 0.2s, background 0.2s;
     }
     .stat-card:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+    .stat-card.orange-card {
+      border-color: rgba(249,115,22,0.2);
+      background: rgba(249,115,22,0.03);
+    }
+    .stat-card.orange-card:hover { border-color: rgba(249,115,22,0.4); background: rgba(249,115,22,0.06); }
 
     .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
     .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
@@ -369,14 +374,14 @@
     <!-- Stat Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">⏱ Next Post</div>
+        <div class="stat-label">🎬 Next Generation</div>
         <div class="stat-value gradient-text" id="countdown">--:--</div>
         <div class="stat-sub" id="next-post-time">Loading schedule...</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">📅 Scheduled At</div>
-        <div class="stat-value" id="scheduled-display" style="font-size:20px;padding-top:4px">--:-- UTC</div>
-        <div class="stat-sub" id="npt-display">-- NPT</div>
+      <div class="stat-card orange-card">
+        <div class="stat-label" style="color:var(--orange-bright)">📺 Next Public Time</div>
+        <div class="stat-value" id="publish-countdown" style="background:linear-gradient(135deg,#fff,var(--orange-bright));-webkit-background-clip:text;-webkit-text-fill-color:transparent">--:--</div>
+        <div class="stat-sub" id="next-public-time">Loading publish times...</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">✅ Last Run</div>
@@ -752,13 +757,15 @@
   function updateScheduleDisplay() {
     const genTimes = scheduleConfig.generation_times || (scheduleConfig.post_hours_utc || []).map(h => `${String(h).padStart(2,'0')}:00`);
     if (genTimes.length === 0) {
-      document.getElementById('scheduled-display').textContent = `None`;
-      document.getElementById('npt-display').textContent = `No times set`;
-      document.getElementById('next-post-time').textContent = `Schedule paused`;
+      document.getElementById('next-post-time').textContent = `No generation times set`;
     } else {
-      document.getElementById('scheduled-display').textContent = genTimes.join(', ');
-      document.getElementById('npt-display').textContent = `${genTimes.length} generation${genTimes.length>1?'s':''}/day`;
-      document.getElementById('next-post-time').textContent = `Videos generated, then queued for publish`;
+      document.getElementById('next-post-time').textContent = `Daily at: ${genTimes.join(' & ')}`;
+    }
+    const pts = scheduleConfig.publish_times || [];
+    if (pts.length === 0) {
+      document.getElementById('next-public-time').textContent = `No publish times set`;
+    } else {
+      document.getElementById('next-public-time').textContent = `Goes public at: ${pts.join(' & ')}`;
     }
   }
 
@@ -766,31 +773,58 @@
     if (countdownInterval) clearInterval(countdownInterval);
     countdownInterval = setInterval(() => {
       const now = new Date();
+
+      // --- Generation countdown (UTC hours) ---
       const hs = scheduleConfig.post_hours_utc || [];
       if (hs.length === 0) {
-         document.getElementById('countdown').textContent = `--:--`;
-         return;
-      }
-      
-      let next = null;
-      for (let h of hs) {
-        let test = new Date();
-        test.setUTCHours(h, 0, 0, 0);
-        if (test > now) {
-          if (!next || test < next) next = test;
+        document.getElementById('countdown').textContent = `--:--`;
+      } else {
+        let next = null;
+        for (let h of hs) {
+          let test = new Date();
+          test.setUTCHours(h, 0, 0, 0);
+          if (test > now) { if (!next || test < next) next = test; }
         }
+        if (!next) {
+          next = new Date();
+          next.setUTCDate(next.getUTCDate() + 1);
+          next.setUTCHours(hs[0], 0, 0, 0);
+        }
+        const diff = Math.max(0, next - now);
+        const hh = Math.floor(diff / 3600000);
+        const mm = Math.floor((diff % 3600000) / 60000);
+        const ss = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdown').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
       }
-      if (!next) {
-        next = new Date();
-        next.setUTCDate(next.getUTCDate() + 1);
-        next.setUTCHours(hs[0], 0, 0, 0);
+
+      // --- Publish (public) countdown (HH:MM local Nepal time) ---
+      const pts = scheduleConfig.publish_times || [];
+      if (pts.length === 0) {
+        document.getElementById('publish-countdown').textContent = `--:--`;
+      } else {
+        // Nepal is UTC+5:45 = 345 minutes ahead
+        const NPT_OFFSET_MS = 345 * 60 * 1000;
+        const nowNPT = new Date(now.getTime() + NPT_OFFSET_MS - now.getTimezoneOffset() * 60000);
+        let nextPub = null;
+        for (let t of pts) {
+          const [ph, pm] = t.split(':').map(Number);
+          let test = new Date(nowNPT);
+          test.setHours(ph, pm, 0, 0);
+          if (test > nowNPT) { if (!nextPub || test < nextPub) nextPub = test; }
+        }
+        if (!nextPub) {
+          const [ph, pm] = pts[0].split(':').map(Number);
+          nextPub = new Date(nowNPT);
+          nextPub.setDate(nextPub.getDate() + 1);
+          nextPub.setHours(ph, pm, 0, 0);
+        }
+        const diffP = Math.max(0, nextPub - nowNPT);
+        const hhP = Math.floor(diffP / 3600000);
+        const mmP = Math.floor((diffP % 3600000) / 60000);
+        const ssP = Math.floor((diffP % 60000) / 1000);
+        document.getElementById('publish-countdown').textContent = `${String(hhP).padStart(2,'0')}:${String(mmP).padStart(2,'0')}:${String(ssP).padStart(2,'0')}`;
       }
-      
-      const diff = Math.max(0, next - now);
-      const hh = Math.floor(diff / 3600000);
-      const mm = Math.floor((diff % 3600000) / 60000);
-      const ss = Math.floor((diff % 60000) / 1000);
-      document.getElementById('countdown').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
     }, 1000);
   }
 
