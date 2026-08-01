@@ -1,6 +1,8 @@
 name: Auto-Post Daily Reel
 
 on:
+  schedule:
+    - cron: '*/15 * * * *'
   # Manual trigger from the GitHub Actions tab / Netlify dashboard
   workflow_dispatch:
     inputs:
@@ -25,10 +27,26 @@ jobs:
     - name: Check Schedule
       id: schedule_check
       run: |
-        CURRENT_HOUR=$(date -u +%-H)
-        IN_SCHEDULE=$(python3 -c "import json; c=json.load(open('schedule_config.json')); print('yes' if int($CURRENT_HOUR) in c.get('post_hours_utc', []) else 'no')")
-        ENABLED=$(python3 -c "import json; c=json.load(open('schedule_config.json')); print(c.get('enabled', True))")
-        echo "Current UTC hour: $CURRENT_HOUR | In schedule: $IN_SCHEDULE | Enabled: $ENABLED"
+        cat << 'EOF' > check_sched.py
+        import json, datetime
+        import zoneinfo
+        config = json.load(open('schedule_config.json'))
+        enabled = config.get('enabled', True)
+        tz = zoneinfo.ZoneInfo(config.get('timezone', 'UTC'))
+        now = datetime.datetime.now(tz)
+        in_schedule = 'no'
+        for t_str in config.get('generation_times', []):
+            h, m = map(int, t_str.split(':'))
+            sched_time = now.replace(hour=h, minute=m, second=0, microsecond=0)
+            if 0 <= (now - sched_time).total_seconds() < 15 * 60:
+                in_schedule = 'yes'
+                break
+        print(f"IN_SCHEDULE={in_schedule}")
+        print(f"ENABLED={enabled}")
+        EOF
+        python3 check_sched.py > sched_out.txt
+        source sched_out.txt
+        echo "In schedule: $IN_SCHEDULE | Enabled: $ENABLED"
         FORCE="${{ github.event.inputs.force_post }}"
         if [ "$FORCE" = "yes" ] || ([ "$IN_SCHEDULE" = "yes" ] && [ "$ENABLED" = "True" ]); then
           echo "should_post=true" >> $GITHUB_OUTPUT
