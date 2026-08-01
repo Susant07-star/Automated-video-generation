@@ -785,9 +785,9 @@
       if (pts.length === 0) {
         document.getElementById('publish-countdown').textContent = `--:--`;
       } else {
-        // Nepal is UTC+5:45 = 345 minutes ahead
-        const NPT_OFFSET_MS = 345 * 60 * 1000;
-        const nowNPT = new Date(now.getTime() + NPT_OFFSET_MS - now.getTimezoneOffset() * 60000);
+        // Calculate accurate Nepal Time (NPT) regardless of user's browser timezone
+        const nptString = now.toLocaleString("en-US", { timeZone: "Asia/Kathmandu" });
+        const nowNPT = new Date(nptString);
         let nextPub = null;
         const normalizedPts = pts.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
         for (let t of normalizedPts) {
