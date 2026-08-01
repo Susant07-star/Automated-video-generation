@@ -609,32 +609,7 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
     except Exception as e:
         print(f"Error creating CTA overlay: {e}")
             
-    # Viral FOMO Overlay (Top of screen for entire video)
-    if fomo_overlay:
-        try:
-            fomo_img = Image.new('RGBA', (TARGET_W, TARGET_H), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(fomo_img)
-            font = get_font(75)
-            
-            tmp_img = Image.new('RGBA', (1, 1))
-            tmp_draw = ImageDraw.Draw(tmp_img)
-            bbox = tmp_draw.textbbox((0, 0), fomo_overlay, font=font)
-            text_w = bbox[2] - bbox[0]
-            
-            x = (TARGET_W - text_w) / 2
-            y = int(TARGET_H * 0.15) # Top 15% of the screen
-            
-            # Yellow text with strong stroke
-            stroke_width = 4
-            for dx in range(-stroke_width, stroke_width + 1):
-                for dy in range(-stroke_width, stroke_width + 1):
-                    draw.text((x + dx, y + dy), fomo_overlay, font=font, fill=(0, 0, 0, 255))
-            draw.text((x, y), fomo_overlay, font=font, fill=(255, 230, 0, 255))
-            
-            fomo_clip = ImageClip(np.array(fomo_img)).set_duration(target_duration).set_position('center')
-            layers.append(fomo_clip)
-        except Exception as e:
-            print(f"Error creating FOMO overlay: {e}")
+    # Viral FOMO Overlay removed per user request
 
 
     # Composite everything
