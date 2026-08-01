@@ -524,7 +524,8 @@
   }
 
   async function getFileContent(filePath) {
-    const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/${filePath}`);
+    // Add a timestamp cache-buster so GitHub API doesn't return a stale cached version on page refresh
+    const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/${filePath}?t=${Date.now()}`);
     return { content: JSON.parse(atob(data.content.replace(/\n/g,''))), sha: data.sha };
   }
 
