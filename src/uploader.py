@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import requests
 import datetime
@@ -141,16 +142,20 @@ def get_next_publish_time_iso():
     slots.sort()
     
     # Find the next available slot today
+    # Add a 5-minute buffer: never schedule publishAt within 5 min of now
+    # (YouTube API rejects publishAt that is in the past or < 5 min in future)
+    buffer = now + datetime.timedelta(minutes=5)
     target = None
     for slot in slots:
-        if now < slot:
+        if slot > buffer:
             target = slot
             break
             
-    # If no slots left today, pick the first slot of tomorrow
+    # If no slots left today (or too soon), pick the first slot of tomorrow
     if target is None:
         target = slots[0] + datetime.timedelta(days=1)
         
+    print(f"   🔒 Video will be PRIVATE until: {target.strftime('%Y-%m-%d %H:%M %Z')}")
     return target.isoformat()
 
 def upload_to_youtube(video_path: str, title: str, description: str, tags: list):
@@ -174,11 +179,13 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
             "categoryId": "27"  # Education
         },
         "status": {
-            "privacyStatus": "private",  # Must be private to use publishAt
+            "privacyStatus": "private",  # Stays PRIVATE until publishAt time
             "publishAt": publish_at_iso,
             "selfDeclaredMadeForKids": False
         }
     }
+    
+    print(f"   📋 Upload status: PRIVATE with publishAt = {publish_at_iso}")
     
     insert_request = youtube.videos().insert(
         part=",".join(body.keys()),
@@ -189,6 +196,7 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
     response = insert_request.execute()
     video_id = response.get('id')
     print(f"YouTube upload successful! Video ID: {video_id}")
+    print(f"   ✅ Video is PRIVATE. Will go PUBLIC automatically at: {publish_at_iso}")
     return response
 
 
