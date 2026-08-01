@@ -13,6 +13,8 @@ class ContentResponse(BaseModel):
     music_search_keyword: str
     caption: str
     hashtags: str
+    fomo_overlay: str
+
 
 
 def _is_topic_duplicate(new_topic: str, used_topics_text: str) -> bool:
@@ -79,8 +81,9 @@ def generate_content() -> dict:
         "You do NOT summarize the book. You TELL A STORY. You make the viewer feel something.\n\n"
 
         "SCRIPT STRUCTURE (follow this exact emotional arc):\n"
-        "1. THE HOOK — A vivid, relatable real-life scenario (NOT a question like 'Have you ever...'). "
-        "Drop the viewer into a moment. Make it feel personal. Make them feel seen. 2-3 sentences MAX.\n"
+        "1. THE HOOK (0-3 Seconds) — A highly disruptive, scroll-stopping pattern interrupt. "
+        "It must grab them instantly. Do NOT use repetitive hooks. Every video must start differently. "
+        "Make it feel urgent, forbidden, or highly relatable. Make them feel seen. 1-2 punchy sentences MAX.\n"
 
         "2. THE REVEAL — Name the psychological concept or law immediately after the hook. "
         "Frame it like a secret: 'That tactic has a name. Robert Greene calls it Law 3: Conceal Your Intentions. "
@@ -105,7 +108,8 @@ def generate_content() -> dict:
 
         "PLATFORM SEO METADATA (generate after the script):\n"
         "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, urgent or forbidden feeling). "
-        "A rich, multi-paragraph YouTube description (minimum 150 words), ending with hashtags. "
+        "A rich, multi-paragraph YouTube description (minimum 150 words). IMPORTANT: You MUST include highly searched phrases "
+        "in both English and Romanized Hindi (e.g., 'dark psychology tricks in hindi', 'kaise kare', 'manipulation secrets') organically in the description, ending with hashtags. "
         "A list of 12-15 highly viral, trending tags.\n"
         "   - FACEBOOK REELS: A warm, conversational caption ending with a thought-provoking question. Exactly 7 viral hashtags.\n"
         "   - INSTAGRAM REELS: A short, minimalistic, aesthetic caption. Max 2 lines. 2-3 emojis. 6-8 niche hashtags.\n"
@@ -120,9 +124,11 @@ def generate_content() -> dict:
         "OUTPUT FORMAT: Single valid JSON object. NO markdown wrapping.\n"
         "The 'topic_name' must be: [Book Title] — [Specific Law/Concept Name]. "
         "Example: '48 Laws of Power — Law 3: Conceal Your Intentions'\n"
+        "The 'fomo_overlay' is a short, clickbaity half-caption that stays on screen (e.g. 'The real reason they ignore you...'). Max 7 words.\n"
         "{\n"
         "  \"topic_name\": \"...\",\n"
         "  \"quote\": \"the full spoken script\",\n"
+        "  \"fomo_overlay\": \"...\",\n"
         "  \"video_search_keywords\": [\"keyword1\", \"keyword2\"],\n"
         "  \"music_search_keyword\": \"...\",\n"
         "  \"yt_title\": \"...\",\n"
