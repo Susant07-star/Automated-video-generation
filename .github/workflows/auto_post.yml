@@ -1,11 +1,6 @@
 name: Auto-Post Daily Reel
 
 on:
-  schedule:
-    # Runs at minute 7 of the hour. We avoid minute 0 to bypass GitHub's massive global queue delays.
-    # The Python script checks schedule_config.json to decide whether to actually post.
-    - cron: '7 * * * *'
-
   # Manual trigger from the GitHub Actions tab / Netlify dashboard
   workflow_dispatch:
     inputs:
