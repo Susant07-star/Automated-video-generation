@@ -1,1 +1,13 @@
-{"timezone":"Asia/Kathmandu","generation_times":["10:00","18:00"],"publish_times":["11:00","19:00"],"enabled":true}
+{
+  "timezone": "Asia/Kathmandu",
+  "generation_times": [
+    "10:00",
+    "18:00"
+  ],
+  "publish_times": [
+    "11:00",
+    "17:00",
+    "19:00"
+  ],
+  "enabled": true
+}
