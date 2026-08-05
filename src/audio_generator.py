@@ -15,6 +15,7 @@ load_dotenv()
 # Voice ID: pNInz6obpgDQGcFmaJcg
 # ============================================================
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJcg")
+ELEVENLABS_VOICE_NAME = os.getenv("ELEVENLABS_VOICE_NAME", "Adam")
 
 # edge-tts fallback voices per profile
 FALLBACK_VOICE = "en-US-GuyNeural"           # Motivational (English)
@@ -132,24 +133,33 @@ def ensure_iconic_voice_exists(api_key: str) -> str:
             print(f"   Details: {e.response.text}")
         return ELEVENLABS_VOICE_ID
 
-def _get_valid_voice_id(api_key: str, preferred_voice_id: str) -> str:
-    """Checks if the preferred voice is available. If not, grabs the first available voice."""
+def _get_valid_voice_id(api_key: str, preferred_voice_name: str = "Adam") -> str:
+    """Checks if the preferred voice exists by NAME. If not, grabs the first available voice."""
     try:
         url = "https://api.elevenlabs.io/v1/voices"
         headers = {"xi-api-key": api_key}
         resp = requests.get(url, headers=headers)
         if resp.status_code == 200:
             voices = resp.json().get("voices", [])
+            
+            # 1. Search by exact name match (case-insensitive)
             for v in voices:
-                if v.get("voice_id") == preferred_voice_id:
-                    return preferred_voice_id
+                if v.get("name", "").lower() == preferred_voice_name.lower():
+                    return v.get("voice_id")
+                    
+            # 2. Search by partial name match
+            for v in voices:
+                if preferred_voice_name.lower() in v.get("name", "").lower():
+                    return v.get("voice_id")
+            
+            # 3. Fallback to whatever is available
             if voices:
                 fallback = voices[0]
-                print(f"   ⚠️ Voice {preferred_voice_id} not in library. Auto-falling back to '{fallback['name']}' ({fallback['voice_id']})")
+                print(f"   ⚠️ Voice '{preferred_voice_name}' not found on this account. Auto-falling back to '{fallback['name']}' ({fallback['voice_id']})")
                 return fallback["voice_id"]
     except Exception:
         pass
-    return preferred_voice_id
+    return ELEVENLABS_VOICE_ID
 
 def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str, voice_id: str) -> bool:
     """
@@ -273,9 +283,9 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3", profile="mot
     while elevenlabs_rotator.has_keys():
         current_key = elevenlabs_rotator.get_random_key()
         # Verify the voice exists in this key's library, or auto-fallback to the first available
-        voice_id = _get_valid_voice_id(current_key, ELEVENLABS_VOICE_ID)
+        voice_id = _get_valid_voice_id(current_key, ELEVENLABS_VOICE_NAME)
         
-        print(f"Generating voiceover with ElevenLabs (Voice: {voice_id}, with timestamps)...")
+        print(f"Generating voiceover with ElevenLabs (Voice: {voice_id} - {ELEVENLABS_VOICE_NAME}, with timestamps)...")
         success = _generate_with_elevenlabs(text, output_filename, current_key, voice_id)
         if success:
             return output_filename
