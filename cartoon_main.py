@@ -95,9 +95,10 @@ def main():
                 print("❌  Failed to generate content. Exiting.")
                 sys.exit(1)
 
-            quote     = content.get("quote", "Yaar, sun ek baat...")
-            video_kws = content.get("video_search_keywords", ["soap cutting", "kinetic sand"])
-            music_kw  = content.get("music_search_keyword", "funny quirky")
+            quote       = content.get("quote", "Yaar, sun ek baat...")
+            quote_hindi = content.get("quote_hindi", quote)  # Fallback to Roman if missing
+            video_kws   = content.get("video_search_keywords", ["soap cutting", "kinetic sand"])
+            music_kw    = content.get("music_search_keyword", "funny quirky")
             fomo_overlay = content.get("fomo_overlay", "Wait for it... 🤣")
 
             yt_title       = content.get("yt_title", "Funny Hindi Short 😂")
@@ -106,13 +107,14 @@ def main():
             fb_caption     = content.get("fb_caption", "")
             fb_hashtags    = content.get("fb_hashtags", "#funny #hindi")
 
-            print(f"   Script   : {quote[:80]}...")
+            print(f"   Script (Subtitles): {quote[:80]}...")
+            print(f"   Script (Audio)    : {quote_hindi[:80]}...")
             print(f"   Video kws: {video_kws}")
             print(f"   Music kw : {music_kw}")
 
             state.update({
                 "content_done": True,
-                "quote": quote, "video_kws": video_kws, "music_kw": music_kw,
+                "quote": quote, "quote_hindi": quote_hindi, "video_kws": video_kws, "music_kw": music_kw,
                 "fomo_overlay": fomo_overlay,
                 "yt_title": yt_title, "yt_description": yt_description, "yt_tags": yt_tags,
                 "fb_caption": fb_caption, "fb_hashtags": fb_hashtags,
@@ -126,7 +128,9 @@ def main():
             print(f"\n⏭️  [Step 2/5] Skipping voiceover — {VOICE_PATH} already exists")
         else:
             print(f"\n▶️  [Step 2/5] Generating Hindi voiceover...")
-            generate_voiceover(quote, VOICE_PATH, profile=PROFILE)
+            # Use pure Devanagari Hindi for flawless TTS pronunciation
+            hindi_script_for_tts = state.get("quote_hindi", state.get("quote", ""))
+            generate_voiceover(hindi_script_for_tts, VOICE_PATH, profile=PROFILE)
             state["voice_done"] = True
             save_checkpoint(state)
             print("   ✅ Voiceover saved to checkpoint.")

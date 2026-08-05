@@ -82,7 +82,9 @@ def generate_content(profile="motivational") -> dict:
             "4. THE PUNCHLINE: Deliver the final, hilarious punchline immediately after the CTA.\n\n"
             
             "LANGUAGE RULES:\n"
-            "   - Write in conversational Roman Hindi (Hinglish).\n"
+            "   - You MUST generate TWO versions of the script.\n"
+            "   - Version 1 ('quote'): Conversational Roman Hindi (Hinglish) for on-screen subtitles. Easy to read for Gen Z.\n"
+            "   - Version 2 ('quote_hindi'): Proper Devanagari script (e.g. 'एक बार पिंटू ने बोला...') for the AI voice to read perfectly natively.\n"
             "   - NO markdown: no **, no __, no #. Plain spoken text only.\n"
             "   - Script length: around 50 to 80 words.\n\n"
             
@@ -111,7 +113,8 @@ def generate_content(profile="motivational") -> dict:
             "OUTPUT FORMAT: Single valid JSON object. NO markdown wrapping.\n"
             "{\n"
             "  \"topic_name\": \"Short description of the joke (for history tracking)\",\n"
-            "  \"quote\": \"the full spoken script including the CTA and punchline\",\n"
+            "  \"quote\": \"the full spoken script in Roman Hindi (Hinglish)\",\n"
+            "  \"quote_hindi\": \"the EXACT SAME script in proper Devanagari Hindi\",\n"
             "  \"fomo_overlay\": \"Wait for it... 🤣\",\n"
             "  \"video_search_keywords\": [\"soap cutting\", \"satisfying slime\"],\n"
             "  \"music_search_keyword\": \"funny quirky\",\n"
