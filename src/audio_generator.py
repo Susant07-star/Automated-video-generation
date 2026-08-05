@@ -202,21 +202,11 @@ async def _generate_fallback_async(text: str, output_filename: str, profile: str
             volume="+20%", # Slightly louder for clarity
         )
     else:
-        sentences = [s.strip() for s in text.replace("!", ".").replace("?", ".").split(".") if s.strip()]
-        ssml_sentences = "".join(
-            f'<break time="400ms"/>{s}.<break time="700ms"/>' for s in sentences
+        # Standard edge-tts for motivational (if ever used)
+        communicate = edge_tts.Communicate(
+            text, voice,
+            rate="-5%",
         )
-        ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
-            xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">
-            <voice name="{voice}">
-                <prosody rate="-10%" pitch="+1Hz">
-                    <break time="300ms"/>Here is your motivation for today.<break time="800ms"/>
-                    {ssml_sentences}
-                    <break time="600ms"/>Follow for your daily motivation.
-                </prosody>
-            </voice>
-        </speak>"""
-        communicate = edge_tts.Communicate(ssml, voice)
     
     await communicate.save(output_filename)
     
@@ -272,8 +262,10 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3", profile="mot
         else:
             elevenlabs_rotator.remove_key(current_key)
 
-    # Fallback to English edge-tts if all ElevenLabs keys are exhausted
-    print("All ElevenLabs keys exhausted. Falling back to edge-tts...")
-    asyncio.run(_generate_fallback_async(text, output_filename, profile="motivational"))
-    return output_filename
+    # Fail if all ElevenLabs keys are exhausted
+    print("❌ All ElevenLabs keys exhausted or failed.")
+    raise Exception(
+        f"ElevenLabs generation failed. If you got 'voice_not_found', make sure to add the voice ID "
+        f"'{ELEVENLABS_VOICE_ID}' to your ElevenLabs Voice Library, or change ELEVENLABS_VOICE_ID in your .env file."
+    )
 
