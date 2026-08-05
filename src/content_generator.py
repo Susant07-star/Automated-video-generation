@@ -87,7 +87,16 @@ def generate_content(profile="motivational") -> dict:
             "   - Script length: around 50 to 80 words.\n\n"
             
             "PLATFORM SEO METADATA:\n"
-            "   - YOUTUBE SHORTS: A clickbaity, funny Hindi title WITH EMOJIS. A description with viral Hindi comedy tags (#funny #comedy #hindi), add more if it can make video viral.\n"
+            "   - YOUTUBE SHORTS: A clickbaity, funny Hindi title WITH EMOJIS under 80 characters.\n"
+            "   - DESCRIPTION: 2-3 lines in Hindi/Hinglish with emojis. Keep it fun and short.\n"
+            "   - YOUTUBE TAGS (MOST IMPORTANT): Generate exactly 25 to 30 tags for maximum reach. Mix ALL of these categories:\n"
+            "       * Core viral tags: shorts, ytshorts, viral shorts, trending shorts, funny shorts, comedy shorts\n"
+            "       * Hindi-specific: hindi comedy, hindi funny video, hindi jokes, funny hindi shorts, desi comedy\n"
+            "       * Character/story tags based on the joke (e.g. teacher student joke, pappu joke, dost yaar joke)\n"
+            "       * Relatable life tags: school life, office life, family comedy, desi life, indian comedy\n"
+            "       * Discovery tags: new shorts, popular shorts, shorts feed, you tube shorts, short video\n"
+            "       * Channel tag: Cartoon Plus\n"
+            "     RULES: Tags must NOT include '#'. Each tag is a plain string. Mix single words and 2-4 word phrases.\n\n"
             "   - FACEBOOK/IG REELS: A short funny caption with emojis and hashtags.\n\n"
             
             "VIDEO ASSETS:\n"
