@@ -512,11 +512,11 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             import numpy as np
             is_scalar = np.isscalar(t)
             t_arr = np.atleast_1d(t)
-            vol = np.full(t_arr.shape, 0.03) # Ducked volume (very quiet when talking)
+            vol = np.full(t_arr.shape, 0.015) # Ducked volume (very quiet when talking, lowered from 0.03)
             
             for start, end in swells:
                 mask = (t_arr > start) & (t_arr < end)
-                vol[mask] = 0.20 # Swell volume (loud cinematic fill)
+                vol[mask] = 0.10 # Swell volume (loud cinematic fill, lowered from 0.20)
                 
             vol = vol[:, np.newaxis] # Expand dims for stereo broadcasting
             return vol[0, 0] if is_scalar else vol
