@@ -1,8 +1,9 @@
 {
   "timezone": "Asia/Kathmandu",
   "generation_times": [
-    "10:00",
-    "18:00"
+    "05:00",
+    "13:00",
+    "21:00"
   ],
   "publish_times": [
     "11:00",
