@@ -98,8 +98,13 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+        # Pull latest first, using ours strategy so cloud-generated content wins on conflict
+        git fetch origin main
+        git merge -X ours origin/main -m "chore: merge remote history [skip ci]" --no-edit || true
+
+        # Now stage and commit the freshly generated files on top
         git add generated_history_cartoon.txt 2>/dev/null || true
         git add video_progress.json 2>/dev/null || true
         git diff --staged --quiet || git commit -m "chore: update cartoon history & progress [skip ci]"
-        git pull --rebase --autostash origin main
         git push
