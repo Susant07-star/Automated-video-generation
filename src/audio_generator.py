@@ -132,6 +132,25 @@ def ensure_iconic_voice_exists(api_key: str) -> str:
             print(f"   Details: {e.response.text}")
         return ELEVENLABS_VOICE_ID
 
+def _get_valid_voice_id(api_key: str, preferred_voice_id: str) -> str:
+    """Checks if the preferred voice is available. If not, grabs the first available voice."""
+    try:
+        url = "https://api.elevenlabs.io/v1/voices"
+        headers = {"xi-api-key": api_key}
+        resp = requests.get(url, headers=headers)
+        if resp.status_code == 200:
+            voices = resp.json().get("voices", [])
+            for v in voices:
+                if v.get("voice_id") == preferred_voice_id:
+                    return preferred_voice_id
+            if voices:
+                fallback = voices[0]
+                print(f"   ⚠️ Voice {preferred_voice_id} not in library. Auto-falling back to '{fallback['name']}' ({fallback['voice_id']})")
+                return fallback["voice_id"]
+    except Exception:
+        pass
+    return preferred_voice_id
+
 def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str, voice_id: str) -> bool:
     """
     Generates voiceover using ElevenLabs API with timestamps.
@@ -253,8 +272,9 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3", profile="mot
     # ── Motivational: use ElevenLabs with the default Adam voice (no cloning) ──
     while elevenlabs_rotator.has_keys():
         current_key = elevenlabs_rotator.get_random_key()
-        # Use the configured default voice ID directly — no cloning attempted
-        voice_id = ELEVENLABS_VOICE_ID
+        # Verify the voice exists in this key's library, or auto-fallback to the first available
+        voice_id = _get_valid_voice_id(current_key, ELEVENLABS_VOICE_ID)
+        
         print(f"Generating voiceover with ElevenLabs (Voice: {voice_id}, with timestamps)...")
         success = _generate_with_elevenlabs(text, output_filename, current_key, voice_id)
         if success:
