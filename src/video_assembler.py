@@ -560,16 +560,16 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
     base_clip = base_clip.set_audio(final_audio)
     layers = [base_clip]
 
-    # Cinematic Color Grading (Teal overlay)
-    color_overlay = (ColorClip(size=(TARGET_W, TARGET_H), color=(0, 20, 50))
-                     .set_opacity(0.3)
-                     .set_duration(target_duration))
-    layers.append(color_overlay)
+    # Cinematic Color Grading & Vignette (Keep for Motivational, skip for Cartoon)
+    if profile != "cartoon":
+        color_overlay = (ColorClip(size=(TARGET_W, TARGET_H), color=(0, 20, 50))
+                         .set_opacity(0.3)
+                         .set_duration(target_duration))
+        layers.append(color_overlay)
 
-    # Vignette
-    vignette_arr = make_vignette(TARGET_W, TARGET_H)
-    vignette_clip = ImageClip(vignette_arr).set_duration(target_duration)
-    layers.append(vignette_clip)
+        vignette_arr = make_vignette(TARGET_W, TARGET_H)
+        vignette_clip = ImageClip(vignette_arr).set_duration(target_duration)
+        layers.append(vignette_clip)
 
     # Dynamic Subtitles
     timestamps_file = audio_path + ".json"
