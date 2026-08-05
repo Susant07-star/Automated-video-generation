@@ -11,11 +11,11 @@ load_dotenv()
 
 # ============================================================
 # BRAND VOICE
-# Voice ID for Adam (standard ElevenLabs voice available on free tier)
-# Voice ID: pNInz6obpgDQGcFmaJcg
+# Voice ID for Clyde (deep, raspy, intense — perfect for dark psychology)
+# Voice ID: 2EiwWnXFnvU5JabPnv8n
 # ============================================================
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJcg")
-ELEVENLABS_VOICE_NAME = os.getenv("ELEVENLABS_VOICE_NAME", "Adam")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "2EiwWnXFnvU5JabPnv8n")
+ELEVENLABS_VOICE_NAME = os.getenv("ELEVENLABS_VOICE_NAME", "Clyde")
 
 # edge-tts fallback voices per profile
 FALLBACK_VOICE = "en-US-GuyNeural"           # Motivational (English)
