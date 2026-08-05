@@ -10,14 +10,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ============================================================
-# BRAND VOICE — DO NOT CHANGE
-# This is the custom iconic voice of the channel.
-# Voice ID: qeVMjfAnyqoR0DeCeeXL
+# BRAND VOICE
+# Voice ID for Adam (standard ElevenLabs voice available on free tier)
+# Voice ID: pNInz6obpgDQGcFmaJcg
 # ============================================================
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "qeVMjfAnyqoR0DeCeeXL")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJcg")
 
-# edge-tts fallback voice
-FALLBACK_VOICE = "en-US-GuyNeural"
+# edge-tts fallback voices per profile
+FALLBACK_VOICE = "en-US-GuyNeural"           # Motivational (English)
+FALLBACK_VOICE_CARTOON = "hi-IN-SwaraNeural" # Hindi female voice — lighter, clearer, suits comedy
 
 def _extract_word_timestamps(alignment: dict) -> list:
     """
@@ -189,42 +190,81 @@ def _generate_with_elevenlabs(text: str, output_filename: str, api_key: str, voi
         print(f"ElevenLabs unexpected error: {e}")
         return False
 
-async def _generate_fallback_async(text: str, output_filename: str):
-    """Fallback to edge-tts with SSML for emotional delivery."""
-    sentences = [s.strip() for s in text.replace("!", ".").replace("?", ".").split(".") if s.strip()]
-    ssml_sentences = "".join(
-        f'<break time="400ms"/>{s}.<break time="700ms"/>' for s in sentences
-    )
-    ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
-        xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">
-        <voice name="{FALLBACK_VOICE}">
-            <prosody rate="-10%" pitch="+1Hz">
-                <break time="300ms"/>Here is your motivation for today.<break time="800ms"/>
-                {ssml_sentences}
-                <break time="600ms"/>Follow for your daily motivation.
-            </prosody>
-        </voice>
-    </speak>"""
-    communicate = edge_tts.Communicate(ssml, FALLBACK_VOICE)
+async def _generate_fallback_async(text: str, output_filename: str, profile: str = "motivational"):
+    """Fallback to edge-tts. Uses a Hindi expressive voice for the cartoon profile."""
+    voice = FALLBACK_VOICE_CARTOON if profile == "cartoon" else FALLBACK_VOICE
+    
+    if profile == "cartoon":
+        # Hindi TTS with slightly faster rate for energetic/funny delivery
+        communicate = edge_tts.Communicate(
+            text, voice,
+            rate="+10%",   # Slightly faster for lively Hindi comedy pacing
+            volume="+20%", # Slightly louder for clarity
+        )
+    else:
+        sentences = [s.strip() for s in text.replace("!", ".").replace("?", ".").split(".") if s.strip()]
+        ssml_sentences = "".join(
+            f'<break time="400ms"/>{s}.<break time="700ms"/>' for s in sentences
+        )
+        ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
+            xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">
+            <voice name="{voice}">
+                <prosody rate="-10%" pitch="+1Hz">
+                    <break time="300ms"/>Here is your motivation for today.<break time="800ms"/>
+                    {ssml_sentences}
+                    <break time="600ms"/>Follow for your daily motivation.
+                </prosody>
+            </voice>
+        </speak>"""
+        communicate = edge_tts.Communicate(ssml, voice)
+    
     await communicate.save(output_filename)
     
-    # Save a fake/empty JSON timestamp file to prevent assembler crashes
-    with open(output_filename + ".json", "w") as f:
-        json.dump([], f)
+    # Generate fake evenly-spaced timestamps so dynamic subtitles still work
+    try:
+        from moviepy.editor import AudioFileClip
+        audio = AudioFileClip(output_filename)
+        duration = audio.duration
+        audio.close()
+        
+        words = text.split()
+        if words:
+            time_per_word = duration / len(words)
+            timestamps = []
+            for i, word in enumerate(words):
+                timestamps.append({
+                    "word": word,
+                    "start": i * time_per_word,
+                    "end": (i + 1) * time_per_word
+                })
+            with open(output_filename + ".json", "w") as f:
+                json.dump(timestamps, f, indent=4)
+        else:
+            with open(output_filename + ".json", "w") as f:
+                json.dump([], f)
+    except Exception as e:
+        print(f"Failed to generate fake timestamps: {e}")
+        with open(output_filename + ".json", "w") as f:
+            json.dump([], f)
 
-def generate_voiceover(text: str, output_filename="temp_voice.mp3") -> str:
+def generate_voiceover(text: str, output_filename="temp_voice.mp3", profile="motivational") -> str:
     """
-    Generates voiceover using ElevenLabs (brand voice) with key rotation.
-    Falls back to edge-tts if keys are exhausted.
+    Generates voiceover using ElevenLabs (motivational profile) or edge-tts (cartoon profile).
+    - motivational: Uses ElevenLabs with the default Adam voice (NO cloning).
+    - cartoon: Skips ElevenLabs entirely and uses hi-IN-SwaraNeural (Hindi) via edge-tts.
     Returns the path to the MP3. (A matching .json file will also be created).
     """
-    # Try ElevenLabs first
+    # ── Cartoon Plus: go straight to Hindi edge-tts, skip ElevenLabs entirely ──
+    if profile == "cartoon":
+        print("Cartoon Plus profile — using Hindi edge-tts voice (hi-IN-SwaraNeural)...")
+        asyncio.run(_generate_fallback_async(text, output_filename, profile="cartoon"))
+        return output_filename
+
+    # ── Motivational: use ElevenLabs with the default Adam voice (no cloning) ──
     while elevenlabs_rotator.has_keys():
         current_key = elevenlabs_rotator.get_random_key()
-        
-        # Ensure voice exists and get its ID
-        voice_id = ensure_iconic_voice_exists(current_key)
-        
+        # Use the configured default voice ID directly — no cloning attempted
+        voice_id = ELEVENLABS_VOICE_ID
         print(f"Generating voiceover with ElevenLabs (Voice: {voice_id}, with timestamps)...")
         success = _generate_with_elevenlabs(text, output_filename, current_key, voice_id)
         if success:
@@ -232,7 +272,8 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3") -> str:
         else:
             elevenlabs_rotator.remove_key(current_key)
 
-    # Fallback to edge-tts
+    # Fallback to English edge-tts if all ElevenLabs keys are exhausted
     print("All ElevenLabs keys exhausted. Falling back to edge-tts...")
-    asyncio.run(_generate_fallback_async(text, output_filename))
+    asyncio.run(_generate_fallback_async(text, output_filename, profile="motivational"))
     return output_filename
+

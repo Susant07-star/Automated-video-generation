@@ -6,6 +6,9 @@ from urllib.parse import quote_plus
 import time
 import numpy as np
 from src.api_manager import pexels_rotator, pixabay_rotator
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from googleapiclient.http import MediaIoBaseDownload
 
 REQUEST_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -45,7 +48,174 @@ def download_file(url: str, dest_path: str):
             os.remove(temp_path)
         raise
 
-    return dest_path
+
+def download_video_from_drive(drive_folder_id: str, local_folder: str = "local_satisfying_videos"):
+    if not os.path.exists('drive_token.json'):
+        print("No Google Drive credentials found (drive_token.json). Skipping cloud download.")
+        return False
+        
+    try:
+        creds = Credentials.from_authorized_user_file('drive_token.json', ['https://www.googleapis.com/auth/drive.readonly'])
+        service = build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Failed to auth with Google Drive: {e}")
+        return False
+        
+    print(f"Checking Google Drive folder: {drive_folder_id}")
+    try:
+        query = f"'{drive_folder_id}' in parents and trashed = false and (mimeType contains 'video/mp4' or mimeType contains 'video/quicktime' or mimeType contains 'video/x-matroska')"
+        results = service.files().list(q=query, fields="files(id, name)", pageSize=1000).execute()
+        items = results.get('files', [])
+    except Exception as e:
+        print(f"Failed to list Drive files: {e}")
+        return False
+    
+    if not items:
+        print("No videos found in the Google Drive folder.")
+        return False
+        
+    items.sort(key=lambda x: x['name'])
+    
+    progress_file = "video_progress.json"
+    current_filename = ""
+    if os.path.exists(progress_file):
+        try:
+            import json
+            with open(progress_file, 'r') as f:
+                progress = json.load(f)
+                current_filename = progress.get("current_video_filename", "")
+        except:
+            pass
+            
+    target_file = items[0]
+    if current_filename:
+        for item in items:
+            if item['name'] == current_filename:
+                target_file = item
+                break
+                
+    if not os.path.exists(local_folder):
+        os.makedirs(local_folder, exist_ok=True)
+        
+    local_filepath = os.path.join(local_folder, target_file['name'])
+    if os.path.exists(local_filepath):
+        print(f"Video {target_file['name']} already exists locally. Skipping download.")
+        return True
+        
+    # Clean up old videos to save disk space on GitHub Actions runner
+    for f in os.listdir(local_folder):
+        old_file = os.path.join(local_folder, f)
+        if os.path.isfile(old_file) and f != target_file['name']:
+            try:
+                os.remove(old_file)
+                print(f"Removed old video to save space: {f}")
+            except Exception:
+                pass
+            
+    print(f"Downloading {target_file['name']} from Google Drive...")
+    try:
+        request = service.files().get_media(fileId=target_file['id'])
+        with open(local_filepath, 'wb') as fh:
+            downloader = MediaIoBaseDownload(fh, request, chunksize=1024*1024*10)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+                if status:
+                    print(f"Download {int(status.progress() * 100)}%.", end='\\r')
+        print(f"\\n✅ Successfully downloaded {target_file['name']} to local folder.")
+        return True
+    except Exception as e:
+        print(f"\\n❌ Failed to download from Drive: {e}")
+        return False
+
+def fetch_sequential_local_video(target_duration: float, output_filename: str, drive_folder_id: str = None):
+    """
+    Extracts a subclip of exactly `target_duration` from the local satisfying videos folder.
+    Tracks progress in `video_progress.json` so the next generation starts exactly where this one left off.
+    """
+    folder = "local_satisfying_videos"
+    progress_file = "video_progress.json"
+    
+    if drive_folder_id:
+        download_video_from_drive(drive_folder_id, folder)
+        
+    if not os.path.exists(folder):
+        os.makedirs(folder, exist_ok=True)
+        
+    videos = sorted([f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.mov', '.mkv'))])
+    if not videos:
+        raise Exception(f"No videos found in '{folder}'. Please add some satisfying compilations.")
+
+    # Load progress
+    import json
+    from moviepy.editor import VideoFileClip
+    progress = {"current_video_filename": "", "last_timestamp_seconds": 0.0}
+    if os.path.exists(progress_file):
+        with open(progress_file, 'r', encoding='utf-8') as f:
+            try:
+                progress = json.load(f)
+            except:
+                pass
+                
+    curr_filename = progress.get("current_video_filename", "")
+    curr_t = progress.get("last_timestamp_seconds", 0.0)
+    
+    # Find the index of the currently tracked filename
+    try:
+        curr_idx = videos.index(curr_filename) if curr_filename else 0
+    except ValueError:
+        # If the file was deleted or renamed, start from the first one
+        print(f"   ⚠️ Tracked video '{curr_filename}' not found. Starting from the beginning.")
+        curr_idx = 0
+        curr_t = 0.0
+    
+    current_video_path = os.path.join(folder, videos[curr_idx])
+    clip = VideoFileClip(current_video_path)
+    
+    # If the remaining duration is less than what we need, move to the next video
+    if curr_t + target_duration > clip.duration:
+        print(f"   ⏩ Not enough time left in {videos[curr_idx]}. Moving to next video.")
+        clip.close()
+        curr_idx += 1
+        curr_t = 0.0
+        
+        if curr_idx >= len(videos):
+            print("   🔄 All satisfying videos used! Looping back to the first video.")
+            curr_idx = 0
+            
+        current_video_path = os.path.join(folder, videos[curr_idx])
+        clip = VideoFileClip(current_video_path)
+        
+        if clip.duration < target_duration:
+            print(f"   ⚠️ Video {videos[curr_idx]} is too short for the joke. Will extract full length.")
+
+    # Extract the subclip
+    start_t = curr_t
+    end_t = min(curr_t + target_duration, clip.duration)
+    
+    print(f"   ✂️ Extracting {end_t - start_t:.1f}s from '{videos[curr_idx]}' (Start: {start_t:.1f}s)")
+    subclip = clip.subclip(start_t, end_t)
+    
+    # Write to output file silently
+    subclip.write_videofile(
+        output_filename, 
+        codec='libx264', 
+        audio_codec='aac', 
+        preset='superfast',
+        ffmpeg_params=["-crf", "18"],
+        logger=None # Hide output
+    )
+    
+    # Save progress for next time (track by filename, not index)
+    progress["current_video_filename"] = videos[curr_idx]
+    progress["last_timestamp_seconds"] = end_t
+    with open(progress_file, 'w', encoding='utf-8') as f:
+        json.dump(progress, f, indent=4)
+        
+    clip.close()
+    subclip.close()
+    return output_filename
+
 
 
 def create_local_cinematic_music(output_filename="temp_music.wav", duration=60, sample_rate=44100):
@@ -125,8 +295,8 @@ def _fetch_single_video(keyword: str, output_filename: str):
         data = response.json()
 
         if not data.get("videos"):
-            print(f"No videos found for keyword '{keyword}', falling back to 'nature'.")
-            fallback_url = f"https://api.pexels.com/videos/search?query=nature&orientation=portrait&size=large&per_page=15"
+            print(f"No videos found for keyword '{keyword}', falling back to 'satisfying'.")
+            fallback_url = f"https://api.pexels.com/videos/search?query=satisfying&orientation=portrait&size=large&per_page=15"
             response = requests.get(fallback_url, headers=headers)
             data = response.json()
 

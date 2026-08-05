@@ -39,13 +39,13 @@ def preprocess_video_ffmpeg(input_path: str, output_path: str):
         FFMPEG_BIN, "-y",
         "-i", input_path,
         "-vf", (
-            f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
+            f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase:flags=lanczos,"
             f"crop={TARGET_W}:{TARGET_H}"
         ),
         "-an",
         "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-crf", "23",
+        "-preset", "slow",
+        "-crf", "17",
         output_path
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -371,7 +371,7 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
             clip = (ImageClip(text_img)
                     .set_start(start_t)
                     .set_end(end_t)
-                    .set_position(('center', 'center')))
+                    .set_position(('center', int(H * 0.72))))  # Lower third — 72% down the screen
             clips.append(clip)
 
     return clips
@@ -379,7 +379,7 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
 
 from moviepy.editor import concatenate_videoclips
 
-def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None, fomo_overlay=None):
+def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None, fomo_overlay=None, profile="motivational", meme_sound_path=None):
     print("Assembling cinematic multi-clip video...")
     
     try:
@@ -427,19 +427,22 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
                 clip = VideoFileClip(preprocessed_path)
             else:
                 clip = VideoFileClip(vp)
-                if clip.w > TARGET_W:
-                    clip = clip.resize(width=TARGET_W)
+                # MoviePy fallback: resize and center crop to exactly TARGET_W x TARGET_H
+                if clip.w != TARGET_W or clip.h != TARGET_H:
+                    clip = clip.resize(height=TARGET_H)
+                    clip = clip.fx(vfx.crop, x_center=clip.w/2, y_center=clip.h/2, width=TARGET_W, height=TARGET_H)
             
-            # Apply 1.5x speed multiplier for faster, more dynamic visual pacing
-            clip = clip.fx(vfx.speedx, 1.5)
+            if profile != "cartoon":
+                # Apply 1.5x speed multiplier for faster, more dynamic visual pacing (Motivational only)
+                clip = clip.fx(vfx.speedx, 1.5)
             
             if clip.duration < seg_dur:
                 clip = clip.fx(vfx.loop, duration=seg_dur)
             else:
                 clip = clip.subclip(0, seg_dur)
                 
-            # Idea: Ken Burns effect on the VERY FIRST clip
-            if i == 0:
+            # Idea: Ken Burns effect on the VERY FIRST clip (Motivational only)
+            if i == 0 and profile != "cartoon":
                 print("   Applying Ken Burns zoom effect to the opening clip...")
                 # We will handle thumbnail generation via AI later in the process
                 def zoom(t):
@@ -462,18 +465,26 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         print("Failed to load any video clips. Aborting.")
         return
 
-    # Add random visual transitions between clips
-    for i in range(1, len(processed_clips)):
-        transition_type = random.choice(["hard_cut", "dip_to_black", "flash_white"])
-        print(f"   Applying transition: {transition_type} between clip {i} and {i+1}")
-        if transition_type == "dip_to_black":
-            processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.4, final_color=[0, 0, 0])
-            processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.4, initial_color=[0, 0, 0])
-        elif transition_type == "flash_white":
-            processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.3, final_color=[255, 255, 255])
-            processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.3, initial_color=[255, 255, 255])
+    # Add random visual transitions between clips (Motivational only — cartoon keeps clean cuts)
+    if profile != "cartoon":
+        for i in range(1, len(processed_clips)):
+            transition_type = random.choice(["hard_cut", "dip_to_black", "flash_white"])
+            print(f"   Applying transition: {transition_type} between clip {i} and {i+1}")
+            if transition_type == "dip_to_black":
+                processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.4, final_color=[0, 0, 0])
+                processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.4, initial_color=[0, 0, 0])
+            elif transition_type == "flash_white":
+                processed_clips[i-1] = processed_clips[i-1].fx(vfx.fadeout, 0.3, final_color=[255, 255, 255])
+                processed_clips[i] = processed_clips[i].fx(vfx.fadein, 0.3, initial_color=[255, 255, 255])
 
+    # Create base video by concatenating
     base_clip = concatenate_videoclips(processed_clips, method="compose")
+
+    if profile == "cartoon":
+        # Skip FOMO overlay for cartoon profile
+        fomo_overlay = None
+        # Skip whoosh
+        whoosh_audio = None
 
     # Audio Mix
     audio_tracks = []
@@ -522,22 +533,29 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             current_time += segment_durations[i]
             audio_tracks.append(whoosh_audio.set_start(current_time - 0.2)) # Lead the transition slightly
             
-    # Add impact sounds on high-impact keywords
-    if impact_audio and os.path.exists(audio_path + ".json"):
-        import json
-        with open(audio_path + ".json", 'r') as f:
-            words_data = json.load(f)
-            
-        impact_keywords = ["secret", "beware", "danger", "never", "always", "control", "hidden", "stop", "listen", "warning", "powerful", "manipulation", "instantly"]
-        for w in words_data:
-            word_clean = "".join(c for c in w['word'].lower() if c.isalnum())
-            if word_clean in impact_keywords:
-                print(f"   Adding impact SFX at word: '{word_clean}' (t={w['start']:.2f})")
-                audio_tracks.append(impact_audio.set_start(w['start'] + 0.5)) # 0.5 is voice_offset
+    # Impact SFX removed per user request
             
     final_audio = CompositeAudioClip(audio_tracks)
-    # Audio fade out at the end so it doesn't end abruptly (USER REQUESTED)
-    final_audio = final_audio.fx(afx.audio_fadeout, 0.2)
+    # No audio fadeout — let audio end cleanly
+    
+    # If cartoon profile and meme sound provided, overlap meme sound 1s before voice ends
+    if profile == "cartoon" and meme_sound_path and os.path.exists(meme_sound_path):
+        meme_audio = AudioFileClip(meme_sound_path).fx(afx.volumex, 3.0)
+        # Start meme sound 1 second before the voice finishes for a punchline overlap effect
+        meme_start = max(0, audio_duration - 1.0)
+        meme_audio = meme_audio.set_start(meme_start)
+        audio_tracks.append(meme_audio)
+        final_audio = CompositeAudioClip(audio_tracks)
+        total_duration_with_meme = meme_start + meme_audio.duration
+        print(f"   Meme sound starts at {meme_start:.1f}s (1s before voice ends), total: {total_duration_with_meme:.1f}s")
+        
+        # Trim or preserve background clip to fit total duration exactly
+        if base_clip.duration > total_duration_with_meme:
+            base_clip = base_clip.subclip(0, total_duration_with_meme)
+        elif base_clip.duration < total_duration_with_meme:
+            print(f"   ⚠️  Video clip is {total_duration_with_meme - base_clip.duration:.1f}s shorter than needed. Playing to natural end.")
+        
+        target_duration = total_duration_with_meme
     
     base_clip = base_clip.set_audio(final_audio)
     layers = [base_clip]
@@ -596,27 +614,15 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
                       .set_position(('center', 'bottom')))
     layers.append(progress_clip)
 
-    # Idea C: Save For Later CTA Overlay (Last 3 seconds)
-    try:
-        # Remove emoji since standard fonts don't support them (they render as square boxes)
-        cta_img = create_cta_image("Save this video for later", TARGET_W, TARGET_H, fontsize=85)
-        cta_clip = (ImageClip(cta_img)
-                    .set_duration(3.0)
-                    .set_start(max(0, target_duration - 3.0))
-                    .set_position('center')
-                    .crossfadein(0.5))
-        layers.append(cta_clip)
-    except Exception as e:
-        print(f"Error creating CTA overlay: {e}")
-            
+    # "Save this video for later" CTA removed per user request
     # Viral FOMO Overlay removed per user request
 
 
     # Composite everything
     final_video = CompositeVideoClip(layers)
 
-    # Subtle video fade in/out
-    final_video = final_video.fadein(0.5).fadeout(0.8)
+    # No fade in/out — clean cut
+    # final_video = final_video.fadein(0.5).fadeout(0.8)
 
     print(f"\n   🖥️  Rendering on {CPU_THREADS} CPU threads @ 24fps...")
     print(f"   Resolution : {TARGET_W}x{TARGET_H}   Duration : {target_duration:.1f}s")
@@ -628,8 +634,8 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         codec="libx264",
         audio_codec="aac",
         threads=CPU_THREADS,  # Use ALL available CPU cores
-        preset="ultrafast",
-        ffmpeg_params=["-crf", "23"],  # CRF 23 = good quality + fast
+        preset="superfast",
+        ffmpeg_params=["-crf", "18"],  # CRF 18 = visually lossless, preserves upscale sharpness
         logger="bar"
     )
 

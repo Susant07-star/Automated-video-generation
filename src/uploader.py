@@ -80,10 +80,10 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
     print("Reel published successfully!")
     return pub_res.json()
 
-def get_youtube_service():
+def get_youtube_service(token_file='youtube_token.json'):
     creds = None
-    if os.path.exists('youtube_token.json'):
-        creds = Credentials.from_authorized_user_file('youtube_token.json', YOUTUBE_SCOPES)
+    if os.path.exists(token_file):
+        creds = Credentials.from_authorized_user_file(token_file, YOUTUBE_SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -95,13 +95,13 @@ def get_youtube_service():
                 return None
             flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', YOUTUBE_SCOPES)
             creds = flow.run_local_server(port=0)
-        with open('youtube_token.json', 'w') as token:
+        with open(token_file, 'w') as token:
             token.write(creds.to_json())
     return build('youtube', 'v3', credentials=creds)
 
-def get_next_publish_time_iso():
+def get_next_publish_time_iso(schedule_config_file='schedule_config.json'):
     """
-    Returns an ISO 8601 string for the next available slot based on schedule_config.json.
+    Returns an ISO 8601 string for the next available slot based on a schedule config file.
     Strictly uses the configured timezone.
     """
     # Default config
@@ -109,15 +109,15 @@ def get_next_publish_time_iso():
     publish_times_str = ["12:00", "20:00"]
     
     try:
-        if os.path.exists("schedule_config.json"):
-            with open("schedule_config.json", "r", encoding="utf-8") as f:
+        if os.path.exists(schedule_config_file):
+            with open(schedule_config_file, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 config_tz = config.get("timezone", config_tz)
                 if "publish_times" in config and isinstance(config["publish_times"], list):
                     if len(config["publish_times"]) > 0:
                         publish_times_str = config["publish_times"]
     except Exception as e:
-        print(f"Warning: Could not read schedule_config.json ({e}). Using defaults.")
+        print(f"Warning: Could not read {schedule_config_file} ({e}). Using defaults.")
         
     try:
         tz = pytz.timezone(config_tz)
@@ -158,8 +158,8 @@ def get_next_publish_time_iso():
     print(f"   🔒 Video will be PRIVATE until: {target.strftime('%Y-%m-%d %H:%M %Z')}")
     return target.isoformat()
 
-def upload_to_youtube(video_path: str, title: str, description: str, tags: list):
-    youtube = get_youtube_service()
+def upload_to_youtube(video_path: str, title: str, description: str, tags: list, token_file='youtube_token.json', schedule_config_file='schedule_config.json'):
+    youtube = get_youtube_service(token_file=token_file)
     if not youtube:
         return
         
@@ -168,7 +168,7 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list)
     # Ensure title is < 100 chars
     title = title[:95] + "..." if len(title) > 95 else title
     
-    publish_at_iso = get_next_publish_time_iso()
+    publish_at_iso = get_next_publish_time_iso(schedule_config_file=schedule_config_file)
     print(f"   Scheduling publishAt for: {publish_at_iso}")
     
     body = {

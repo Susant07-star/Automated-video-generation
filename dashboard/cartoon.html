@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NextGenThoughts — Control Panel</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
-  <meta name="description" content="Control panel for the NextGenThoughts automated video posting pipeline.">
+  <title>Cartoon Plus — Control Panel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
+  <meta name="description" content="Control panel for the Cartoon Plus automated funny Hindi shorts pipeline.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -17,9 +17,10 @@
       --surface-hover: rgba(255,255,255,0.07);
       --border: rgba(255,255,255,0.08);
       --border-strong: rgba(255,255,255,0.15);
-      --accent: #7c3aed;
-      --accent-bright: #a855f7;
-      --accent-glow: rgba(124,58,237,0.3);
+      /* Cartoon Plus uses a warm amber/yellow-orange accent instead of purple */
+      --accent: #d97706;
+      --accent-bright: #fbbf24;
+      --accent-glow: rgba(217,119,6,0.3);
       --orange: #f97316;
       --orange-bright: #fb923c;
       --orange-glow: rgba(249,115,22,0.3);
@@ -45,13 +46,10 @@
     body::before {
       content: '';
       position: fixed;
-      top: -30%;
-      left: -10%;
-      width: 60%;
-      height: 70%;
-      background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+      top: -30%; left: -10%;
+      width: 60%; height: 70%;
+      background: radial-gradient(ellipse, rgba(217,119,6,0.10) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
 
     /* ─── SETUP MODAL ─── */
@@ -67,22 +65,17 @@
     .modal-box {
       background: #0d0d1a;
       border: 1px solid var(--border-strong);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 480px;
-      width: 100%;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(124,58,237,0.15);
+      border-radius: 20px; padding: 40px;
+      max-width: 480px; width: 100%;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(217,119,6,0.12);
     }
-
     .modal-box h2 {
       font-size: 22px; font-weight: 700;
       background: linear-gradient(135deg, #fff 0%, var(--accent-bright) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       margin-bottom: 8px;
     }
-
     .modal-box p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
-
     .modal-box a { color: var(--accent-bright); text-decoration: none; }
     .modal-box a:hover { text-decoration: underline; }
 
@@ -90,14 +83,10 @@
     .input-group label { font-size: 12px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; }
     .input-group input {
       background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-strong);
-      border-radius: 10px;
-      padding: 12px 16px;
-      color: var(--text);
-      font-family: 'Inter', monospace;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
+      border: 1px solid var(--border-strong); border-radius: 10px;
+      padding: 12px 16px; color: var(--text);
+      font-family: 'Inter', monospace; font-size: 13px;
+      outline: none; transition: border-color 0.2s;
     }
     .input-group input:focus { border-color: var(--accent-bright); }
 
@@ -109,20 +98,18 @@
       transition: all 0.2s; text-decoration: none; white-space: nowrap;
     }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #5b21b6);
+      background: linear-gradient(135deg, var(--accent), #92400e);
       color: #fff;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+      box-shadow: 0 4px 20px rgba(217,119,6,0.4);
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.5); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(217,119,6,0.5); }
     .btn-primary:active { transform: translateY(0); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
     .btn-ghost {
       background: var(--surface); border: 1px solid var(--border);
       color: var(--text-dim);
     }
     .btn-ghost:hover { background: var(--surface-hover); color: var(--text); }
-
     .btn-full { width: 100%; }
     .btn-lg { padding: 16px 32px; font-size: 16px; border-radius: 14px; }
 
@@ -135,51 +122,48 @@
       background: rgba(6,6,15,0.8);
       backdrop-filter: blur(20px);
     }
-
     .nav-brand { display: flex; align-items: center; gap: 12px; }
     .nav-icon {
       width: 40px; height: 40px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      background: linear-gradient(135deg, var(--accent), #92400e);
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; box-shadow: 0 4px 16px var(--accent-glow);
     }
     .nav-title { font-size: 18px; font-weight: 700; }
     .nav-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
-
     .nav-right { display: flex; align-items: center; gap: 12px; }
+
+    /* Channel switcher */
+    .channel-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px;
+      background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.25);
+      color: #a78bfa; font-size: 12px; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .channel-link:hover { background: rgba(124,58,237,0.22); }
+
     .status-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
+      background: var(--green); box-shadow: 0 0 8px var(--green);
       animation: pulse-dot 2s ease-in-out infinite;
     }
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* ─── MAIN CONTENT ─── */
-    main {
-      position: relative; z-index: 1;
-      max-width: 1100px; margin: 0 auto;
-      padding: 32px 24px;
-    }
+    /* ─── MAIN ─── */
+    main { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
 
     /* ─── STAT CARDS ─── */
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-      margin-bottom: 28px;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
     @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr; } }
 
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 16px; padding: 20px 24px;
       transition: border-color 0.2s, background 0.2s;
     }
     .stat-card:hover { background: var(--surface-hover); border-color: var(--border-strong); }
-    .stat-card.orange-card {
-      border-color: rgba(249,115,22,0.2);
-      background: rgba(249,115,22,0.03);
-    }
+    .stat-card.orange-card { border-color: rgba(249,115,22,0.2); background: rgba(249,115,22,0.03); }
     .stat-card.orange-card:hover { border-color: rgba(249,115,22,0.4); background: rgba(249,115,22,0.06); }
 
     .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
@@ -189,25 +173,10 @@
     .gradient-text { background: linear-gradient(135deg, #fff, var(--accent-bright)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
     /* ─── ACTION GRID ─── */
-    .action-grid {
-      display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px;
-      margin-bottom: 28px;
-    }
+    .action-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; margin-bottom: 28px; }
     @media (max-width: 768px) { .action-grid { grid-template-columns: 1fr; } }
 
-    /* ─── SCHEDULE ROW ─── */
-    .schedule-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-      margin-bottom: 28px;
-    }
-    @media (max-width: 768px) { .schedule-row { grid-template-columns: 1fr; } }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; }
 
     .card-title {
       font-size: 13px; font-weight: 700; color: var(--text-dim);
@@ -215,34 +184,24 @@
       display: flex; align-items: center; gap: 8px;
     }
 
-    /* Post Now Card */
     .post-now-card { display: flex; flex-direction: column; justify-content: space-between; }
     .post-now-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; flex: 1; }
-
-    .post-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-    }
+    .post-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .post-btn .btn { width: 100%; }
     .post-status { font-size: 12px; color: var(--text-muted); height: 16px; transition: all 0.3s; }
     .post-status.success { color: var(--green); }
     .post-status.error { color: var(--red); }
 
-    /* Spinner */
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Schedule Card */
     .schedule-info { font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
 
-    .hour-grid {
-      display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
-      margin-bottom: 20px;
-    }
+    .hour-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 20px; }
     @media (max-width: 500px) { .hour-grid { grid-template-columns: repeat(4, 1fr); } }
 
     .hour-btn {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
       border-radius: 8px; padding: 8px 4px;
       cursor: pointer; text-align: center;
       transition: all 0.15s; color: var(--text-dim);
@@ -255,17 +214,10 @@
 
     .schedule-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .selected-time-display { font-size: 13px; color: var(--text-dim); }
-    .selected-time-display strong { color: var(--text); }
 
-    /* Publish time hour grid - orange variant */
-    .hour-btn.selected-publish { background: var(--orange-glow); border-color: var(--orange-bright); color: var(--orange-bright); font-weight: 700; box-shadow: 0 0 12px var(--orange-glow); }
-
-    /* How It Works note panel */
     .note-panel {
-      background: rgba(124,58,237,0.06);
-      border: 1px solid rgba(124,58,237,0.15);
-      border-radius: 16px; padding: 20px;
-      margin-top: 16px;
+      background: rgba(217,119,6,0.06); border: 1px solid rgba(217,119,6,0.15);
+      border-radius: 16px; padding: 20px; margin-top: 16px;
     }
     .note-panel .note-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
     .note-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
@@ -274,25 +226,13 @@
 
     /* ─── ACTIVITY ─── */
     .activity-card { padding: 0; overflow: hidden; }
-
-    .activity-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 24px 28px 16px;
-    }
-
+    .activity-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 16px; }
     .activity-table { width: 100%; border-collapse: collapse; }
-    .activity-table th {
-      font-size: 11px; font-weight: 600; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em;
-      padding: 0 28px 12px; text-align: left;
-    }
+    .activity-table th { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 28px 12px; text-align: left; }
     .activity-table td { padding: 14px 28px; border-top: 1px solid var(--border); font-size: 13px; }
     .activity-table tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-    }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .badge-success { background: rgba(16,185,129,0.15); color: var(--green); }
     .badge-failure { background: rgba(239,68,68,0.15); color: var(--red); }
     .badge-running { background: rgba(59,130,246,0.15); color: var(--blue); }
@@ -310,10 +250,6 @@
     .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
     .toggle-label { font-size: 13px; color: var(--text-dim); }
 
-    /* ─── LOADING SKELETON ─── */
-    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%); background-size: 200%; animation: shimmer 1.5s infinite; border-radius: 6px; }
-    @keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
-
     /* ─── FOOTER ─── */
     footer { text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 16px; }
     footer a { color: var(--accent-bright); text-decoration: none; }
@@ -324,36 +260,36 @@
 <!-- ─── SETUP MODAL ─── -->
 <div class="modal-overlay" id="setup-modal">
   <div class="modal-box">
-    <div style="font-size:36px;margin-bottom:16px">🧠</div>
+    <div style="font-size:36px;margin-bottom:16px">🎭</div>
     <h2>Connect Your GitHub</h2>
     <p>
-      To control your automation pipeline, enter a GitHub Personal Access Token (PAT) with <strong>repo</strong> and <strong>workflow</strong> scopes.<br><br>
-      👉 <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=NextGenThoughts+Control+Panel" target="_blank">Create a token here</a> — select <strong>repo</strong> and <strong>workflow</strong>, then click Generate.
+      To control the Cartoon Plus automation, enter a GitHub Personal Access Token (PAT) with <strong>repo</strong> and <strong>workflow</strong> scopes.<br><br>
+      👉 <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=CartoonPlus+Control+Panel" target="_blank">Create a token here</a> — select <strong>repo</strong> and <strong>workflow</strong>, then click Generate.
     </p>
     <div class="input-group">
       <label>GitHub Personal Access Token</label>
       <input type="password" id="pat-input" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
     </div>
     <button class="btn btn-primary btn-full btn-lg" id="save-pat-btn" onclick="savePAT()">
-      🔐 Connect & Open Dashboard
+      🔐 Connect &amp; Open Dashboard
     </button>
   </div>
 </div>
 
 <!-- ─── APP ─── -->
-<div id="app" class="hidden" style="display:none">
+<div id="app" style="display:none">
 
   <!-- Nav -->
   <nav>
     <div class="nav-brand">
-      <div class="nav-icon">🧠</div>
+      <div class="nav-icon">🎭</div>
       <div>
-        <div class="nav-title">NextGenThoughts</div>
+        <div class="nav-title">Cartoon Plus</div>
         <div class="nav-sub">Control Panel</div>
       </div>
     </div>
     <div class="nav-right">
-      <a href="cartoon.html" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.25);color:#fbbf24;font-size:12px;font-weight:600;text-decoration:none;transition:all 0.2s" onmouseover="this.style.background='rgba(217,119,6,0.22)'" onmouseout="this.style.background='rgba(217,119,6,0.12)'">🎭 Cartoon Plus</a>
+      <a class="channel-link" href="index.html">🧠 NextGenThoughts</a>
       <div class="status-dot" id="status-dot"></div>
       <span id="status-text" style="font-size:13px;color:var(--text-dim)">Connecting...</span>
       <button class="btn btn-ghost" style="padding:8px 14px;font-size:12px" onclick="resetPAT()">⚙️ Reset Token</button>
@@ -365,7 +301,7 @@
     <!-- Stat Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">🎬 Next Generation</div>
+        <div class="stat-label">🎭 Next Generation</div>
         <div class="stat-value gradient-text" id="countdown">--:--</div>
         <div class="stat-sub" id="next-post-time">Loading schedule...</div>
       </div>
@@ -384,46 +320,43 @@
     <!-- Action Grid -->
     <div class="action-grid">
 
-      <!-- Post Now + Note -->
       <div style="display:flex;flex-direction:column;gap:16px">
         <!-- Post Now -->
         <div class="card post-now-card">
-          <div class="card-title">🚀 Post Now</div>
-          <p class="post-now-desc">Instantly trigger a new video generation and post it to YouTube and Facebook, bypassing the schedule.</p>
+          <div class="card-title">🚀 Post Now (Cartoon Plus)</div>
+          <p class="post-now-desc">Instantly trigger a new funny Hindi short, upload as Private to Cartoon Plus YouTube, and schedule its publish time.</p>
           <div class="post-btn">
             <button class="btn btn-primary btn-lg btn-full" id="post-now-btn" onclick="triggerNow()">
-              🎬 Generate &amp; Post Now
+              🎭 Generate &amp; Post Now
             </button>
             <div class="post-status" id="post-status"></div>
           </div>
         </div>
 
-        <!-- How It Works note -->
+        <!-- How It Works -->
         <div class="note-panel">
           <div class="note-title">📖 How It Works</div>
-          <div class="note-row"><span class="note-icon">🎬</span><div><strong style="color:var(--text)">Generation</strong> — Server creates a video &amp; uploads it to YouTube as <strong>Private</strong> at your set times.</div></div>
-          <div class="note-row"><span class="note-icon">⏳</span><div><strong style="color:var(--text)">Waiting</strong> — Video stays Private. All videos between two publish times queue for the next slot.</div></div>
-          <div class="note-row"><span class="note-icon">📺</span><div><strong style="color:var(--text)">Goes Public</strong> — YouTube releases it at your exact publish time. Your PC can be off!</div></div>
+          <div class="note-row"><span class="note-icon">🎭</span><div><strong style="color:var(--text)">Generation</strong> — AI writes a funny Hindi script, downloads calming clips, records voice & assembles video.</div></div>
+          <div class="note-row"><span class="note-icon">🤣</span><div><strong style="color:var(--text)">Meme Sound</strong> — The Majnu Bhai sound is auto-appended at the very end as the punchline kicker.</div></div>
+          <div class="note-row"><span class="note-icon">🔒</span><div><strong style="color:var(--text)">Private → Public</strong> — Uploaded as Private. Goes Public at your exact publish time automatically!</div></div>
         </div>
       </div>
 
       <!-- Generation Schedule -->
       <div class="card">
         <div class="card-title" style="justify-content:space-between">
-          <span>🎬 Video Generation Times</span>
+          <span>🎭 Video Generation Times</span>
           <div class="toggle-wrap">
             <label class="toggle"><input type="checkbox" id="enabled-toggle" onchange="toggleEnabled()"><span class="toggle-slider"></span></label>
             <span class="toggle-label" id="toggle-label">Enabled</span>
           </div>
         </div>
-        <p class="schedule-info">Click the hours below to set NPT top-of-the-hour times, or add custom exact minutes below.</p>
-        
-        <!-- Re-added Grid -->
-        <div class="hour-grid" id="hour-grid" style="margin-bottom:14px"></div>
+        <p class="schedule-info">Click the hours below to set NPT top-of-the-hour generation times, or add custom exact minutes.</p>
 
+        <div class="hour-grid" id="hour-grid" style="margin-bottom:14px"></div>
         <div id="gen-time-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="time" id="gen-time-input" value="19:45" style="background:#1a1a2e;border:1px solid var(--border-strong);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
+          <input type="time" id="gen-time-input" value="10:00" style="background:#1a1a2e;border:1px solid var(--border-strong);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
           <button class="btn btn-ghost" onclick="addGenTime()" style="padding:8px 16px">+ Add Custom Time</button>
         </div>
         <div class="schedule-footer" style="margin-top:14px">
@@ -441,19 +374,17 @@
           <span style="color:var(--orange-bright)">📺 YouTube Publish Times</span>
           <span style="font-size:12px;color:var(--text-muted);font-weight:400">Videos stay Private until these times</span>
         </div>
-        <p class="schedule-info">Click the hours below to set when your Private videos automatically go <strong style="color:var(--orange-bright)">Public</strong>, or add exact minutes below.</p>
-        
-        <!-- Re-added Grid -->
-        <div class="hour-grid" id="publish-hour-grid" style="margin-bottom:14px"></div>
+        <p class="schedule-info">Click the hours below to set when Private videos automatically go <strong style="color:var(--orange-bright)">Public</strong>.</p>
 
+        <div class="hour-grid" id="publish-hour-grid" style="margin-bottom:14px"></div>
         <div id="pub-time-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input type="time" id="pub-time-input" value="20:45" style="background:#1a1a2e;border:1px solid rgba(249,115,22,0.4);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
+          <input type="time" id="pub-time-input" value="11:00" style="background:#1a1a2e;border:1px solid rgba(249,115,22,0.4);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
           <button class="btn btn-ghost" onclick="addPubTime()" style="padding:8px 16px;border-color:var(--orange)">+ Add Custom Time</button>
         </div>
         <div class="schedule-footer" style="margin-top:14px">
           <div class="selected-time-display" id="publish-time-display">Times shown above (NPT)</div>
-          <button class="btn btn-orange" id="save-publish-btn" onclick="savePublishTimes()">💾 Save Publish Times</button>
+          <button class="btn btn-primary" id="save-publish-btn" onclick="savePublishTimes()" style="background:linear-gradient(135deg,var(--orange),#c2410c)">💾 Save Publish Times</button>
         </div>
       </div>
     </div>
@@ -461,7 +392,7 @@
     <!-- Activity Feed -->
     <div class="card activity-card">
       <div class="activity-header">
-        <div class="card-title" style="margin-bottom:0">📊 Recent Pipeline Runs</div>
+        <div class="card-title" style="margin-bottom:0">📊 Recent Cartoon Plus Runs</div>
         <button class="btn btn-ghost" style="padding:6px 14px;font-size:12px" onclick="loadRuns()">↻ Refresh</button>
       </div>
       <table class="activity-table">
@@ -483,7 +414,8 @@
   </main>
 
   <footer>
-    NextGenThoughts Automation · <a href="https://github.com/Susant07-star/Automated-video-generation" target="_blank">View on GitHub</a>
+    Cartoon Plus Automation · <a href="https://github.com/Susant07-star/Automated-video-generation" target="_blank">View on GitHub</a>
+    · <a href="index.html">Switch to NextGenThoughts ↗</a>
   </footer>
 
 </div>
@@ -492,11 +424,12 @@
   // ─── CONFIG ───────────────────────────────────────────────────────────────
   const OWNER    = 'Susant07-star';
   const REPO     = 'Automated-video-generation';
-  const WORKFLOW = 'auto_post.yml';
+  const WORKFLOW = 'auto_post_cartoon.yml';   // ← Cartoon Plus workflow
+  const SCHEDULE_FILE = 'schedule_config_cartoon.json'; // ← Cartoon Plus schedule
   const API      = 'https://api.github.com';
 
-  let selectedHours = [13]; // default
-  let publishTimes = ["20:00"]; // default
+  let genTimesArr = [];
+  let pubTimesArr = [];
   let scheduleConfig = { timezone: 'Asia/Kathmandu', generation_times: [], publish_times: [], enabled: true };
   let countdownInterval = null;
 
@@ -537,7 +470,6 @@
   }
 
   async function getFileContent(filePath) {
-    // Add a timestamp cache-buster so GitHub API doesn't return a stale cached version on page refresh
     const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/${filePath}?t=${Date.now()}`);
     return { content: JSON.parse(atob(data.content.replace(/\n/g,''))), sha: data.sha };
   }
@@ -559,31 +491,20 @@
   }
 
   // ─── SCHEDULE ─────────────────────────────────────────────────────────────
-  // genTimes / pubTimesArr are arrays of exact "HH:MM" strings
-  let genTimesArr = [];
-  let pubTimesArr = [];
-
   async function loadSchedule() {
     try {
-      const { content } = await getFileContent('schedule_config.json');
+      const { content } = await getFileContent(SCHEDULE_FILE);
       scheduleConfig = content;
-
-      // Normalize to HH:MM strings
       const normalize = arr => (arr || []).map(t =>
         typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : String(t)
       );
-
-      genTimesArr = normalize(content.generation_times || content.post_hours_utc || []);
+      genTimesArr = normalize(content.generation_times || []);
       pubTimesArr = normalize(content.publish_times || []);
-
-      updateHourGrid();
-      updatePublishHourGrid();
-      renderGenTags();
-      renderPubTags();
+      updateHourGrid(); updatePublishHourGrid();
+      renderGenTags(); renderPubTags();
       document.getElementById('enabled-toggle').checked = content.enabled !== false;
       document.getElementById('toggle-label').textContent = content.enabled !== false ? 'Enabled' : 'Disabled';
-      updateScheduleDisplay();
-      updateCountdown();
+      updateScheduleDisplay(); updateCountdown();
       document.getElementById('status-dot').style.background = content.enabled !== false ? 'var(--green)' : 'var(--yellow)';
       document.getElementById('status-text').textContent = content.enabled !== false ? 'Active' : 'Paused';
     } catch(e) {
@@ -595,7 +516,7 @@
   function renderGenTags() {
     const list = document.getElementById('gen-time-list');
     list.innerHTML = genTimesArr.map(t =>
-      `<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.5);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600">
+      `<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(217,119,6,0.2);border:1px solid rgba(217,119,6,0.5);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;color:var(--accent-bright)">
         ${t} NPT
         <span onclick="removeGenTime('${t}')" style="cursor:pointer;opacity:0.7;font-size:16px;line-height:1">&times;</span>
       </span>`
@@ -612,54 +533,35 @@
     ).join('');
   }
 
-  function addGenTime() {
-    const val = document.getElementById('gen-time-input').value;
-    if (!val) return;
-    if (!genTimesArr.includes(val)) { genTimesArr.push(val); genTimesArr.sort(); }
-    renderGenTags(); updateHourGrid();
-  }
+  function addGenTime() { const val = document.getElementById('gen-time-input').value; if (!val) return; if (!genTimesArr.includes(val)) { genTimesArr.push(val); genTimesArr.sort(); } renderGenTags(); updateHourGrid(); }
   function removeGenTime(t) { genTimesArr = genTimesArr.filter(x => x !== t); renderGenTags(); updateHourGrid(); }
-
-  function addPubTime() {
-    const val = document.getElementById('pub-time-input').value;
-    if (!val) return;
-    if (!pubTimesArr.includes(val)) { pubTimesArr.push(val); pubTimesArr.sort(); }
-    renderPubTags(); updatePublishHourGrid();
-  }
+  function addPubTime() { const val = document.getElementById('pub-time-input').value; if (!val) return; if (!pubTimesArr.includes(val)) { pubTimesArr.push(val); pubTimesArr.sort(); } renderPubTags(); updatePublishHourGrid(); }
   function removePubTime(t) { pubTimesArr = pubTimesArr.filter(x => x !== t); renderPubTags(); updatePublishHourGrid(); }
 
   async function saveSchedule() {
     const btn = document.getElementById('save-schedule-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
+      const { sha } = await getFileContent(SCHEDULE_FILE).catch(() => ({ sha: null }));
       const newConfig = { ...scheduleConfig, generation_times: genTimesArr, publish_times: pubTimesArr };
-      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update generation times to ${genTimesArr.join(', ')} [skip ci]`);
-      scheduleConfig = newConfig;
-      updateCountdown(); updateScheduleDisplay();
+      await updateFileContent(SCHEDULE_FILE, newConfig, sha, `chore: update cartoon generation times [skip ci]`);
+      scheduleConfig = newConfig; updateCountdown(); updateScheduleDisplay();
       btn.textContent = '✅ Saved!';
       setTimeout(() => { btn.textContent = '💾 Save Generation Times'; btn.disabled = false; }, 2000);
-    } catch(e) {
-      btn.textContent = '❌ Failed'; alert('Failed: ' + e.message);
-      setTimeout(() => { btn.textContent = '💾 Save Generation Times'; btn.disabled = false; }, 2000);
-    }
+    } catch(e) { btn.textContent = '❌ Failed'; alert('Failed: ' + e.message); setTimeout(() => { btn.textContent = '💾 Save Generation Times'; btn.disabled = false; }, 2000); }
   }
 
   async function savePublishTimes() {
     const btn = document.getElementById('save-publish-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
+      const { sha } = await getFileContent(SCHEDULE_FILE).catch(() => ({ sha: null }));
       const newConfig = { ...scheduleConfig, publish_times: pubTimesArr, generation_times: genTimesArr };
-      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update publish times to ${pubTimesArr.join(', ')} [skip ci]`);
-      scheduleConfig = newConfig;
-      updateCountdown(); updateScheduleDisplay();
+      await updateFileContent(SCHEDULE_FILE, newConfig, sha, `chore: update cartoon publish times [skip ci]`);
+      scheduleConfig = newConfig; updateCountdown(); updateScheduleDisplay();
       btn.textContent = '✅ Saved!';
       setTimeout(() => { btn.textContent = '💾 Save Publish Times'; btn.disabled = false; }, 2000);
-    } catch(e) {
-      btn.textContent = '❌ Failed'; alert('Failed: ' + e.message);
-      setTimeout(() => { btn.textContent = '💾 Save Publish Times'; btn.disabled = false; }, 2000);
-    }
+    } catch(e) { btn.textContent = '❌ Failed'; alert('Failed: ' + e.message); setTimeout(() => { btn.textContent = '💾 Save Publish Times'; btn.disabled = false; }, 2000); }
   }
 
   async function toggleEnabled() {
@@ -669,29 +571,19 @@
     document.getElementById('status-dot').style.background = enabled ? 'var(--green)' : 'var(--yellow)';
     document.getElementById('status-text').textContent = enabled ? 'Active' : 'Paused';
     try {
-      const { sha } = await getFileContent('schedule_config.json');
-      await updateFileContent('schedule_config.json', { ...scheduleConfig, enabled }, sha, `chore: ${enabled ? 'enable' : 'disable'} auto-posting [skip ci]`);
+      const { sha } = await getFileContent(SCHEDULE_FILE);
+      await updateFileContent(SCHEDULE_FILE, { ...scheduleConfig, enabled }, sha, `chore: ${enabled ? 'enable' : 'disable'} cartoon auto-posting [skip ci]`);
     } catch(e) { console.error('Toggle save failed:', e); }
   }
 
-  // ─── RE-ADDED HOUR GRIDS ──────────────────────────────────────────────────
-  function localLabel(utcH) {
-    const d = new Date(); d.setUTCHours(utcH, 0, 0, 0);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-  }
-
-  function nptLabel(h) {
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    return `${h % 12 || 12}:00 ${ampm}`;
-  }
+  // ─── HOUR GRIDS ───────────────────────────────────────────────────────────
+  function nptLabel(h) { const ampm = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:00 ${ampm}`; }
 
   function buildHourGrid() {
-    const grid = document.getElementById('hour-grid');
-    grid.innerHTML = '';
+    const grid = document.getElementById('hour-grid'); grid.innerHTML = '';
     for (let h = 0; h < 24; h++) {
       const btn = document.createElement('div');
-      btn.className = 'hour-btn';
-      btn.id = `hour-${h}`;
+      btn.className = 'hour-btn'; btn.id = `hour-${h}`;
       btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${nptLabel(h)}</span>`;
       btn.onclick = () => selectHour(h);
       grid.appendChild(btn);
@@ -700,34 +592,20 @@
 
   function updateHourGrid() {
     document.querySelectorAll('.hour-btn').forEach(b => b.classList.remove('selected'));
-    genTimesArr.forEach(t => {
-      const [gh, gm] = t.split(':').map(Number);
-      if (gm === 0) {
-        const el = document.getElementById(`hour-${gh}`);
-        if (el) el.classList.add('selected');
-      }
-    });
+    genTimesArr.forEach(t => { const [gh, gm] = t.split(':').map(Number); if (gm === 0) { const el = document.getElementById(`hour-${gh}`); if (el) el.classList.add('selected'); } });
   }
 
   function selectHour(h) {
     const tStr = `${String(h).padStart(2,'0')}:00`;
-    if (genTimesArr.includes(tStr)) {
-      genTimesArr = genTimesArr.filter(x => x !== tStr);
-    } else {
-      genTimesArr.push(tStr);
-      genTimesArr.sort();
-    }
-    updateHourGrid();
-    renderGenTags();
+    if (genTimesArr.includes(tStr)) { genTimesArr = genTimesArr.filter(x => x !== tStr); } else { genTimesArr.push(tStr); genTimesArr.sort(); }
+    updateHourGrid(); renderGenTags();
   }
 
   function buildPublishGrid() {
-    const grid = document.getElementById('publish-hour-grid');
-    grid.innerHTML = '';
+    const grid = document.getElementById('publish-hour-grid'); grid.innerHTML = '';
     for (let h = 0; h < 24; h++) {
       const btn = document.createElement('div');
-      btn.className = 'hour-btn';
-      btn.id = `pub-hour-${h}`;
+      btn.className = 'hour-btn'; btn.id = `pub-hour-${h}`;
       btn.innerHTML = `<span class="utc">${h}:00</span><span class="local">${nptLabel(h)}</span>`;
       btn.onclick = () => selectPublishHour(h);
       grid.appendChild(btn);
@@ -736,118 +614,48 @@
 
   function updatePublishHourGrid() {
     document.querySelectorAll('[id^="pub-hour-"]').forEach(b => b.classList.remove('selected-publish'));
-    pubTimesArr.forEach(t => {
-      const [ph, pm] = t.split(':').map(Number);
-      if (pm === 0) {
-        const el = document.getElementById(`pub-hour-${ph}`);
-        if (el) el.classList.add('selected-publish');
-      }
-    });
+    pubTimesArr.forEach(t => { const [ph, pm] = t.split(':').map(Number); if (pm === 0) { const el = document.getElementById(`pub-hour-${ph}`); if (el) el.classList.add('selected-publish'); } });
   }
 
   function selectPublishHour(h) {
     const tStr = `${String(h).padStart(2,'0')}:00`;
-    if (pubTimesArr.includes(tStr)) {
-      pubTimesArr = pubTimesArr.filter(x => x !== tStr);
-    } else {
-      pubTimesArr.push(tStr);
-      pubTimesArr.sort();
-    }
-    updatePublishHourGrid();
-    renderPubTags();
+    if (pubTimesArr.includes(tStr)) { pubTimesArr = pubTimesArr.filter(x => x !== tStr); } else { pubTimesArr.push(tStr); pubTimesArr.sort(); }
+    updatePublishHourGrid(); renderPubTags();
   }
 
-  // ─── TIME UTILS ───────────────────────────────────────────────────────────
+  // ─── SCHEDULE DISPLAY ─────────────────────────────────────────────────────
   function updateScheduleDisplay() {
-    const rawGen = scheduleConfig.generation_times || scheduleConfig.post_hours_utc || [];
-    const genTimes = rawGen.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
-    
-    if (genTimes.length === 0) {
-      document.getElementById('next-post-time').textContent = `No generation times set`;
-    } else {
-      document.getElementById('next-post-time').textContent = `Daily at: ${genTimes.join(' & ')}`;
-    }
-    
-    const rawPub = scheduleConfig.publish_times || [];
-    const pubTimeStrs = rawPub.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
-    
-    if (pubTimeStrs.length === 0) {
-      document.getElementById('next-public-time').textContent = `No publish times set`;
-    } else {
-      document.getElementById('next-public-time').textContent = `Goes public at: ${pubTimeStrs.join(' & ')}`;
-    }
+    const genTimes = (scheduleConfig.generation_times || []).map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+    document.getElementById('next-post-time').textContent = genTimes.length ? `Daily at: ${genTimes.join(' & ')}` : 'No generation times set';
+    const pubTimes = (scheduleConfig.publish_times || []).map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+    document.getElementById('next-public-time').textContent = pubTimes.length ? `Goes public at: ${pubTimes.join(' & ')}` : 'No publish times set';
   }
 
   function updateCountdown() {
     if (countdownInterval) clearInterval(countdownInterval);
     countdownInterval = setInterval(() => {
       const now = new Date();
+      const nptParts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kathmandu', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+      const p = Object.fromEntries(nptParts.map(x => [x.type, x.value]));
+      const nowNPTms = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
 
-      // ── Generation countdown ──────────────────────────────────────────────
-      const rawGen = scheduleConfig.generation_times || [];
-      const genTimesStr = rawGen.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
-      if (genTimesStr.length === 0) {
-        document.getElementById('countdown').textContent = '--:--';
-      } else {
-        // Use Intl to get the current NPT hour+minute, then build a real UTC Date for target
-        const nptParts = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Asia/Kathmandu',
-          hour: '2-digit', minute: '2-digit', second: '2-digit',
-          hour12: false, year: 'numeric', month: '2-digit', day: '2-digit'
-        }).formatToParts(now);
-        const p = Object.fromEntries(nptParts.map(x => [x.type, x.value]));
-        const nowNPTms = Date.UTC(
-          +p.year, +p.month - 1, +p.day,
-          +p.hour % 24, +p.minute, +p.second
-        );
+      const genTimesStr = (scheduleConfig.generation_times || []).map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+      if (genTimesStr.length === 0) { document.getElementById('countdown').textContent = '--:--'; }
+      else {
         let nextGenMs = null;
-        for (let t of genTimesStr) {
-          const [gh, gm] = t.split(':').map(Number);
-          // Build the target in NPT = same date, set h/m
-          let targetMs = Date.UTC(+p.year, +p.month - 1, +p.day, gh, gm, 0);
-          if (targetMs <= nowNPTms) targetMs += 86400000; // push to tomorrow
-          if (nextGenMs === null || targetMs < nextGenMs) nextGenMs = targetMs;
-        }
+        for (let t of genTimesStr) { const [gh, gm] = t.split(':').map(Number); let targetMs = Date.UTC(+p.year, +p.month - 1, +p.day, gh, gm, 0); if (targetMs <= nowNPTms) targetMs += 86400000; if (nextGenMs === null || targetMs < nextGenMs) nextGenMs = targetMs; }
         const diffG = Math.max(0, nextGenMs - nowNPTms);
-        const hhG = Math.floor(diffG / 3600000);
-        const mmG = Math.floor((diffG % 3600000) / 60000);
-        const ssG = Math.floor((diffG % 60000) / 1000);
-        document.getElementById('countdown').textContent =
-          `${String(hhG).padStart(2,'0')}:${String(mmG).padStart(2,'0')}:${String(ssG).padStart(2,'0')}`;
+        document.getElementById('countdown').textContent = `${String(Math.floor(diffG/3600000)).padStart(2,'0')}:${String(Math.floor((diffG%3600000)/60000)).padStart(2,'0')}:${String(Math.floor((diffG%60000)/1000)).padStart(2,'0')}`;
       }
 
-      // ── Publish countdown ─────────────────────────────────────────────────
-      const rawPub = scheduleConfig.publish_times || [];
-      const pubTimesStr = rawPub.map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
-      if (pubTimesStr.length === 0) {
-        document.getElementById('publish-countdown').textContent = '--:--';
-      } else {
-        // Same reliable Intl approach — get current NPT moment as UTC epoch
-        const nptParts2 = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Asia/Kathmandu',
-          hour: '2-digit', minute: '2-digit', second: '2-digit',
-          hour12: false, year: 'numeric', month: '2-digit', day: '2-digit'
-        }).formatToParts(now);
-        const p2 = Object.fromEntries(nptParts2.map(x => [x.type, x.value]));
-        const nowNPTms2 = Date.UTC(
-          +p2.year, +p2.month - 1, +p2.day,
-          +p2.hour % 24, +p2.minute, +p2.second
-        );
+      const pubTimesStr = (scheduleConfig.publish_times || []).map(t => typeof t === 'number' ? `${String(t).padStart(2,'0')}:00` : t);
+      if (pubTimesStr.length === 0) { document.getElementById('publish-countdown').textContent = '--:--'; }
+      else {
         let nextPubMs = null;
-        for (let t of pubTimesStr) {
-          const [ph, pm] = t.split(':').map(Number);
-          let targetMs = Date.UTC(+p2.year, +p2.month - 1, +p2.day, ph, pm, 0);
-          if (targetMs <= nowNPTms2) targetMs += 86400000; // push to tomorrow
-          if (nextPubMs === null || targetMs < nextPubMs) nextPubMs = targetMs;
-        }
-        const diffP = Math.max(0, nextPubMs - nowNPTms2);
-        const hhP = Math.floor(diffP / 3600000);
-        const mmP = Math.floor((diffP % 3600000) / 60000);
-        const ssP = Math.floor((diffP % 60000) / 1000);
-        document.getElementById('publish-countdown').textContent =
-          `${String(hhP).padStart(2,'0')}:${String(mmP).padStart(2,'0')}:${String(ssP).padStart(2,'0')}`;
+        for (let t of pubTimesStr) { const [ph, pm] = t.split(':').map(Number); let targetMs = Date.UTC(+p.year, +p.month - 1, +p.day, ph, pm, 0); if (targetMs <= nowNPTms) targetMs += 86400000; if (nextPubMs === null || targetMs < nextPubMs) nextPubMs = targetMs; }
+        const diffP = Math.max(0, nextPubMs - nowNPTms);
+        document.getElementById('publish-countdown').textContent = `${String(Math.floor(diffP/3600000)).padStart(2,'0')}:${String(Math.floor((diffP%3600000)/60000)).padStart(2,'0')}:${String(Math.floor((diffP%60000)/1000)).padStart(2,'0')}`;
       }
-
     }, 1000);
   }
 
@@ -872,29 +680,22 @@
       status.textContent = e.message;
       status.className = 'post-status error';
     }
-    setTimeout(() => { btn.disabled = false; btn.innerHTML = '🎬 Generate &amp; Post Now'; }, 5000);
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = '🎭 Generate &amp; Post Now'; }, 5000);
   }
 
   // ─── RECENT RUNS ──────────────────────────────────────────────────────────
   async function loadRuns() {
     try {
       const data = await ghFetch(`/repos/${OWNER}/${REPO}/actions/runs?per_page=8`);
-      const runs = data.workflow_runs || [];
+      const runs = (data.workflow_runs || []).filter(r => r.path && r.path.includes('cartoon'));
       const tbody = document.getElementById('runs-tbody');
-
-      if (!runs.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No runs yet. Click "Post Now" to start!</div></td></tr>';
-        return;
-      }
-
-      // Update last run stat card
+      if (!runs.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No Cartoon Plus runs yet. Click "Post Now" to start!</div></td></tr>'; return; }
       if (runs[0]) {
         const lr = runs[0];
         const statusMap = { success:'✅ Success', failure:'❌ Failed', in_progress:'🔄 Running', skipped:'⏭ Skipped', cancelled:'🚫 Cancelled' };
         document.getElementById('last-run-status').textContent = statusMap[lr.conclusion || lr.status] || lr.conclusion || lr.status;
         document.getElementById('last-run-time').textContent = timeAgo(lr.created_at);
       }
-
       tbody.innerHTML = runs.map(run => {
         const dur = run.updated_at && run.created_at ? Math.round((new Date(run.updated_at) - new Date(run.created_at)) / 1000) : 0;
         const durStr = dur > 0 ? `${Math.floor(dur/60)}m ${dur%60}s` : '—';
@@ -930,11 +731,7 @@
   }
 
   // ─── BOOT ─────────────────────────────────────────────────────────────────
-  if (getToken()) {
-    showApp();
-  } else {
-    document.getElementById('setup-modal').classList.remove('hidden');
-  }
+  if (getToken()) { showApp(); } else { document.getElementById('setup-modal').classList.remove('hidden'); }
 </script>
 </body>
 </html>
