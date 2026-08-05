@@ -292,10 +292,8 @@ def generate_voiceover(text: str, output_filename="temp_voice.mp3", profile="mot
         else:
             elevenlabs_rotator.remove_key(current_key)
 
-    # Fail if all ElevenLabs keys are exhausted
-    print("❌ All ElevenLabs keys exhausted or failed.")
-    raise Exception(
-        f"ElevenLabs generation failed. If you got 'voice_not_found', make sure to add the voice ID "
-        f"'{ELEVENLABS_VOICE_ID}' to your ElevenLabs Voice Library, or change ELEVENLABS_VOICE_ID in your .env file."
-    )
+    # Fallback to English edge-tts if all ElevenLabs keys are exhausted/rejected
+    print("⚠️ All ElevenLabs keys exhausted or rejected. Falling back to edge-tts (en-US-GuyNeural)...")
+    asyncio.run(_generate_fallback_async(text, output_filename, profile="motivational"))
+    return output_filename
 
