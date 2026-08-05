@@ -223,7 +223,8 @@ def main():
                     description=yt_desc,
                     tags=yt_tags,
                     token_file=YT_TOKEN_FILE,           # ← Cartoon Plus channel token
-                    schedule_config_file=SCHEDULE_CFG   # ← Cartoon Plus publish schedule
+                    schedule_config_file=SCHEDULE_CFG,  # ← Cartoon Plus publish schedule
+                    category_id="24"                    # ← Entertainment (not Education)
                 )
                 print("   ✅ Uploaded! Video is PRIVATE and will auto-publish per schedule.")
             except Exception as e:

@@ -158,7 +158,7 @@ def get_next_publish_time_iso(schedule_config_file='schedule_config.json'):
     print(f"   🔒 Video will be PRIVATE until: {target.strftime('%Y-%m-%d %H:%M %Z')}")
     return target.isoformat()
 
-def upload_to_youtube(video_path: str, title: str, description: str, tags: list, token_file='youtube_token.json', schedule_config_file='schedule_config.json'):
+def upload_to_youtube(video_path: str, title: str, description: str, tags: list, token_file='youtube_token.json', schedule_config_file='schedule_config.json', category_id='27'):
     youtube = get_youtube_service(token_file=token_file)
     if not youtube:
         return
@@ -176,7 +176,7 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list,
             "title": title,
             "description": description,
             "tags": tags,
-            "categoryId": "27"  # Education
+            "categoryId": category_id  # 24 = Entertainment, 27 = Education
         },
         "status": {
             "privacyStatus": "private",  # Stays PRIVATE until publishAt time
