@@ -572,8 +572,8 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         layers.append(vignette_clip)
 
     # Text / Subtitles
-    if profile == "cartoon":
-        # Cartoon Plus gets dynamic karaoke subtitles
+    if profile != "cartoon":
+        # NextGen Thoughts gets dynamic karaoke subtitles
         timestamps_file = audio_path + ".json"
         subtitle_clips = create_dynamic_subtitles(
             timestamps_file, TARGET_W, TARGET_H, target_duration, voice_offset=0.5
@@ -581,14 +581,7 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         if subtitle_clips:
             for c in subtitle_clips:
                 layers.append(c)
-    else:
-        # NextGen Thoughts gets the classic large static text block
-        text_img = create_text_image(textwrap.fill(text, width=25), TARGET_W, TARGET_H)
-        txt_clip = (ImageClip(text_img)
-                    .set_duration(target_duration)
-                    .set_position('center')
-                    .crossfadein(1.2))
-        layers.append(txt_clip)
+        # If timestamps are missing, it intentionally renders no text, avoiding the old static block.
 
 
 
