@@ -571,16 +571,18 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
         vignette_clip = ImageClip(vignette_arr).set_duration(target_duration)
         layers.append(vignette_clip)
 
-    # Dynamic Subtitles
-    timestamps_file = audio_path + ".json"
-    subtitle_clips = create_dynamic_subtitles(
-        timestamps_file, TARGET_W, TARGET_H, target_duration, voice_offset=0.5
-    )
-
-    if subtitle_clips:
-        for c in subtitle_clips:
-            layers.append(c)
+    # Text / Subtitles
+    if profile == "cartoon":
+        # Cartoon Plus gets dynamic karaoke subtitles
+        timestamps_file = audio_path + ".json"
+        subtitle_clips = create_dynamic_subtitles(
+            timestamps_file, TARGET_W, TARGET_H, target_duration, voice_offset=0.5
+        )
+        if subtitle_clips:
+            for c in subtitle_clips:
+                layers.append(c)
     else:
+        # NextGen Thoughts gets the classic large static text block
         text_img = create_text_image(textwrap.fill(text, width=25), TARGET_W, TARGET_H)
         txt_clip = (ImageClip(text_img)
                     .set_duration(target_duration)
