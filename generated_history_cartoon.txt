@@ -42,3 +42,4 @@
 - Chintu's logic on gym vs library for smartness
 - Chintu's funny solution for melting in the heat
 - Kid misunderstands 'flight mode' as phone flying
+- Child misunderstands alarm clock, thinks Mom is the alarm
