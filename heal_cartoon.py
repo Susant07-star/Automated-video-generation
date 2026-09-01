@@ -18,6 +18,8 @@ import datetime
 from googleapiclient.discovery import build
 from src.uploader import get_youtube_service, YOUTUBE_SCOPES
 from google import genai
+from google.genai import errors
+from src.api_manager import gemini_rotator
 from dotenv import load_dotenv
 
 # Force UTF-8 output so emoji never crash on Windows terminals
@@ -28,8 +30,6 @@ if hasattr(sys.stderr, 'reconfigure'):
 
 load_dotenv()
 
-_gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEYS", "").split(",")[0].strip()
-gemini_client = genai.Client(api_key=_gemini_key) if _gemini_key else None
 
 # Cartoon Plus specific files
 HISTORY_FILE   = "posted_history_cartoon.json"
@@ -186,14 +186,40 @@ INSTRUCTIONS:
     """
 
     print("   🧠 Sending Cartoon Plus data to Gemini for analysis...")
-    if not gemini_client:
-        print("   ❌ Error: No Gemini API key configured.")
+    
+    max_retries = 5
+    response = None
+    models_to_try = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
+    
+    while gemini_rotator.has_keys() and max_retries > 0 and not response:
+        max_retries -= 1
+        current_key = gemini_rotator.get_random_key()
+        client = genai.Client(api_key=current_key)
+        
+        for model_name in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                break  # Success, break out of model loop
+            except errors.APIError as e:
+                print(f"Gemini API Error with model {model_name} on key {current_key[:5]}...: {e}")
+                if e.code in [429, 403]:
+                    print(f"Key {current_key[:5]}... hit limit. Rotating key...")
+                    gemini_rotator.remove_key(current_key)
+                    break  # Break out of model loop to try next key
+                else:
+                    print(f"Falling back to next model...")
+                    continue
+            except Exception as e:
+                print(f"Unexpected error with model {model_name}: {e}")
+                continue
+            
+    if not response:
+        print("   ❌ Error: Could not get a response from Gemini. All API keys or models exhausted.")
         return
         
-    response = gemini_client.models.generate_content(
-        model='gemini-2.5-pro',
-        contents=prompt
-    )
     new_rules = response.text.strip()
 
     with open(DIRECTIVES_FILE, "w", encoding="utf-8") as f:

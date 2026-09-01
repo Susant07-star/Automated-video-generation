@@ -208,7 +208,7 @@ def generate_content(profile="motivational") -> dict:
             "Every word must hit hard.\n\n"
 
             "PLATFORM SEO METADATA (generate after the script):\n"
-            "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, urgent or forbidden feeling). "
+            "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, urgent or forbidden feeling). IMPORTANT: At the very end of the title, append 2-3 of the most relevant hashtags (e.g. '#shorts #psychology'). "
             "A rich, multi-paragraph YouTube description (minimum 150 words). IMPORTANT: You MUST include highly searched phrases "
             "in both English and Romanized Hindi (e.g., 'dark psychology tricks in hindi', 'kaise kare', 'manipulation secrets') organically in the description, ending with hashtags. "
             "A list of 12-15 highly viral, trending tags.\n"
@@ -329,21 +329,43 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
         )
 
     max_retries = 5
-    while gemini_rotator.has_keys() and max_retries > 0:
+    response = None
+    raw_text = ""
+    models_to_try = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
+    
+    while gemini_rotator.has_keys() and max_retries > 0 and not response:
         max_retries -= 1
         current_key = gemini_rotator.get_random_key()
+        client = genai.Client(api_key=current_key)
+        
+        for model_name in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config={
+                        'tools': [{'google_search': {}}],
+                    }
+                )
+                raw_text = response.text.strip()
+                break  # Success, break out of model loop
+            except errors.APIError as e:
+                print(f"Gemini API Error with model {model_name} on key {current_key[:5]}...: {e}")
+                if e.code in [429, 403]:
+                    print(f"Key {current_key[:5]}... hit limit. Rotating key...")
+                    gemini_rotator.remove_key(current_key)
+                    break  # Break out of model loop to try next key
+                else:
+                    print(f"Falling back to next model...")
+                    continue
+            except Exception as e:
+                print(f"Unexpected error with model {model_name}: {e}")
+                continue
+
+        if not response:
+            continue # If all models failed for this key, the loop will try the next key
+            
         try:
-            client = genai.Client(api_key=current_key)
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config={
-                    'tools': [{'google_search': {}}],
-                }
-            )
-
-            raw_text = response.text.strip()
-
             start_idx = raw_text.find('{')
             end_idx = raw_text.rfind('}')
 
