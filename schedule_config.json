@@ -18,5 +18,6 @@
   "post_hours_utc": [
     14
   ],
-  "enabled": true
+  "enabled": true,
+  "analytics_day": ""
 }
