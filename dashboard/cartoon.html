@@ -582,10 +582,26 @@
   }
 
   async function updateFileContent(filePath, content, sha, message) {
+    // Only include sha if it exists — omitting it creates the file; including null causes 422
+    const body = { message, content: btoa(JSON.stringify(content, null, 2)) };
+    if (sha) body.sha = sha;
     return ghFetch(`/repos/${OWNER}/${REPO}/contents/${filePath}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, content: btoa(JSON.stringify(content, null, 2)), sha })
+      body: JSON.stringify(body)
+    });
+  }
+
+  // Updates the cron day in a workflow YAML file so the actual CI schedule changes
+  async function updateWorkflowCronDay(workflowFile, cronHour, dayNumber) {
+    const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/.github/workflows/${workflowFile}?t=${Date.now()}`);
+    const rawText = atob(data.content.replace(/\n/g, ''));
+    const sha = data.sha;
+    const updated = rawText.replace(/(cron:\s*'\d+\s+\d+\s+\*\s+\*\s+)\d+'/, `$1${dayNumber}'`);
+    if (updated === rawText) return; // Already set
+    const body = { message: `chore: update ${workflowFile} cron to weekday ${dayNumber} [skip ci]`, content: btoa(unescape(encodeURIComponent(updated))), sha };
+    await ghFetch(`/repos/${OWNER}/${REPO}/contents/.github/workflows/${workflowFile}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     });
   }
 
@@ -681,17 +697,22 @@
   async function saveAnalyticsDay() {
     // Read value immediately — the select element is never touched, avoiding the collapse bug
     const day = document.getElementById('analytics-day-select').value; // day name string e.g. "Sunday"
+    const DAY_NUM = { Sunday:0, Monday:1, Tuesday:2, Wednesday:3, Thursday:4, Friday:5, Saturday:6 };
+    const dayNumber = DAY_NUM[day] ?? 0;
     const statusEl = document.getElementById('doctor-status');
     statusEl.textContent = '⏳ Saving...';
     statusEl.className = 'doctor-status';
     try {
+      // 1. Save to schedule_config_cartoon.json so dropdown persists on refresh
       const { sha } = await getFileContent(SCHEDULE_FILE).catch(() => ({ sha: null }));
       const newConfig = { ...scheduleConfig, analytics_day: day };
       await updateFileContent(SCHEDULE_FILE, newConfig, sha, `chore: update cartoon analytics day to ${day} [skip ci]`);
       scheduleConfig = newConfig;
-      statusEl.textContent = `✅ Saved: Doctor runs every ${day}`;
+      // 2. Update the actual cron day in analyze_cartoon.yml so GitHub Actions runs on right day
+      await updateWorkflowCronDay('analyze_cartoon.yml', 4, dayNumber);
+      statusEl.textContent = `✅ Saved: Doctor now runs every ${day}`;
       statusEl.className = 'doctor-status success';
-      setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'doctor-status'; }, 3000);
+      setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'doctor-status'; }, 4000);
     } catch(e) {
       statusEl.textContent = '❌ Error saving: ' + e.message;
       statusEl.className = 'doctor-status error';
