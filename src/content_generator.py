@@ -331,15 +331,19 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
     max_retries = 5
     response = None
     raw_text = ""
+    # Models ordered by preference: try newer/better first, fall back to older ones
     models_to_try = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
-    
+
     while gemini_rotator.has_keys() and max_retries > 0 and not response:
         max_retries -= 1
         current_key = gemini_rotator.get_random_key()
         client = genai.Client(api_key=current_key)
-        
+
+        all_models_exhausted_on_key = True  # Assume all fail unless one succeeds
+
         for model_name in models_to_try:
             try:
+                print(f"Trying model '{model_name}' on key {current_key[:5]}...")
                 response = client.models.generate_content(
                     model=model_name,
                     contents=prompt,
@@ -348,23 +352,37 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
                     }
                 )
                 raw_text = response.text.strip()
-                break  # Success, break out of model loop
+                all_models_exhausted_on_key = False
+                print(f"✅ Success with model '{model_name}'")
+                break  # Success — exit model loop
+
             except errors.APIError as e:
                 print(f"Gemini API Error with model {model_name} on key {current_key[:5]}...: {e}")
                 if e.code in [429, 403]:
-                    print(f"Key {current_key[:5]}... hit limit. Rotating key...")
-                    gemini_rotator.remove_key(current_key)
-                    break  # Break out of model loop to try next key
+                    # This model's quota is exhausted on this key.
+                    # DO NOT rotate key yet — try the next fallback model first.
+                    print(f"  ↳ Rate/quota limit on '{model_name}'. Trying next fallback model...")
+                    continue  # Try next model in list
                 else:
-                    print(f"Falling back to next model...")
+                    # Non-quota error (e.g. 400 bad request, 500 server error)
+                    # Still worth trying the next model, but this key may still work
+                    print(f"  ↳ Non-quota error ({e.code}) on '{model_name}'. Trying next fallback model...")
+                    all_models_exhausted_on_key = False  # Key isn't necessarily dead
                     continue
+
             except Exception as e:
                 print(f"Unexpected error with model {model_name}: {e}")
+                all_models_exhausted_on_key = False  # Unknown error, don't kill the key
                 continue
 
+        # After exhausting ALL models on this key, only then remove the key
+        if all_models_exhausted_on_key and not response:
+            print(f"Key {current_key[:5]}... is rate-limited across ALL models. Removing key and rotating...")
+            gemini_rotator.remove_key(current_key)
+
         if not response:
-            continue # If all models failed for this key, the loop will try the next key
-            
+            continue  # Try next key
+
         try:
             start_idx = raw_text.find('{')
             end_idx = raw_text.rfind('}')
@@ -382,6 +400,8 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
             # Programmatically reject duplicates — never trust Gemini alone.
             if _is_topic_duplicate(topic_name, used_topics):
                 print(f"⚠️  Duplicate topic detected ('{topic_name}'). Forcing retry...")
+                response = None  # Reset so the outer while loop retries
+                raw_text = ""
                 max_retries += 1  # Don't waste a retry on Gemini's mistake
                 continue
             # ─────────────────────────────────────────────────────────────────────
@@ -394,23 +414,29 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
             return content
 
         except errors.APIError as e:
-            print(f"Gemini API Error with key {current_key[:5]}...: {e}")
+            print(f"Gemini API Error during post-processing with key {current_key[:5]}...: {e}")
             if e.code in [429, 403]:
                 print(f"Key {current_key[:5]}... hit limit. Rotating...")
                 gemini_rotator.remove_key(current_key)
             else:
                 print("Unknown API error, rotating key anyway.")
                 gemini_rotator.remove_key(current_key)
+            response = None
+            raw_text = ""
         except json.JSONDecodeError:
             print("Failed to decode JSON from Gemini response. Raw output was:")
             print(raw_text)
             print("Retrying generation...")
+            response = None
+            raw_text = ""
             continue
         except Exception as e:
             print(f"Unexpected error: {e}")
             gemini_rotator.remove_key(current_key)
+            response = None
+            raw_text = ""
 
-    print("All Gemini API keys exhausted.")
+    print("All Gemini API keys exhausted or max retries reached.")
     return {}
 
 if __name__ == "__main__":
