@@ -238,6 +238,72 @@
     .badge-running { background: rgba(59,130,246,0.15); color: var(--blue); }
     .badge-skipped { background: rgba(100,116,139,0.15); color: var(--text-muted); }
 
+    /* ─── DOCTOR CARD ─── */
+    .doctor-card {
+      border-color: rgba(16,185,129,0.25) !important;
+      background: rgba(16,185,129,0.03) !important;
+    }
+    .doctor-card .card-title { color: var(--green) !important; }
+
+    .btn-green {
+      background: linear-gradient(135deg, #047857, #10b981);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.35);
+    }
+    .btn-green:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(16,185,129,0.5); }
+    .btn-green:active { transform: translateY(0); }
+    .btn-green:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .day-select {
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .day-select:focus { border-color: var(--green); }
+    .day-select option { background: #0d0d1a; }
+
+    .directives-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(16,185,129,0.15);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow-y: auto;
+      font-family: 'Inter', monospace;
+      margin-top: 16px;
+    }
+    .directives-box::-webkit-scrollbar { width: 4px; }
+    .directives-box::-webkit-scrollbar-track { background: transparent; }
+    .directives-box::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.3); border-radius: 4px; }
+
+    .doctor-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 8px;
+    }
+    .doctor-status.success { color: var(--green); }
+    .doctor-status.error { color: var(--red); }
+
+    .doctor-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .doctor-row-left {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
     .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
 
     /* ─── TOGGLE ─── */
@@ -391,24 +457,42 @@
 
     <!-- Self-Healing Analytics -->
     <div style="margin-bottom:28px">
-      <div class="card" style="border-color:rgba(16,185,129,0.2); background:rgba(16,185,129,0.02)">
-        <div class="card-title" style="justify-content:space-between">
-          <span style="color:var(--green)">🩺 Self-Healing Analytics (The Doctor)</span>
+      <div class="card doctor-card" style="border-radius:20px;padding:28px">
+        <div class="card-title" style="justify-content:space-between;margin-bottom:16px">
+          <span>🩺 The Doctor — Self-Healing Analytics (Cartoon Plus)</span>
+          <span id="doctor-last-run" style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">Loading last run...</span>
         </div>
-        <p class="schedule-info">Choose which day of the week the AI will analyze the last 7 days of Cartoon Plus videos and rewrite its own comedy rules based on YouTube Analytics.</p>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <select id="analytics-day-select" style="background:#1a1a2e;border:1px solid rgba(16,185,129,0.4);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit">
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
-            <option value="Sunday" selected>Sunday</option>
-          </select>
-          <button class="btn btn-primary" style="background:var(--green);border-color:var(--green);" onclick="saveAnalyticsDay()">💾 Save Day</button>
-          <button class="btn btn-ghost" onclick="triggerAnalyzeNow()" style="padding:8px 16px;border-color:var(--green)">⚡ Analyze Now</button>
+
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px">
+          Analyzes funny Hindi videos that are 3–20 days old, generating new AI scriptwriting directives based on YouTube AVD data, and saves them automatically.
+        </p>
+
+        <div class="doctor-row" style="margin-bottom:16px">
+          <div class="doctor-row-left">
+            <label style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em">Weekly Run Day</label>
+            <select class="day-select" id="analytics-day-select" onchange="saveAnalyticsDay()">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-green" id="run-doctor-btn" style="padding:10px 20px;font-size:13px" onclick="triggerAnalyzeNow(event)">
+              ⚡ Run Doctor Now
+            </button>
+          </div>
         </div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">
+          📋 Current AI Directives
+          <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:6px">(from ai_directives.txt)</span>
+        </div>
+        <div class="directives-box" id="directives-box">Loading directives...</div>
+        <div class="doctor-status" id="doctor-status"></div>
       </div>
     </div>
 
@@ -509,7 +593,7 @@
   async function init() {
     buildHourGrid();
     buildPublishGrid();
-    await Promise.allSettled([ loadSchedule(), loadRuns() ]);
+    await Promise.allSettled([ loadSchedule(), loadRuns(), loadDirectives() ]);
     setInterval(() => { if(document.visibilityState === 'visible') loadRuns(); }, 30000);
   }
 
@@ -591,40 +675,45 @@
   }
 
   async function saveAnalyticsDay() {
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving...'; btn.style.opacity = '0.7';
+    const day = document.getElementById('analytics-day-select').value;
+    const statusEl = document.getElementById('doctor-status');
+    statusEl.textContent = '⏳ Saving day preference...';
+    statusEl.className = 'doctor-status';
     try {
       const { sha } = await getFileContent(SCHEDULE_FILE).catch(() => ({ sha: null }));
-      const day = document.getElementById('analytics-day-select').value;
       const newConfig = { ...scheduleConfig, analytics_day: day };
       await updateFileContent(SCHEDULE_FILE, newConfig, sha, `chore: update cartoon analytics day to ${day} [skip ci]`);
       scheduleConfig = newConfig;
-      btn.textContent = '✅ Saved';
-      setTimeout(() => btn.textContent = originalText, 2000);
+      statusEl.textContent = `✅ Weekly run day saved: ${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day]}`;
+      statusEl.className = 'doctor-status success';
+      setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'doctor-status'; }, 3000);
     } catch(e) {
-      alert('Error saving analytics day: ' + e.message);
-      btn.textContent = originalText;
+      statusEl.textContent = '❌ Error saving: ' + e.message;
+      statusEl.className = 'doctor-status error';
     }
-    btn.style.opacity = '1';
   }
 
-  async function triggerAnalyzeNow() {
-    const btn = event.target;
-    btn.textContent = '⏳ Analyzing...'; btn.style.opacity = '0.7';
+  async function triggerAnalyzeNow(evt) {
+    const btn = evt ? evt.target : document.getElementById('run-doctor-btn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Triggering...';
     try {
       await ghFetch(`/repos/${OWNER}/${REPO}/actions/workflows/analyze_cartoon.yml/dispatches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
+        body: JSON.stringify({ ref: 'main', inputs: { force_analyze: 'yes' } })
       });
-      btn.textContent = '✅ Analysis Triggered';
-      setTimeout(() => btn.textContent = '⚡ Analyze Now', 3000);
+      btn.innerHTML = '✅ Doctor Triggered!';
+      const status = document.getElementById('doctor-status');
+      status.textContent = '🩺 Analysis started — check GitHub Actions for live progress.';
+      status.className = 'doctor-status success';
+      setTimeout(() => loadRuns(), 3000);
     } catch(e) {
       alert('Error triggering Cartoon Plus analysis: ' + e.message);
-      btn.textContent = '⚡ Analyze Now';
+      btn.innerHTML = originalHTML;
     }
-    btn.style.opacity = '1';
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = originalHTML; }, 6000);
   }
 
   async function toggleEnabled() {
@@ -720,6 +809,33 @@
         document.getElementById('publish-countdown').textContent = `${String(Math.floor(diffP/3600000)).padStart(2,'0')}:${String(Math.floor((diffP%3600000)/60000)).padStart(2,'0')}:${String(Math.floor((diffP%60000)/1000)).padStart(2,'0')}`;
       }
     }, 1000);
+  }
+
+  // ─── DIRECTIVES LOADER ────────────────────────────────────────────────────
+  async function loadDirectives() {
+    const box = document.getElementById('directives-box');
+    const lastRunEl = document.getElementById('doctor-last-run');
+    try {
+      // Fetch ai_directives.txt raw content from GitHub
+      const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/ai_directives.txt?t=${Date.now()}`);
+      const text = atob(data.content.replace(/\n/g, ''));
+      box.textContent = text || '(No directives yet — run the Doctor to generate them.)';
+      // Show last commit date
+      try {
+        const commits = await ghFetch(`/repos/${OWNER}/${REPO}/commits?path=ai_directives.txt&per_page=1`);
+        if (commits && commits[0]) {
+          const d = new Date(commits[0].commit.committer.date);
+          lastRunEl.textContent = `Last updated: ${timeAgo(d.toISOString())}`;
+        }
+      } catch(_) { lastRunEl.textContent = ''; }
+    } catch(e) {
+      if (e.message && e.message.includes('404')) {
+        box.textContent = '(ai_directives.txt not found — run the Doctor for the first time to generate it.)';
+      } else {
+        box.textContent = 'Could not load directives: ' + e.message;
+      }
+      lastRunEl.textContent = '';
+    }
   }
 
   // ─── POST NOW ─────────────────────────────────────────────────────────────
