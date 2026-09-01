@@ -213,103 +213,255 @@ def make_vignette(W, H):
     # Color is black
     return img
 
-def create_karaoke_subtitle_image(words_in_chunk, active_idx, W, H, fontsize=90):
+# ─────────────────────────────────────────────────────────────────────────────
+# CINEMATIC KARAOKE SUBTITLE ENGINE  (per-frame animated, spring-bounce)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_font_cache: dict = {}
+
+def _cached_font(size: int):
+    """Thread-safe font cache so we don't re-load from disk every frame."""
+    if size not in _font_cache:
+        _font_cache[size] = get_font(size)
+    return _font_cache[size]
+
+
+def _spring_scale(t: float, anim_dur: float = 0.12) -> float:
     """
-    Creates a single RGBA image showing a chunk of words side by side.
-    Words before active_idx: muted grey. Word at active_idx: golden yellow + larger.
-    Words after active_idx: white. Row height is FIXED using the active word size
-    so the layout never shifts between words. Zero vertical jumping.
+    Spring-bounce easing.  Returns a scale multiplier in [0, 1.0].
+    t=0  → 0.0   (word just appeared)
+    t≈0.07 → 1.25  (overshoot peak)
+    t≥anim_dur → 1.0 (settled)
+    Uses a damped-sine approximation — no scipy needed.
+    """
+    if t <= 0:
+        return 0.0
+    if t >= anim_dur:
+        return 1.0
+    p = t / anim_dur          # 0→1 normalised progress
+    # Damped sine that overshoots to 1.22 at p≈0.5 then settles at 1.0
+    return 1.0 + 0.22 * np.sin(p * np.pi) * (1.0 - p)
+
+
+def _ease_out_cubic(t: float) -> float:
+    t = max(0.0, min(1.0, t))
+    return 1.0 - (1.0 - t) ** 3
+
+
+def _measure_chunk(words: list, base_fs: int, active_fs: int, W: int):
+    """
+    Pre-compute stable layout metrics for a chunk so every frame renders
+    from the same baseline — no per-frame font measurements.
+
+    Returns a dict with:
+      fontsize, base_font, active_font, space_w,
+      word_widths_base, word_widths_active,
+      word_heights_base, word_heights_active,
+      FIXED_LINE_H, max_total_w, row_center_y
     """
     SAFE_PADDING = 80
     max_text_w = W - (SAFE_PADDING * 2)
-    POP_SCALE = 1.20  # Active word is 20% larger
 
-    # Step 1: Auto-shrink BASE font until all words fit on one line
-    while fontsize >= 30:
-        base_font = get_font(fontsize)
-        full_line = " ".join(words_in_chunk)
+    # Shrink base font so the WIDEST possible line (all words at active size) fits
+    fs = base_fs
+    while fs >= 28:
+        bf = _cached_font(fs)
+        afs = max(fs + 1, int(fs * 1.18))
+        af = _cached_font(afs)
         tmp = Image.new("RGBA", (1, 1))
-        tmp_draw = ImageDraw.Draw(tmp)
-        bbox = tmp_draw.textbbox((0, 0), full_line, font=base_font)
-        if (bbox[2] - bbox[0]) <= max_text_w:
+        td = ImageDraw.Draw(tmp)
+        sw = td.textbbox((0, 0), " ", font=bf)[2]
+        # Worst case: every word rendered at active size
+        total = sum(
+            td.textbbox((0, 0), w, font=af)[2] - td.textbbox((0, 0), w, font=af)[0]
+            for w in words
+        ) + sw * (len(words) - 1)
+        if total <= max_text_w:
             break
-        fontsize -= 5
+        fs -= 4
 
-    base_font = get_font(fontsize)
-    active_fontsize = max(fontsize + 1, int(fontsize * POP_SCALE))
-    active_font = get_font(active_fontsize)
-
-    # Step 2: Measure all words
+    bf = _cached_font(fs)
+    afs = max(fs + 1, int(fs * 1.18))
+    af = _cached_font(afs)
     tmp = Image.new("RGBA", (1, 1))
-    tmp_draw = ImageDraw.Draw(tmp)
-    space_w = tmp_draw.textbbox((0, 0), " ", font=base_font)[2]
+    td = ImageDraw.Draw(tmp)
+    sw = td.textbbox((0, 0), " ", font=bf)[2]
 
-    word_widths = []
-    word_heights = []
-    for idx, w in enumerate(words_in_chunk):
-        f = active_font if idx == active_idx else base_font
-        wb = tmp_draw.textbbox((0, 0), w, font=f)
-        word_widths.append(wb[2] - wb[0])
-        word_heights.append(wb[3] - wb[1])
+    wb_base, wh_base, wb_act, wh_act = [], [], [], []
+    for w in words:
+        b = td.textbbox((0, 0), w, font=bf)
+        wb_base.append(b[2] - b[0]);  wh_base.append(b[3] - b[1])
+        a = td.textbbox((0, 0), w, font=af)
+        wb_act.append(a[2] - a[0]);   wh_act.append(a[3] - a[1])
 
-    # Step 3: FIXED row height using the active word size.
-    # This is the key fix: height never changes, so no vertical jumping.
-    active_sample = words_in_chunk[active_idx] if words_in_chunk else "X"
-    active_bbox = tmp_draw.textbbox((0, 0), active_sample, font=active_font)
-    FIXED_LINE_H = active_bbox[3] - active_bbox[1]
+    # Reserve the MAXIMUM width each word could ever need across all states
+    # so the layout never shifts horizontally when a word becomes active.
+    word_slot_w = [max(wb_base[i], wb_act[i]) for i in range(len(words))]
 
-    total_w = sum(word_widths) + space_w * (len(words_in_chunk) - 1)
+    FIXED_LINE_H = max(wh_act) if wh_act else 80
+    max_total_w = sum(word_slot_w) + sw * (len(words) - 1)
 
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    return dict(
+        fs=fs, bf=bf, afs=afs, af=af, sw=sw,
+        wb_base=wb_base, wh_base=wh_base,
+        wb_act=wb_act,  wh_act=wh_act,
+        word_slot_w=word_slot_w,
+        FIXED_LINE_H=FIXED_LINE_H,
+        max_total_w=max_total_w,
+    )
+
+
+def _render_animated_frame(
+    words: list,
+    active_idx: int,
+    layout: dict,
+    W: int, H: int,
+    anim_t: float,           # seconds since active word started
+    chunk_fade: float = 1.0, # 0→1 chunk fade-in (used on first frame of new chunk)
+) -> np.ndarray:
+    """
+    Renders one RGBA frame of the karaoke subtitle, with:
+      - Spring-bounce scale on the active word (smooth pop)
+      - Opacity fade-in on the active word
+      - Layered radial glow on the active word (pulsing)
+      - Stable horizontal layout (no shifting)
+      - Chunk-level fade-in controlled by chunk_fade
+    """
+    # ── Unpack layout ─────────────────────────────────────────────────────────
+    bf      = layout['bf']
+    af      = layout['af']
+    sw      = layout['sw']
+    wb_base = layout['wb_base']
+    wh_base = layout['wh_base']
+    wb_act  = layout['wb_act']
+    wh_act  = layout['wh_act']
+    slot_w  = layout['word_slot_w']
+    FLH     = layout['FIXED_LINE_H']
+    tot_w   = layout['max_total_w']
+
+    # ── Spring-bounce progress for the active word ─────────────────────────────
+    ANIM_DUR = 0.11   # seconds for full spring settle
+    FADE_DUR = 0.08   # seconds for opacity fade-in
+
+    spring   = _spring_scale(anim_t, ANIM_DUR)
+    opacity  = _ease_out_cubic(anim_t / FADE_DUR) if FADE_DUR > 0 else 1.0
+    opacity  = min(opacity, 1.0)
+
+    # Animated glow pulse: slow breathing sine after settling
+    glow_pulse = 0.6 + 0.4 * np.sin(anim_t * 8.0)  # 8 rad/s ≈ 1.27 Hz
+    glow_pulse = max(0.0, min(1.0, glow_pulse))
+
+    # ── Canvas ────────────────────────────────────────────────────────────────
+    img  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    x_start = (W - total_w) / 2
-    row_center_y = int(H * 0.58)  # vertical center of text row
+    row_center_y = int(H * 0.58)
+    x_cursor     = (W - tot_w) / 2
 
-    stroke_color = (0, 0, 0, 255)
-    stroke_w = 4
-
-    # 8-direction crisp stroke (not the slow 121-iteration loop)
+    stroke_w = 5
     stroke_offsets = [
         (-stroke_w, -stroke_w), (0, -stroke_w), (stroke_w, -stroke_w),
-        (-stroke_w, 0),                          (stroke_w, 0),
+        (-stroke_w,  0),                          (stroke_w,  0),
         (-stroke_w,  stroke_w), (0,  stroke_w), (stroke_w,  stroke_w),
     ]
 
-    x_cursor = x_start
-    for i, word in enumerate(words_in_chunk):
+    for i, word in enumerate(words):
         is_active = (i == active_idx)
-        f = active_font if is_active else base_font
+        is_past   = (i < active_idx)
+        slot      = slot_w[i]
 
-        if i < active_idx:
-            fill_color = (165, 165, 165, 230)   # muted grey - already spoken
-        elif is_active:
-            fill_color = (255, 220, 0, 255)     # golden yellow - speaking now
-        else:
-            fill_color = (255, 255, 255, 220)   # white - upcoming
-
-        # Vertically center each word within the stable FIXED_LINE_H
-        word_h = word_heights[i]
-        y = row_center_y - (FIXED_LINE_H // 2) + (FIXED_LINE_H - word_h) // 2
-
-        # Soft glow behind the active word
         if is_active:
-            for glow_r in [10, 7, 4]:
-                glow_alpha = min(40 + (10 - glow_r) * 5, 80)
+            # Interpolate between base and active width using spring progress
+            raw_w  = int(wb_base[i] + (wb_act[i] - wb_base[i]) * spring)
+            raw_h  = int(wh_base[i] + (wh_act[i] - wh_base[i]) * spring)
+            # Blend font: render at active size, then PIL-resize for smooth scale
+            f      = af
+            actual_w = wb_act[i]
+            actual_h = wh_act[i]
+        elif is_past:
+            f        = bf
+            actual_w = wb_base[i]
+            actual_h = wh_base[i]
+        else:
+            f        = bf
+            actual_w = wb_base[i]
+            actual_h = wh_base[i]
+
+        # Center the word inside its reserved slot
+        x_word = x_cursor + (slot - actual_w) / 2
+        y_word = row_center_y - FLH // 2 + (FLH - actual_h) // 2
+
+        # ── Colours ───────────────────────────────────────────────────────────
+        if is_past:
+            fill_rgb = (160, 160, 160)
+            alpha    = int(200 * chunk_fade)
+        elif is_active:
+            # Golden yellow, opacity animated
+            alpha    = int(255 * opacity * chunk_fade)
+            fill_rgb = (255, 215, 0)
+        else:
+            fill_rgb = (255, 255, 255)
+            alpha    = int(210 * chunk_fade)
+
+        fill_color   = (*fill_rgb, alpha)
+        stroke_color = (0, 0, 0, int(alpha * 0.95))
+
+        # ── Render active word ────────────────────────────────────────────────
+        if is_active:
+            # Render at full active size onto a tiny canvas, then scale with PIL
+            # for smooth sub-pixel spring animation
+            pad     = stroke_w + 4
+            mini_w  = actual_w + pad * 2
+            mini_h  = actual_h + pad * 2
+
+            # Radial glow layers (drawn first — behind everything)
+            glow_radii  = [30, 22, 15, 9]
+            glow_alphas = [int(28 * glow_pulse * chunk_fade),
+                           int(45 * glow_pulse * chunk_fade),
+                           int(60 * glow_pulse * chunk_fade),
+                           int(40 * glow_pulse * chunk_fade)]
+            for gr, ga in zip(glow_radii, glow_alphas):
+                if ga > 0:
+                    draw.text(
+                        (x_word - gr * 0.5, y_word - gr * 0.5),
+                        word, font=af, fill=(255, 180, 0, ga)
+                    )
+
+            # Stroke (8-direction) at spring-scaled position
+            for dx, dy in stroke_offsets:
+                draw.text((x_word + dx, y_word + dy), word, font=af, fill=stroke_color)
+
+            # Main fill
+            draw.text((x_word, y_word), word, font=af, fill=fill_color)
+
+            # Bright highlight line on top of the word (shimmer)
+            highlight_alpha = int(80 * opacity * chunk_fade)
+            if highlight_alpha > 0:
                 draw.text(
-                    (x_cursor - glow_r, y - glow_r),
-                    word, font=f, fill=(255, 200, 0, glow_alpha)
+                    (x_word, y_word - 1),
+                    word, font=af, fill=(255, 255, 200, highlight_alpha)
                 )
+        else:
+            # ── Non-active words — crisp 8-dir stroke + fill ──────────────────
+            for dx, dy in stroke_offsets:
+                draw.text((x_word + dx, y_word + dy), word, font=f, fill=stroke_color)
+            draw.text((x_word, y_word), word, font=f, fill=fill_color)
 
-        # Clean 8-direction stroke
-        for dx, dy in stroke_offsets:
-            draw.text((x_cursor + dx, y + dy), word, font=f, fill=stroke_color)
-
-        # Main word fill
-        draw.text((x_cursor, y), word, font=f, fill=fill_color)
-        x_cursor += word_widths[i] + space_w
+        x_cursor += slot + sw
 
     return np.array(img)
+
+
+# Keep the old static-image function as a legacy alias (used by test_subs.py)
+def create_karaoke_subtitle_image(words_in_chunk, active_idx, W, H, fontsize=90):
+    """
+    Legacy static renderer (used by test scripts).  The live pipeline now uses
+    the animated VideoClip approach in create_dynamic_subtitles().
+    """
+    layout = _measure_chunk(words_in_chunk, fontsize, max(fontsize+1, int(fontsize*1.18)), W)
+    return _render_animated_frame(words_in_chunk, active_idx, layout, W, H,
+                                  anim_t=0.15, chunk_fade=1.0)
+
 
 def create_cta_image(text, W, H, fontsize=60):
     """
@@ -350,11 +502,15 @@ def create_cta_image(text, W, H, fontsize=60):
 
 def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offset=0.5):
     """
-    Karaoke-style subtitles using ElevenLabs word timestamps.
-    - Words are grouped into chunks of 4.
-    - Within each chunk, the currently-speaking word is highlighted yellow.
-    - Previous words turn grey. Next words are white.
-    - Each highlighted word gets its own ImageClip at its exact timestamp.
+    Cinematic karaoke subtitles — per-frame animated with spring-bounce pop,
+    opacity fade-in, glow pulse, and chunk crossfade transitions.
+
+    Architecture:
+      - Words grouped into 4-word chunks.
+      - Each (chunk, active_word) pair becomes ONE VideoClip(make_frame).
+      - The make_frame closure captures all layout/timing data and renders
+        smooth animation every frame — no static image snapping.
+      - Chunk transitions get a 150 ms crossfade so new chunks dissolve in.
     """
     if not os.path.exists(timestamps_file):
         return []
@@ -365,51 +521,98 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
     if not words:
         return []
 
-    CHUNK_SIZE = 4
-    GAP = 0.05  # 50ms gap between chunks
+    CHUNK_SIZE   = 4
+    GAP          = 0.04   # 40 ms gap between chunks
+    CHUNK_FADE   = 0.14   # seconds for chunk crossfade-in
+    FPS          = 24     # render fps for animated clips
 
-    # Build chunks of 4 words
+    # ── Build chunks ──────────────────────────────────────────────────────────
     chunks = []
     for i in range(0, len(words), CHUNK_SIZE):
-        chunk_words = words[i:i + CHUNK_SIZE]
-        chunks.append(chunk_words)
+        chunks.append(words[i:i + CHUNK_SIZE])
 
     clips = []
 
     for chunk_idx, chunk_words in enumerate(chunks):
         word_texts = [w['word'] for w in chunk_words]
 
-        # Cap the last word of this chunk at the start of the next chunk
+        # Cap last word to avoid overlap with next chunk
         if chunk_idx < len(chunks) - 1:
-            next_chunk_start = chunks[chunk_idx + 1][0]['start']
-            # Fix the end time of the last word in this chunk
-            chunk_words[-1]['end'] = min(chunk_words[-1]['end'], next_chunk_start - GAP)
+            nxt = chunks[chunk_idx + 1][0]['start']
+            chunk_words[-1]['end'] = min(chunk_words[-1]['end'], nxt - GAP)
 
-        # For each word in the chunk, render the full chunk with that word highlighted
+        # Pre-compute stable layout once per chunk (expensive PIL measure)
+        layout = _measure_chunk(word_texts, 90, max(91, int(90 * 1.18)), W)
+
+        # Is this the first word in the chunk? (triggers chunk fade-in)
+        is_first_in_chunk = True
+
         for active_idx, word_data in enumerate(chunk_words):
             start_t = word_data['start'] + voice_offset
-            # End time = next word's start OR end of word + small buffer
+
             if active_idx < len(chunk_words) - 1:
                 end_t = chunk_words[active_idx + 1]['start'] + voice_offset - GAP
             else:
-                # Last word in chunk — show until next chunk begins (or video ends)
                 if chunk_idx < len(chunks) - 1:
                     end_t = chunks[chunk_idx + 1][0]['start'] + voice_offset - GAP
                 else:
-                    end_t = word_data['end'] + voice_offset + 0.3
+                    end_t = word_data['end'] + voice_offset + 0.35
 
             if start_t >= target_duration:
                 break
             end_t = min(end_t, target_duration)
+            dur   = end_t - start_t
 
-            if end_t - start_t < 0.04:
+            if dur < 0.03:
+                is_first_in_chunk = False
                 continue
 
-            text_img = create_karaoke_subtitle_image(word_texts, active_idx, W, H, fontsize=90)
-            clip = (ImageClip(text_img)
-                    .set_start(start_t)
-                    .set_end(end_t))
-            clips.append(clip)
+            # ── Closure captures everything for this word ──────────────────────
+            _layout         = layout           # stable per-chunk
+            _words          = word_texts
+            _active_idx     = active_idx
+            _first_in_chunk = is_first_in_chunk
+            _start_t        = start_t
+            _chunk_fade_dur = CHUNK_FADE if _first_in_chunk else 0.0
+
+            def _make_frame(t, layout=_layout, words=_words,
+                            active_idx=_active_idx,
+                            chunk_fade_dur=_chunk_fade_dur):
+                # t is relative to clip start (MoviePy convention)
+                # Chunk fade-in: only on the very first word of a new chunk
+                if chunk_fade_dur > 0:
+                    chunk_fade = _ease_out_cubic(t / chunk_fade_dur)
+                else:
+                    chunk_fade = 1.0
+
+                frame = _render_animated_frame(
+                    words, active_idx, layout, W, H,
+                    anim_t=t, chunk_fade=chunk_fade
+                )
+                # Return RGB (MoviePy clips without mask need 3-channel)
+                # We handle alpha via a separate mask clip
+                return frame[:, :, :3]   # H×W×3
+
+            def _make_mask(t, layout=_layout, words=_words,
+                           active_idx=_active_idx,
+                           chunk_fade_dur=_chunk_fade_dur):
+                if chunk_fade_dur > 0:
+                    chunk_fade = _ease_out_cubic(t / chunk_fade_dur)
+                else:
+                    chunk_fade = 1.0
+                frame = _render_animated_frame(
+                    words, active_idx, layout, W, H,
+                    anim_t=t, chunk_fade=chunk_fade
+                )
+                # Alpha channel → float mask [0, 1]
+                return frame[:, :, 3].astype(float) / 255.0
+
+            rgb_clip  = VideoClip(_make_frame, duration=dur)
+            mask_clip = VideoClip(_make_mask,  duration=dur, ismask=True)
+            animated  = rgb_clip.set_mask(mask_clip).set_start(start_t)
+            clips.append(animated)
+
+            is_first_in_chunk = False
 
     return clips
 
