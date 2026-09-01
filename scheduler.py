@@ -22,7 +22,18 @@ def load_config():
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def run_video_generation():
+def run_video_generation(is_first_run_of_day=False, analytics_day="Sunday"):
+    now = datetime.now()
+    current_day = now.strftime("%A")
+    
+    if is_first_run_of_day and current_day == analytics_day:
+        print(f"\n[{datetime.now()}] 🩺 It is {analytics_day}! Running Self-Healing Analytics...")
+        try:
+            subprocess.run(["python", "heal.py"], check=True)
+            print(f"[{datetime.now()}] ✅ Healing complete. New directives set.")
+        except Exception as e:
+            print(f"[{datetime.now()}] ❌ Healing failed: {e}. Proceeding with generation anyway.")
+
     print(f"\n[{datetime.now()}] 🚀 Triggering video generation pipeline...")
     try:
         # Run main.py as a subprocess with headless flag
@@ -63,8 +74,10 @@ def start_scheduler():
         # Check if the current minute matches a generation time
         # Only trigger in the first 10 seconds of that minute to avoid double-trigger
         if current_time_str in generation_times and now.second < 10:
+            is_first_run = (current_time_str == sorted(generation_times)[0]) if generation_times else False
+            analytics_day = config.get("analytics_day", "Sunday")
             print(f"\n⏰ Time matched ({current_time_str} {tz_name})! Starting generation job...")
-            run_video_generation()
+            run_video_generation(is_first_run_of_day=is_first_run, analytics_day=analytics_day)
             # Sleep 65s so we don't trigger again in the same minute
             time.sleep(65)
             continue

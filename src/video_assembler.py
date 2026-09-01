@@ -216,78 +216,107 @@ def make_vignette(W, H):
 def create_karaoke_subtitle_image(words_in_chunk, active_idx, W, H, fontsize=90):
     """
     Creates a single RGBA image showing a chunk of words side by side.
-    - Words spoken BEFORE active_idx: light grey
-    - Word AT active_idx: bright yellow (highlighted)
-    - Words AFTER active_idx: white (upcoming)
-    This is the Hormozi/viral karaoke style.
+    Words before active_idx: muted grey. Word at active_idx: golden yellow + larger.
+    Words after active_idx: white. Row height is FIXED using the active word size
+    so the layout never shifts between words. Zero vertical jumping.
     """
-    font = get_font(fontsize)
     SAFE_PADDING = 80
     max_text_w = W - (SAFE_PADDING * 2)
+    POP_SCALE = 1.20  # Active word is 20% larger
 
-    # Auto-shrink font until all words fit in one line
+    # Step 1: Auto-shrink BASE font until all words fit on one line
     while fontsize >= 30:
-        font = get_font(fontsize)
+        base_font = get_font(fontsize)
         full_line = " ".join(words_in_chunk)
-        tmp_img = Image.new('RGBA', (1, 1))
-        tmp_draw = ImageDraw.Draw(tmp_img)
-        bbox = tmp_draw.textbbox((0, 0), full_line, font=font)
+        tmp = Image.new("RGBA", (1, 1))
+        tmp_draw = ImageDraw.Draw(tmp)
+        bbox = tmp_draw.textbbox((0, 0), full_line, font=base_font)
         if (bbox[2] - bbox[0]) <= max_text_w:
             break
         fontsize -= 5
 
-    font = get_font(fontsize)
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+    base_font = get_font(fontsize)
+    active_fontsize = max(fontsize + 1, int(fontsize * POP_SCALE))
+    active_font = get_font(active_fontsize)
 
-    # Measure each word's width to compute total line width
-    tmp_img2 = Image.new('RGBA', (1, 1))
-    tmp_draw2 = ImageDraw.Draw(tmp_img2)
-    space_bbox = tmp_draw2.textbbox((0, 0), " ", font=font)
-    space_w = space_bbox[2] - space_bbox[0]
+    # Step 2: Measure all words
+    tmp = Image.new("RGBA", (1, 1))
+    tmp_draw = ImageDraw.Draw(tmp)
+    space_w = tmp_draw.textbbox((0, 0), " ", font=base_font)[2]
 
     word_widths = []
     word_heights = []
-    for w in words_in_chunk:
-        bbox = tmp_draw2.textbbox((0, 0), w, font=font)
-        word_widths.append(bbox[2] - bbox[0])
-        word_heights.append(bbox[3] - bbox[1])
+    for idx, w in enumerate(words_in_chunk):
+        f = active_font if idx == active_idx else base_font
+        wb = tmp_draw.textbbox((0, 0), w, font=f)
+        word_widths.append(wb[2] - wb[0])
+        word_heights.append(wb[3] - wb[1])
+
+    # Step 3: FIXED row height using the active word size.
+    # This is the key fix: height never changes, so no vertical jumping.
+    active_sample = words_in_chunk[active_idx] if words_in_chunk else "X"
+    active_bbox = tmp_draw.textbbox((0, 0), active_sample, font=active_font)
+    FIXED_LINE_H = active_bbox[3] - active_bbox[1]
 
     total_w = sum(word_widths) + space_w * (len(words_in_chunk) - 1)
-    line_h = max(word_heights) if word_heights else fontsize
 
-    # Center the whole line horizontally, position at 58% of screen height
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
     x_start = (W - total_w) / 2
-    y = int(H * 0.58) - line_h // 2
+    row_center_y = int(H * 0.58)  # vertical center of text row
 
-    stroke_width = 5
-    stroke_color = (0, 0, 0)
+    stroke_color = (0, 0, 0, 255)
+    stroke_w = 4
+
+    # 8-direction crisp stroke (not the slow 121-iteration loop)
+    stroke_offsets = [
+        (-stroke_w, -stroke_w), (0, -stroke_w), (stroke_w, -stroke_w),
+        (-stroke_w, 0),                          (stroke_w, 0),
+        (-stroke_w,  stroke_w), (0,  stroke_w), (stroke_w,  stroke_w),
+    ]
 
     x_cursor = x_start
     for i, word in enumerate(words_in_chunk):
-        if i < active_idx:
-            fill_color = (180, 180, 180)   # light grey — already spoken
-        elif i == active_idx:
-            fill_color = (255, 230, 0)     # bright yellow — currently speaking
-        else:
-            fill_color = (255, 255, 255)   # white — upcoming
+        is_active = (i == active_idx)
+        f = active_font if is_active else base_font
 
-        # Draw thick black stroke for legibility
-        for dx in range(-stroke_width, stroke_width + 1):
-            for dy in range(-stroke_width, stroke_width + 1):
-                draw.text((x_cursor + dx, y + dy), word, font=font, fill=stroke_color)
-        # Draw the word
-        draw.text((x_cursor, y), word, font=font, fill=fill_color)
+        if i < active_idx:
+            fill_color = (165, 165, 165, 230)   # muted grey - already spoken
+        elif is_active:
+            fill_color = (255, 220, 0, 255)     # golden yellow - speaking now
+        else:
+            fill_color = (255, 255, 255, 220)   # white - upcoming
+
+        # Vertically center each word within the stable FIXED_LINE_H
+        word_h = word_heights[i]
+        y = row_center_y - (FIXED_LINE_H // 2) + (FIXED_LINE_H - word_h) // 2
+
+        # Soft glow behind the active word
+        if is_active:
+            for glow_r in [10, 7, 4]:
+                glow_alpha = min(40 + (10 - glow_r) * 5, 80)
+                draw.text(
+                    (x_cursor - glow_r, y - glow_r),
+                    word, font=f, fill=(255, 200, 0, glow_alpha)
+                )
+
+        # Clean 8-direction stroke
+        for dx, dy in stroke_offsets:
+            draw.text((x_cursor + dx, y + dy), word, font=f, fill=stroke_color)
+
+        # Main word fill
+        draw.text((x_cursor, y), word, font=f, fill=fill_color)
         x_cursor += word_widths[i] + space_w
 
     return np.array(img)
 
-
-def create_cta_image(text, W, H, fontsize=70):
-    """Creates a transparent image with CTA text near the bottom."""
+def create_cta_image(text, W, H, fontsize=60):
+    """
+    Creates a modern pill-shaped CTA overlay with semi-transparent background.
+    Looks clean and professional without relying on emojis.
+    """
     font = get_font(fontsize)
-    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
     
     tmp_img = Image.new('RGBA', (1, 1))
     tmp_draw = ImageDraw.Draw(tmp_img)
@@ -295,17 +324,26 @@ def create_cta_image(text, W, H, fontsize=70):
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     
-    x = (W - text_w) / 2
-    y = int(H * 0.68) - text_h // 2  # Place it underneath the subtitles
+    pad_x = 50
+    pad_y = 25
+    pill_w = text_w + pad_x * 2
+    pill_h = text_h + pad_y * 2
     
-    # Draw stroke
-    stroke_width = 5
-    for dx in range(-stroke_width, stroke_width + 1):
-        for dy in range(-stroke_width, stroke_width + 1):
-            draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
-            
-    # Draw text
-    draw.text((x, y), text, font=font, fill=(255, 255, 255))
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    
+    # Position horizontally centered, lower third of screen
+    x = (W - pill_w) // 2
+    y = int(H * 0.70)
+    
+    # Draw semi-transparent rounded rectangle (pill shape)
+    draw.rounded_rectangle([x, y, x + pill_w, y + pill_h], radius=40, fill=(0, 0, 0, 180))
+    
+    # Draw text vertically aligned inside the pill
+    text_x = x + pad_x
+    text_y = y + pad_y - bbox[1]
+    draw.text((text_x, text_y), text, font=font, fill=(255, 255, 255, 255))
+    
     return np.array(img)
 
 
@@ -370,14 +408,62 @@ def create_dynamic_subtitles(timestamps_file, W, H, target_duration, voice_offse
             text_img = create_karaoke_subtitle_image(word_texts, active_idx, W, H, fontsize=90)
             clip = (ImageClip(text_img)
                     .set_start(start_t)
-                    .set_end(end_t)
-                    .set_position(('center', int(H * 0.72))))  # Lower third — 72% down the screen
+                    .set_end(end_t))
             clips.append(clip)
 
     return clips
 
 
 from moviepy.editor import concatenate_videoclips
+
+
+def _get_pause_cut_points(timestamps_file: str,
+                           total_duration: float,
+                           min_pause: float = 0.35,
+                           max_clip_duration: float = 6.5,
+                           voice_offset: float = 0.5) -> list:
+    """
+    Finds cut points ensuring no clip exceeds `max_clip_duration`.
+    Prefers cutting on natural speech pauses (gaps >= min_pause), but forces a
+    cut if a sentence drags on too long to prevent B-roll from looping awkwardly.
+    """
+    raw_pauses = []
+    if os.path.exists(timestamps_file):
+        try:
+            with open(timestamps_file, 'r') as f:
+                words = json.load(f)
+            # Find all inter-word gaps long enough to feel like a pause
+            for i in range(len(words) - 1):
+                gap = words[i + 1]['start'] - words[i]['end']
+                if gap >= min_pause:
+                    cut_t = words[i]['end'] + gap / 2 + voice_offset
+                    if 0 < cut_t < total_duration:
+                        raw_pauses.append(cut_t)
+        except Exception as e:
+            print(f"   [B-Roll] Warning: could not parse timestamps ({e}).")
+
+    final_cuts = []
+    current_time = 0.0
+
+    while True:
+        next_max = current_time + max_clip_duration
+        if next_max >= total_duration:
+            break
+
+        # Look for a natural pause between 3s and max_clip_duration
+        valid_pauses = [p for p in raw_pauses if current_time + 3.0 <= p <= next_max]
+
+        if valid_pauses:
+            best_cut = valid_pauses[-1]  # Take the latest possible pause that fits
+        else:
+            best_cut = next_max          # Force a cut to prevent overlong clips
+
+        final_cuts.append(best_cut)
+        current_time = best_cut
+
+    print(f"   [B-Roll] ✂️  {len(final_cuts)} dynamic cut points detected: {[f'{t:.2f}s' for t in final_cuts]}")
+    return final_cuts
+
 
 def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4", bg_music_path=None, whoosh_path=None, impact_path=None, fomo_overlay=None, profile="motivational", meme_sound_path=None):
     print("Assembling cinematic multi-clip video...")
@@ -410,13 +496,31 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
     import random
     processed_clips = []
     num_clips = len(bg_video_paths)
-    
-    # Calculate randomized segment durations proportionally
-    # This guarantees the target_duration is distributed smoothly among ANY number of clips
-    raw_weights = [random.uniform(0.7, 1.3) for _ in range(num_clips)]
-    total_weight = sum(raw_weights)
-    segment_durations = [(w / total_weight) * target_duration for w in raw_weights]
-    
+
+    # ── DYNAMIC B-ROLL CUT TIMING (pause-based with max duration) ────────────────
+    if num_clips > 0 and profile != "cartoon":
+        timestamps_file = audio_path + ".json"
+        cut_points = _get_pause_cut_points(
+            timestamps_file,
+            total_duration=target_duration,
+            min_pause=0.35,
+            max_clip_duration=5.0,
+            voice_offset=0.5
+        )
+        # Convert cut points to per-clip durations
+        boundaries = [0.0] + cut_points + [target_duration]
+        segment_durations = [boundaries[i+1] - boundaries[i] for i in range(len(boundaries)-1)]
+        
+        # We need `len(segment_durations)` clips. Cycle through available ones if short.
+        bg_video_paths = [bg_video_paths[i % len(bg_video_paths)] for i in range(len(segment_durations))]
+        num_clips = len(bg_video_paths)
+        print(f"   [B-Roll] Segment durations: {[f'{d:.1f}s' for d in segment_durations]}")
+    else:
+        # Cartoon or single clip — keep random weighting
+        raw_weights = [random.uniform(0.7, 1.3) for _ in range(num_clips)]
+        total_weight = sum(raw_weights)
+        segment_durations = [(w / total_weight) * target_duration for w in raw_weights]
+
     for i, vp in enumerate(bg_video_paths):
         seg_dur = segment_durations[i]
         try:
@@ -609,7 +713,16 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
                       .set_position(('center', 'bottom')))
     layers.append(progress_clip)
 
-    # "Save this video for later" CTA removed per user request
+    # "Save this video for later" CTA (Idea C)
+    if profile != "cartoon":
+        cta_arr = create_cta_image("Save this for later", TARGET_W, TARGET_H, fontsize=60)
+        cta_start = max(0, target_duration - 3.0)
+        cta_clip = (ImageClip(cta_arr)
+                    .set_start(cta_start)
+                    .set_end(target_duration)
+                    .crossfadein(0.5))
+        layers.append(cta_clip)
+
     # Viral FOMO Overlay removed per user request
 
 
@@ -643,4 +756,60 @@ def assemble_video(bg_video_paths, audio_path, text, output_path="final_reel.mp4
             except Exception:
                 pass
 
+
     print(f"\n✅ Video saved: {output_path} ({target_duration:.1f}s @ 24fps, {TARGET_W}x{TARGET_H})")
+
+    # Extract and return thumbnail automatically
+    thumb_path = extract_thumbnail(output_path, audio_path + ".json")
+    return thumb_path
+
+
+def extract_thumbnail(video_path: str, timestamps_file: str = "",
+                      default_t: float = 1.5) -> str:
+    """
+    Extracts the single most visually powerful frame from the rendered video
+    to use as the official cover photo on Instagram and Facebook.
+
+    Strategy:
+    - Uses the timestamp of the 3rd spoken word (index 2) in the ElevenLabs
+      JSON so the thumbnail captures the hook text at full brightness with the
+      subtitle overlay visible. Word #3 is deep enough into the hook to have
+      meaningful text on screen but still within the first 3-4 seconds.
+    - Falls back to default_t (1.5s) if timestamps are missing.
+
+    Saves the frame as a high-quality JPG next to the video file.
+    Returns the thumbnail path, or an empty string on failure.
+    """
+    thumb_path = video_path.replace(".mp4", "_thumbnail.jpg")
+
+    # Determine best timestamp: word #3's midpoint (hook text fully shown)
+    grab_t = default_t
+    if timestamps_file and os.path.exists(timestamps_file):
+        try:
+            with open(timestamps_file, 'r') as f:
+                words = json.load(f)
+            if len(words) > 2:
+                w = words[2]  # 3rd word = deep into hook, subtitle visible
+                grab_t = w['start'] + (w['end'] - w['start']) / 2 + 0.5  # +voice_offset
+                print(f"   [Thumbnail] Grabbing frame at t={grab_t:.2f}s (hook word: '{w['word']}')")
+        except Exception as e:
+            print(f"   [Thumbnail] Warning: could not read timestamps ({e}). Using t={default_t}s.")
+
+    cmd = [
+        FFMPEG_BIN, "-y",
+        "-ss", str(grab_t),          # Seek to hook timestamp
+        "-i", video_path,
+        "-frames:v", "1",            # Extract exactly one frame
+        "-q:v", "1",                 # Highest JPEG quality (1=best, 31=worst)
+        "-vf", "scale=1080:1920",    # Ensure exact portrait resolution
+        thumb_path
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0 and os.path.exists(thumb_path):
+        size_kb = os.path.getsize(thumb_path) // 1024
+        print(f"   [Thumbnail] ✅ Saved → {thumb_path} ({size_kb} KB)")
+        return thumb_path
+    else:
+        print(f"   [Thumbnail] ❌ ffmpeg failed: {result.stderr[-200:]}")
+        return ""
+

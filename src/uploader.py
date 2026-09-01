@@ -12,12 +12,17 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
-YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+YOUTUBE_SCOPES = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/yt-analytics.readonly"
+]
 load_dotenv()
 
-def upload_reel(video_path: str, caption: str, hashtags: str):
+def upload_reel(video_path: str, caption: str, hashtags: str, thumbnail_path: str = ""):
     """
     Uploads a video to a Facebook Page as a Reel using the Graph API.
+    If thumbnail_path is provided, it is hosted and set as the Reel cover.
     """
     access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
     page_id = os.getenv("FACEBOOK_PAGE_ID")
@@ -71,6 +76,15 @@ def upload_reel(video_path: str, caption: str, hashtags: str):
         "description": full_caption,
         "access_token": access_token
     }
+
+    # Set custom thumbnail if provided
+    if thumbnail_path and os.path.exists(thumbnail_path):
+        try:
+            thumb_url = upload_to_temporary_host(thumbnail_path)
+            publish_payload["thumb_url"] = thumb_url
+            print(f"   [Thumbnail] ✅ Custom cover set for Facebook Reel.")
+        except Exception as e:
+            print(f"   [Thumbnail] ⚠️ Could not set FB thumbnail: {e}")
     
     pub_res = requests.post(publish_url, data=publish_payload)
     if not pub_res.ok:
@@ -209,7 +223,7 @@ def upload_to_temporary_host(filepath: str):
     print(f"Temporary URL created: {direct_url}")
     return direct_url
 
-def upload_to_instagram(video_path: str, caption: str, hashtags: str):
+def upload_to_instagram(video_path: str, caption: str, hashtags: str, thumbnail_path: str = ""):
     ig_user_id = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID")
     access_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
     
@@ -218,7 +232,7 @@ def upload_to_instagram(video_path: str, caption: str, hashtags: str):
         return
         
     print("Starting Instagram Reels upload process...")
-    # 1. Host temporarily
+    # 1. Host video temporarily
     video_url = upload_to_temporary_host(video_path)
     
     # 2. Create Media Container
@@ -229,6 +243,16 @@ def upload_to_instagram(video_path: str, caption: str, hashtags: str):
         "caption": f"{caption}\n\n{hashtags}",
         "access_token": access_token
     }
+
+    # Set custom cover thumbnail if provided
+    if thumbnail_path and os.path.exists(thumbnail_path):
+        try:
+            cover_url = upload_to_temporary_host(thumbnail_path)
+            payload["cover_url"] = cover_url
+            print(f"   [Thumbnail] ✅ Custom cover set for Instagram Reel.")
+        except Exception as e:
+            print(f"   [Thumbnail] ⚠️ Could not set IG thumbnail: {e}")
+
     print("Creating Instagram Media Container...")
     res = requests.post(create_url, data=payload)
     if not res.ok:

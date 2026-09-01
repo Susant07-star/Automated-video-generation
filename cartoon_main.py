@@ -22,6 +22,12 @@ import json
 import argparse
 from dotenv import load_dotenv
 
+# Force UTF-8 output so emoji never crash on Windows cp1252 terminals
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 load_dotenv()
 
 from src.content_generator import generate_content
@@ -221,7 +227,7 @@ def main():
             yt_tags = state.get("yt_tags", ["funny", "hindi", "comedy"])
 
             try:
-                upload_to_youtube(
+                yt_res = upload_to_youtube(
                     video_path=FINAL_PATH,
                     title=yt_titl,
                     description=yt_desc,
@@ -231,6 +237,23 @@ def main():
                     category_id="24"                    # ← Entertainment (not Education)
                 )
                 print("   ✅ Uploaded! Video is PRIVATE and will auto-publish per schedule.")
+                
+                if yt_res and yt_res.get("id"):
+                    # Save to posted_history_cartoon.json for analytics healing
+                    history_entry = {
+                        "video_id": yt_res.get("id"),
+                        "timestamp": datetime.datetime.now().isoformat(),
+                        "script_state": state
+                    }
+                    history_file = "posted_history_cartoon.json"
+                    history_data = []
+                    if os.path.exists(history_file):
+                        with open(history_file, "r") as hf:
+                            history_data = json.load(hf)
+                    history_data.append(history_entry)
+                    with open(history_file, "w") as hf:
+                        json.dump(history_data, hf, indent=2)
+
             except Exception as e:
                 print(f"   ❌ YouTube upload failed: {e}")
         else:

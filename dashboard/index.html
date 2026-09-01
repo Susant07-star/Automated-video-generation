@@ -586,6 +586,9 @@
       updateCountdown();
       document.getElementById('status-dot').style.background = content.enabled !== false ? 'var(--green)' : 'var(--yellow)';
       document.getElementById('status-text').textContent = content.enabled !== false ? 'Active' : 'Paused';
+      if (content.analytics_day) {
+        document.getElementById('analytics-day-select').value = content.analytics_day;
+      }
     } catch(e) {
       console.error('Failed to load schedule:', e);
       document.getElementById('status-text').textContent = 'Connection error';
@@ -660,6 +663,44 @@
       btn.textContent = '❌ Failed'; alert('Failed: ' + e.message);
       setTimeout(() => { btn.textContent = '💾 Save Publish Times'; btn.disabled = false; }, 2000);
     }
+  }
+
+  async function saveAnalyticsDay() {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...'; btn.style.opacity = '0.7';
+    try {
+      const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
+      const day = document.getElementById('analytics-day-select').value;
+      const newConfig = { ...scheduleConfig, analytics_day: day };
+      await updateFileContent('schedule_config.json', newConfig, sha, `chore: update analytics day to ${day} [skip ci]`);
+      scheduleConfig = newConfig;
+      btn.textContent = '✅ Saved';
+      setTimeout(() => btn.textContent = originalText, 2000);
+    } catch(e) {
+      alert('Error saving analytics day: ' + e.message);
+      btn.textContent = originalText;
+    }
+    btn.style.opacity = '1';
+  }
+
+  async function triggerAnalyzeNow() {
+    const btn = event.target;
+    btn.textContent = '⏳ Analyzing...'; btn.style.opacity = '0.7';
+    try {
+      // Trigger GitHub Action workflow dispatch for analyze
+      await ghFetch(`/repos/${OWNER}/${REPO}/actions/workflows/analyze.yml/dispatches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: 'main' })
+      });
+      btn.textContent = '✅ Analysis Triggered';
+      setTimeout(() => btn.textContent = '⚡ Analyze Now', 3000);
+    } catch(e) {
+      alert('Error triggering analysis (make sure analyze.yml workflow exists): ' + e.message);
+      btn.textContent = '⚡ Analyze Now';
+    }
+    btn.style.opacity = '1';
   }
 
   async function toggleEnabled() {

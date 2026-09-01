@@ -68,8 +68,23 @@ def generate_content(profile="motivational") -> dict:
         with open(history_file, "r", encoding="utf-8") as f:
             used_topics = f.read().strip()
 
+    # --- SELF HEALING INJECTION ---
+    directives_injection = ""
+    directives_file = "ai_directives_cartoon.txt" if profile == "cartoon" else "ai_directives.txt"
+    
+    if os.path.exists(directives_file):
+        with open(directives_file, "r", encoding="utf-8") as f:
+            directives_txt = f.read().strip()
+            if directives_txt:
+                directives_injection = (
+                    "CRITICAL DIRECTIVES FROM RECENT PERFORMANCE ANALYTICS:\n"
+                    f"{directives_txt}\n"
+                    "You MUST obey these rules, as they were derived from real audience data.\n\n"
+                )
+
     if profile == "cartoon":
         prompt = (
+            f"{directives_injection}"
             "You are a scriptwriter for 'Cartoon Plus', a YouTube channel that posts funny Hindi shorts. "
             "Your videos combine calming background footage (like soap cutting or ASMR) with a hilarious, conversational Hindi story or joke. "
             "Write a short, engaging, and very funny Hindi story or joke. It should feel like a casual conversation or a funny anecdote. "
@@ -128,8 +143,8 @@ def generate_content(profile="motivational") -> dict:
             "}\n"
         )
     else:
-        # Original motivational prompt
         prompt = (
+            f"{directives_injection}"
             "You are the scriptwriter for 'NextGenThoughts', one of the fastest-growing psychology channels on YouTube. "
             "Your scripts are inspired by the greatest books ever written on human behavior, power, and dark psychology. "
             "You have deeply studied: '48 Laws of Power', 'The Laws of Human Nature', 'The Art of Seduction', "
@@ -142,33 +157,56 @@ def generate_content(profile="motivational") -> dict:
             "Your job is to take a specific law, chapter, or concept from these books and transform it into a short, "
             "electrifying script that feels like a brilliant, passionate teacher is revealing a forbidden life-changing secret. "
             "You do NOT summarize the book. You TELL A STORY. You make the viewer feel something.\n\n"
-            
+
             "SCRIPT STRUCTURE (follow this exact emotional arc):\n"
-            "1. THE HOOK (0-3 Seconds) — A highly disruptive, scroll-stopping pattern interrupt. "
-            "It must grab them instantly. Do NOT use repetitive hooks. Every video must start differently. "
-            "Make it feel urgent, forbidden, or highly relatable. Make them feel seen. 1-2 punchy sentences MAX.\n"
-            
-            "2. THE REVEAL — Name the psychological concept or law immediately after the hook. "
-            "Frame it like a secret: 'That tactic has a name. Robert Greene calls it Law 3: Conceal Your Intentions. "
-            "And once you see it, you will spot it everywhere.'\n"
-            
-            "3. THE TEACHING — This is your masterclass. Explain HOW and WHY this works using a second vivid example. "
-            "Write in short, punchy sentences. Vary sentence length for dramatic effect. "
-            "Use 'you' and 'your' to speak directly to ONE person. "
+            "1. THE HOOK (0-3 Seconds) — INVENT YOUR OWN UNIQUE HOOK STYLE for this specific topic. "
+            "Do NOT default to generic or repetitive patterns. You must design the opening strategy that will cause the "
+            "maximum number of people to stop scrolling for THIS particular concept. "
+            "Ask yourself: what is the most psychologically disruptive, emotionally provocative, or counterintuitive angle "
+            "of this specific topic? Then open with THAT. "
+            "Great hooks exploit one of these deep human drives: "
+            "curiosity (make them feel they are about to learn a secret), "
+            "fear (make them feel something bad is happening to them right now), "
+            "identity threat (attack a belief they hold about themselves), "
+            "social proof shock (make them question everyone around them), "
+            "forbidden knowledge (make them feel society is hiding this from them), "
+            "personal confession (raw vulnerable narrator voice that draws them in), "
+            "or a completely novel angle you invent yourself that is even more powerful. "
+            "1-2 punchy, scroll-stopping sentences MAX. Every word must earn its place. "
+            "Record the hook style you invented in the 'hook_archetype' JSON field.\n"
+
+            "2. THE REVEAL — Immediately after the hook, name the psychological concept or law. "
+            "Do NOT copy the same framing every time. Invent the best possible reveal for THIS specific concept. "
+            "A great reveal does three things: (a) it NAMES the concept clearly so the viewer has a label to hold onto, "
+            "(b) it FRAMES it as rare, forbidden, or misunderstood knowledge — something most people will never know, "
+            "(c) it creates an AHA PIVOT that makes the hook make sense: the viewer suddenly understands WHY the opening was so alarming. "
+            "You can frame it through a book ('Robert Greene called it...'), a historical figure, a clinical term made human, "
+            "a phrase you coin yourself, or any other angle that fits the concept best. "
+            "1-3 sentences. Sharp and clean.\n"
+
+            "3. THE TEACHING — This is your masterclass. Explain HOW and WHY this works using a vivid, "
+            "relatable real-world story or scenario. Write in short, punchy sentences. "
+            "Vary sentence length for dramatic effect. Use 'you' and 'your' to speak directly to ONE person. "
             "BANNED phrases: 'cognitive bias', 'research shows', 'studies have found', 'it is important to note', "
             "'this phenomenon', 'in conclusion', 'psychologists say', 'according to'. "
-            "Teach it like you are explaining to your smartest friend over coffee.\n"
-            
+            "Teach it like you are revealing a dangerous secret to your smartest friend.\n"
+
             "4. THE POWER MOVE — End with one actionable, empowering takeaway. "
-            "How can they use this or spot it being used on them? "
-            "End with a single powerful closing sentence that hits like a punch.\n"
-            
-            "5. LANGUAGE RULES:\n"
+            "How can they use this or protect themselves from it?\n"
+
+            "5. THE LOOP CLOSER (CRITICAL RULE) — The VERY LAST sentence of the script MUST echo or "
+            "mirror the exact theme or key phrase from the opening hook, so the video loops seamlessly. "
+            "Example: If the hook was 'Stop choosing people who hurt you', the loop closer might be "
+            "'Because now you know exactly why you kept choosing them, and you never have to again.' "
+            "This is not optional. It creates a seamless infinite loop effect for YouTube Shorts replays, "
+            "which dramatically boosts watch time percentage.\n\n"
+
+            "LANGUAGE RULES:\n"
             "   - NO markdown: no **, no __, no #. Plain spoken English only.\n"
             "   - NO special characters or symbols.\n"
-            "   - Script length: 100 to 150 words. Every single word must earn its place.\n"
-            "   - Read it aloud in your head. If it sounds like a robot or a textbook, rewrite it.\n\n"
-            
+            "   - LENGTH CONSTRAINT: Your final spoken script (the 'quote' field) MUST be strictly between 80 to 100 words. "
+            "Every word must hit hard.\n\n"
+
             "PLATFORM SEO METADATA (generate after the script):\n"
             "   - YOUTUBE SHORTS: A scroll-stopping title WITH EMOJIS (under 80 chars, urgent or forbidden feeling). "
             "A rich, multi-paragraph YouTube description (minimum 150 words). IMPORTANT: You MUST include highly searched phrases "
@@ -177,20 +215,22 @@ def generate_content(profile="motivational") -> dict:
             "   - FACEBOOK REELS: A warm, conversational caption ending with a thought-provoking question. Exactly 7 viral hashtags.\n"
             "   - INSTAGRAM REELS: A short, minimalistic, aesthetic caption. Max 2 lines. 2-3 emojis. 6-8 niche hashtags.\n"
             "   CRITICAL: #NextGenThoughts MUST be the first hashtag on every single platform.\n\n"
-            
+
             "VIDEO ASSETS:\n"
             "   - Provide 5 to 8 hyper-literal Pexels video search keywords. Describe PHYSICAL, VISUAL things, NOT abstract concepts.\n"
             "   - BAN abstract words: 'psychology', 'mindset', 'success', 'manipulation', 'power', 'sadness'.\n"
             "   - INSTEAD: 'person walking dark room', 'eye close up macro', 'chess pieces hand', 'two people arguing office'.\n"
             "   - One background music keyword: calm and ambient ONLY (e.g., 'calm piano', 'cinematic ambient', 'lo-fi focus').\n\n"
-            
+
             "OUTPUT FORMAT: Single valid JSON object. NO markdown wrapping.\n"
             "The 'topic_name' must be: [Book Title] — [Specific Law/Concept Name]. "
             "Example: '48 Laws of Power — Law 3: Conceal Your Intentions'\n"
+            "The 'hook_archetype' field must record which hook style was used (e.g. 'VIVID SCENE').\n"
             "The 'fomo_overlay' is a short, clickbaity half-caption that stays on screen (e.g. 'The real reason they ignore you...'). Max 7 words.\n"
             "{\n"
             "  \"topic_name\": \"...\",\n"
-            "  \"quote\": \"the full spoken script\",\n"
+            "  \"hook_archetype\": \"...\",\n"
+            "  \"quote\": \"the full spoken script with loop closer at the end\",\n"
             "  \"fomo_overlay\": \"...\",\n"
             "  \"video_search_keywords\": [\"keyword1\", \"keyword2\"],\n"
             "  \"music_search_keyword\": \"...\",\n"

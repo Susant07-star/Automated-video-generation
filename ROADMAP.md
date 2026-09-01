@@ -47,16 +47,52 @@ This document outlines the strategic upgrades for the `Automated-video-generatio
 
 ---
 
-## 🔄 Phase 7: Advanced Retention & Voice Design (IN PROGRESS)
-* **Goal:** Implement Hollywood-style audio ducking, a CTA overlay for saves, and a custom viral AI voice.
-* **Status:** Planning phase.
-  * **Idea A (Dynamic Ducking):** Music swells between sentences and ducks during speech.
-  * **Idea C (CTA Overlay):** A "Save this for later" graphic pops up in the last 3 seconds.
-  * **Idea D (Custom Voice):** Shift from the default "Adam" voice to a custom, highly-unique ElevenLabs voice clone (e.g., Robert Greene style).
+## 🔄 Phase 7: Viral Growth & Engagement Enhancements (IN PROGRESS)
+* **Goal:** Implement algorithm-friendly hooks, dynamic visuals, and advanced editing techniques to increase view velocity and audience retention.
+* **Status:** ✅ Complete (2 features skipped with justification).
+  * ✅ **Story/Secret Hook Archetypes:** 7 rotating hook styles (Forbidden Secret, Personal Confession, Counter-Intuitive Challenge, Threat/Warning, Vivid Scene, Rhetorical Trap, Shocking Statistic) are randomly selected each run so every video opens differently.
+  * ✅ **Loopable Script Design:** The AI is now instructed to make the final sentence echo the opening hook, creating a seamless infinite-loop effect for YouTube Shorts replays (boosts watch-time %).
+  * ✅ **Dynamic B-Roll Cuts:** Clips now cut on natural speech pauses (≥ 0.35s gaps between words) detected from the ElevenLabs timestamp JSON, so every B-roll change lands on a breath/sentence boundary — never mid-word.
+  * ✅ **Micro-Animation Pop-In:** The active (yellow) subtitle word is rendered 16% larger than surrounding words, creating a visual "pop" effect in sync with the narrator's speech.
+  * ❌ **Emoji Injection:** Skipped — Pillow cannot reliably render color emoji glyphs on Windows (Arial Bold has no emoji support). Would require PNG overlay pipeline; revisit if needed.
+  * ❌ **Ambient Bed Tracks & Risers:** Skipped — audio mix is already complex (music + impact SFX + whoosh). Adding tension drones/rain on top creates sonic chaos that’s difficult to tune automatically. The bass boom SFX already delivers the cinematic punch.
+  * ❌ **A/B Testing Generation:** Skipped — no analytics feedback loop yet (no code to read back view counts from YouTube/Instagram API). Without a measure-and-iterate pipeline, it’s just 3x the content with no learning. Revisit at 10K+ subscribers.
+  * ✅ **Automated Thumbnail Extraction:** After each render, ffmpeg grabs the frame at the 3rd spoken word's timestamp (deep in the hook, subtitle fully visible). The JPG is saved as `final_reel_thumbnail.jpg` and automatically set as the cover photo for both Instagram (`cover_url`) and Facebook (`thumb_url`) Reels uploads.
 
 ---
 
-## 📋 Phase 8: Hindi Language Channel (PLANNED)
+## ✅ Phase 8: Advanced Retention & Voice Design (COMPLETE)
+* **Goal:** Implement Hollywood-style audio ducking, a CTA overlay for saves, and a professional karaoke subtitle system.
+* **Status:** ✅ Complete (1 feature skipped with justification).
+  * ✅ **Idea A (Dynamic Ducking):** Music swells between sentences and ducks during speech (already implemented in audio mix).
+  * ✅ **Idea C (CTA Overlay):** A sleek, modern "Save this for later" pill graphic pops up in the last 3 seconds. Built using clean Pillow text rendering to avoid color emoji issues.
+  * ✅ **Subtitle Micro-Animation Fix:** Completely rewrote `create_karaoke_subtitle_image` to fix the vertical-jumping layout bug. Key improvements:
+    * **Fixed-height row:** Row height is now reserved using the active word's size upfront, so the layout never shifts when a new word activates.
+    * **Vertical centering:** All words are now perfectly center-aligned within the stable row.
+    * **Clean 8-direction stroke:** Replaced the blurry 121-iteration stroke loop with a crisp 8-point offset stroke.
+    * **Soft glow effect:** Active yellow word gets a subtle golden halo for a premium, professional look.
+  * ❌ **Idea D (Custom Voice):** Skipped — ElevenLabs restricts sharing custom cloned voices across accounts. Reverted to standard high-quality voices (e.g., Adam).
+
+---
+
+## ✅ Phase 9: Self-Healing Analytics System (COMPLETE)
+* **Goal:** Build a closed-loop AI system that tracks video performance and automatically rewrites its own generation rules to improve future videos.
+* **Status:** ✅ Complete.
+  * ✅ **The Tracker (`main.py` & `cartoon_main.py`):** After every successful YouTube upload, the pipeline saves the `video_id`, timestamp, and full script state to `posted_history.json` (and `posted_history_cartoon.json` for Cartoon Plus).
+  * ✅ **The Doctor (`heal.py` & `heal_cartoon.py`):** A standalone script that:
+    * Finds all unanalyzed videos that are 3–20 days old (3-day minimum ensures YouTube AVD data is available; 20-day max avoids stale data).
+    * Fetches Views, Likes, Comments (Data API) and Average View Duration (Analytics API — requires `yt-analytics.readonly` OAuth scope).
+    * Sends data to **Gemini 2.5-Pro** (upgraded from 1.5-Pro for sharper strategic reasoning).
+    * Generates 3–5 new high-impact rules and overwrites `ai_directives.txt`.
+    * Marks each processed video `"analyzed": true` so it's never double-counted. Videos older than 20 days are auto-expired.
+    * Fully independent versions for NextGenThoughts and Cartoon Plus channels.
+  * ✅ **The Healer (`content_generator.py`):** Before generating each script, loads the correct directives file (`ai_directives.txt` or `ai_directives_cartoon.txt`) and injects it as a `CRITICAL DIRECTIVES` block into the Gemini system prompt.
+  * ✅ **Dashboard Integration (`dashboard/index.html` & `cartoon.html`):** Added a "🩺 Self-Healing Analytics" section to both dashboards. Users can select the day of the week for automatic analysis and trigger an immediate analysis with the "⚡ Analyze Now" button.
+  * ✅ **Scheduler Integration (`scheduler.py`):** On the configured Analytics Day, the scheduler runs `heal.py` before generating the first video of the day, so new videos immediately benefit from the latest directives.
+
+---
+
+## 📋 Phase 10: Hindi Language Channel (PLANNED)
 * **Goal:** Launch a second, dedicated Hindi psychology channel to tap into the massive 500M+ Hindi-speaking YouTube audience where competition is significantly lower.
 * **Strategy — Two Separate Channels (NOT the same channel):**
   * Mixing Hindi and English on one channel confuses the YouTube algorithm and splits your audience. Each channel must have a 100% focused identity.
@@ -71,7 +107,7 @@ This document outlines the strategic upgrades for the `Automated-video-generatio
 
 ---
 
-## 📋 Phase 7: Long-Form Deep Dive Videos (PLANNED — Future)
+## 📋 Phase 11: Long-Form Deep Dive Videos (PLANNED — Future)
 * **Goal:** Build deep authority and a loyal community, not just a casual viral audience.
 * **Strategy:**
   * Do NOT start with long-form content. Build the short-form audience to 1,000-5,000 subscribers first. Shorts are the fastest discovery engine.
@@ -84,7 +120,7 @@ This document outlines the strategic upgrades for the `Automated-video-generatio
 
 ---
 
-## 📋 Phase 8: Visual Branding & Logo Overlay (PLANNED)
+## 📋 Phase 12: Visual Branding & Logo Overlay (PLANNED)
 * **Goal:** Build brand authority and prevent content theft.
 * **Implementation:**
   * Prepare a transparent `.png` logo for `NextGenThoughts`.

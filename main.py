@@ -4,6 +4,12 @@ import json
 import argparse
 from dotenv import load_dotenv
 
+# Force UTF-8 output so emoji in print() never crash on Windows cp1252 terminals
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
 # Ensure environment variables are loaded FIRST
 load_dotenv()
 
@@ -166,15 +172,18 @@ def main():
         # ── STEP 5: Assemble video ────────────────────────────────
         if state.get("assembly_done") and _file_ready(final_path):
             print(f"\n⏭️  [Step 5/5] Skipping assembly — {final_path} already exists")
+            # Reconstruct thumbnail path in case we are resuming
+            thumb_path = state.get("thumbnail_path", final_path.replace(".mp4", "_thumbnail.jpg"))
         else:
             print(f"\n▶️  [Step 5/5] Assembling cinematic multi-clip video...")
             print(f"   This step cannot be partially resumed — rendering from frame 0.")
             print(f"   (All media is already local, so this is the only long step)\n")
             
             fomo_overlay = state.get("fomo_overlay", "Wait for the end...")
-            assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path, impact_path, fomo_overlay=fomo_overlay)
+            thumb_path = assemble_video(video_paths, voice_path, quote, final_path, music_path, whoosh_path, impact_path, fomo_overlay=fomo_overlay) or ""
             
             state["assembly_done"] = True
+            state["thumbnail_path"] = thumb_path
             save_checkpoint(state)
             print("   ✅ Assembly saved to checkpoint.")
 
@@ -201,27 +210,43 @@ def main():
             ig_hash = state.get("ig_hashtags", generic_hash)
             
             # Facebook
+            thumb_path = state.get("thumbnail_path", "")
             fb_token = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")
             fb_page  = os.getenv("FACEBOOK_PAGE_ID", "")
             if fb_token and fb_page and fb_token != "your_fb_access_token_here":
                 try:
-                    upload_reel(final_path, fb_cap, fb_hash)
+                    upload_reel(final_path, fb_cap, fb_hash, thumbnail_path=thumb_path)
                 except Exception as e:
                     print(f"   ❌ Facebook upload failed: {e}")
             else:
                 print("   ⚠️ Facebook credentials not set. Skipping.")
-                
+
             # YouTube
             try:
-                upload_to_youtube(final_path, yt_titl, yt_desc, yt_tags)
+                yt_res = upload_to_youtube(final_path, yt_titl, yt_desc, yt_tags)
+                if yt_res and yt_res.get("id"):
+                    # Save to posted_history.json for analytics healing
+                    history_entry = {
+                        "video_id": yt_res.get("id"),
+                        "timestamp": datetime.datetime.now().isoformat(),
+                        "script_state": state
+                    }
+                    history_file = "posted_history.json"
+                    history_data = []
+                    if os.path.exists(history_file):
+                        with open(history_file, "r") as hf:
+                            history_data = json.load(hf)
+                    history_data.append(history_entry)
+                    with open(history_file, "w") as hf:
+                        json.dump(history_data, hf, indent=2)
             except Exception as e:
                 print(f"   ❌ YouTube upload failed: {e}")
-                
+
             # Instagram
             ig_id = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "")
             if ig_id and ig_id != "your_ig_business_id_here":
                 try:
-                    upload_to_instagram(final_path, ig_cap, ig_hash)
+                    upload_to_instagram(final_path, ig_cap, ig_hash, thumbnail_path=thumb_path)
                 except Exception as e:
                     print(f"   ❌ Instagram upload failed: {e}")
             else:
