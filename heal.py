@@ -5,7 +5,7 @@ import datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from src.uploader import get_youtube_service, YOUTUBE_SCOPES
-import google.generativeai as genai
+from google import genai
 
 # Force UTF-8 output so emoji never crash on Windows terminals
 if hasattr(sys.stdout, 'reconfigure'):
@@ -19,8 +19,8 @@ load_dotenv()
 # Support both GEMINI_API_KEY (single) and GEMINI_API_KEYS (comma-separated list used in auto_post)
 _gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEYS", "").split(",")[0].strip()
 if not _gemini_key:
-    print("\u26a0\ufe0f  WARNING: No GEMINI_API_KEY or GEMINI_API_KEYS found in environment. Analysis will fail.")
-genai.configure(api_key=_gemini_key)
+    print("⚠️  WARNING: No GEMINI_API_KEY or GEMINI_API_KEYS found in environment. Analysis will fail.")
+gemini_client = genai.Client(api_key=_gemini_key) if _gemini_key else None
 
 HISTORY_FILE = "posted_history.json"
 DIRECTIVES_FILE = "ai_directives.txt"
@@ -175,8 +175,14 @@ INSTRUCTIONS:
     """
 
     print("   🧠 Sending data to Gemini for analysis...")
-    model = genai.GenerativeModel('gemini-2.5-pro')
-    response = model.generate_content(prompt)
+    if not gemini_client:
+        print("   ❌ Error: No Gemini API key configured.")
+        return
+        
+    response = gemini_client.models.generate_content(
+        model='gemini-2.5-pro',
+        contents=prompt
+    )
 
     new_rules = response.text.strip()
 

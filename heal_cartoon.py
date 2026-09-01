@@ -12,17 +12,24 @@ Or triggered automatically by scheduler_cartoon.py on your chosen Analytics Day.
 """
 
 import os
+import sys
 import json
 import datetime
 from googleapiclient.discovery import build
 from src.uploader import get_youtube_service, YOUTUBE_SCOPES
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
+
+# Force UTF-8 output so emoji never crash on Windows terminals
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 load_dotenv()
 
-# Use existing Gemini key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+_gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEYS", "").split(",")[0].strip()
+gemini_client = genai.Client(api_key=_gemini_key) if _gemini_key else None
 
 # Cartoon Plus specific files
 HISTORY_FILE   = "posted_history_cartoon.json"
@@ -179,8 +186,14 @@ INSTRUCTIONS:
     """
 
     print("   🧠 Sending Cartoon Plus data to Gemini for analysis...")
-    model = genai.GenerativeModel('gemini-2.5-pro')
-    response = model.generate_content(prompt)
+    if not gemini_client:
+        print("   ❌ Error: No Gemini API key configured.")
+        return
+        
+    response = gemini_client.models.generate_content(
+        model='gemini-2.5-pro',
+        contents=prompt
+    )
     new_rules = response.text.strip()
 
     with open(DIRECTIVES_FILE, "w", encoding="utf-8") as f:
