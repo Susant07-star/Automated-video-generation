@@ -660,7 +660,7 @@
   async function getFileContent(filePath) {
     // Add a timestamp cache-buster so GitHub API doesn't return a stale cached version on page refresh
     const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/${filePath}?t=${Date.now()}`);
-    return { content: JSON.parse(atob(data.content.replace(/\n/g,''))), sha: data.sha };
+    return { content: JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g,''))))), sha: data.sha };
   }
 
   async function updateFileContent(filePath, content, sha, message) {
@@ -677,7 +677,7 @@
   // Updates the cron day in the .github/workflows/YAML file so the actual CI schedule changes
   async function updateWorkflowCronDay(workflowFile, cronHour, dayNumber) {
     const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/.github/workflows/${workflowFile}?t=${Date.now()}`);
-    const rawText = atob(data.content.replace(/\n/g, ''));
+    const rawText = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
     const sha = data.sha;
     // Replace the cron day field: matches patterns like '0 3 * * 0' or '0 4 * * 6'
     const updated = rawText.replace(/(cron:\s*'\d+\s+\d+\s+\*\s+\*\s+)\d+'/, `$1${dayNumber}'`);
@@ -1051,7 +1051,7 @@
     try {
       // Fetch ai_directives.txt raw content from GitHub
       const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/ai_directives.txt?t=${Date.now()}`);
-      const text = atob(data.content.replace(/\n/g, ''));
+      const text = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
       box.textContent = text || '(No directives yet — run the Doctor to generate them.)';
       // Show last commit date
       try {
