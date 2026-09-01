@@ -1,9 +1,9 @@
-name: ð­ Doctor â Cartoon Plus Self-Healing Analytics
+name: Ã°ÂÂÂ­ Doctor Ã¢ÂÂ Cartoon Plus Self-Healing Analytics
 
 on:
   schedule:
     # Runs every Sunday at 04:00 UTC by default (1 hour after NextGen to avoid overlap)
-    - cron: '0 4 * * 2'
+    - cron: '0 4 * * 1'
   workflow_dispatch:
     inputs:
       force_analyze:
