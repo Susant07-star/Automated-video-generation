@@ -49,83 +49,57 @@ def download_file(url: str, dest_path: str):
         raise
 
 
-def download_video_from_drive(drive_folder_id: str, local_folder: str = "local_satisfying_videos"):
+def get_drive_video_list(drive_folder_id: str):
     if not os.path.exists('drive_token.json'):
-        print("No Google Drive credentials found (drive_token.json). Skipping cloud download.")
-        return False
-        
+        print("No Google Drive credentials found (drive_token.json). Skipping cloud list.")
+        return []
     try:
         creds = Credentials.from_authorized_user_file('drive_token.json', ['https://www.googleapis.com/auth/drive.readonly'])
         service = build('drive', 'v3', credentials=creds)
-    except Exception as e:
-        print(f"Failed to auth with Google Drive: {e}")
-        return False
-        
-    print(f"Checking Google Drive folder: {drive_folder_id}")
-    try:
         query = f"'{drive_folder_id}' in parents and trashed = false and (mimeType contains 'video/mp4' or mimeType contains 'video/quicktime' or mimeType contains 'video/x-matroska')"
         results = service.files().list(q=query, fields="files(id, name)", pageSize=1000).execute()
         items = results.get('files', [])
+        items.sort(key=lambda x: x['name'])
+        return items
     except Exception as e:
         print(f"Failed to list Drive files: {e}")
-        return False
-    
-    if not items:
-        print("No videos found in the Google Drive folder.")
-        return False
-        
-    items.sort(key=lambda x: x['name'])
-    
-    progress_file = "video_progress.json"
-    current_filename = ""
-    if os.path.exists(progress_file):
-        try:
-            import json
-            with open(progress_file, 'r') as f:
-                progress = json.load(f)
-                current_filename = progress.get("current_video_filename", "")
-        except:
-            pass
-            
-    target_file = items[0]
-    if current_filename:
-        for item in items:
-            if item['name'] == current_filename:
-                target_file = item
-                break
-                
+        return []
+
+def download_single_drive_video(file_id: str, file_name: str, local_folder: str):
     if not os.path.exists(local_folder):
         os.makedirs(local_folder, exist_ok=True)
         
-    local_filepath = os.path.join(local_folder, target_file['name'])
+    local_filepath = os.path.join(local_folder, file_name)
     if os.path.exists(local_filepath):
-        print(f"Video {target_file['name']} already exists locally. Skipping download.")
+        print(f"Video {file_name} already exists locally.")
         return True
         
-    # Clean up old videos to save disk space on GitHub Actions runner
+    # Clean up old videos to save disk space
     for f in os.listdir(local_folder):
         old_file = os.path.join(local_folder, f)
-        if os.path.isfile(old_file) and f != target_file['name']:
+        if os.path.isfile(old_file) and f != file_name:
             try:
                 os.remove(old_file)
                 print(f"Removed old video to save space: {f}")
             except Exception:
                 pass
-            
-    print(f"Downloading {target_file['name']} from Google Drive...")
+                
+    print(f"Downloading {file_name} from Google Drive...")
     try:
-        request = service.files().get_media(fileId=target_file['id'])
+        creds = Credentials.from_authorized_user_file('drive_token.json', ['https://www.googleapis.com/auth/drive.readonly'])
+        service = build('drive', 'v3', credentials=creds)
+        request = service.files().get_media(fileId=file_id)
         with open(local_filepath, 'wb') as fh:
             downloader = MediaIoBaseDownload(fh, request, chunksize=1024*1024*10)
             done = False
             while done is False:
                 status, done = downloader.next_chunk()
                 if status:
-                    print(f"Download {int(status.progress() * 100)}%.", end='\\r')
-        print(f"\\n✅ Successfully downloaded {target_file['name']} to local folder.")
+                    print(f"Download {int(status.progress() * 100)}%.", end='\r')
+        print(f"\n✅ Successfully downloaded {file_name} to local folder.")
         return True
     except Exception as e:
-        print(f"\\n❌ Failed to download from Drive: {e}")
+        print(f"\n❌ Failed to download from Drive: {e}")
         return False
 
 def fetch_sequential_local_video(target_duration: float, output_filename: str, drive_folder_id: str = None):
@@ -136,15 +110,19 @@ def fetch_sequential_local_video(target_duration: float, output_filename: str, d
     folder = "local_satisfying_videos"
     progress_file = "video_progress.json"
     
+    drive_items = []
     if drive_folder_id:
-        download_video_from_drive(drive_folder_id, folder)
+        drive_items = get_drive_video_list(drive_folder_id)
         
-    if not os.path.exists(folder):
-        os.makedirs(folder, exist_ok=True)
+    if drive_items:
+        videos = [item['name'] for item in drive_items]
+    else:
+        if not os.path.exists(folder):
+            os.makedirs(folder, exist_ok=True)
+        videos = sorted([f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.mov', '.mkv'))])
         
-    videos = sorted([f for f in os.listdir(folder) if f.lower().endswith(('.mp4', '.mov', '.mkv'))])
     if not videos:
-        raise Exception(f"No videos found in '{folder}'. Please add some satisfying compilations.")
+        raise Exception(f"No videos found in Drive or '{folder}'. Please add some satisfying compilations.")
 
     # Load progress
     import json
@@ -160,16 +138,19 @@ def fetch_sequential_local_video(target_duration: float, output_filename: str, d
     curr_filename = progress.get("current_video_filename", "")
     curr_t = progress.get("last_timestamp_seconds", 0.0)
     
-    # Find the index of the currently tracked filename
     try:
         curr_idx = videos.index(curr_filename) if curr_filename else 0
     except ValueError:
-        # If the file was deleted or renamed, start from the first one
         print(f"   ⚠️ Tracked video '{curr_filename}' not found. Starting from the beginning.")
         curr_idx = 0
         curr_t = 0.0
     
-    current_video_path = os.path.join(folder, videos[curr_idx])
+    def ensure_video_ready(idx):
+        if drive_items:
+            download_single_drive_video(drive_items[idx]['id'], drive_items[idx]['name'], folder)
+        return os.path.join(folder, videos[idx])
+
+    current_video_path = ensure_video_ready(curr_idx)
     clip = VideoFileClip(current_video_path)
     
     # If the remaining duration is less than what we need, move to the next video
@@ -183,7 +164,7 @@ def fetch_sequential_local_video(target_duration: float, output_filename: str, d
             print("   🔄 All satisfying videos used! Looping back to the first video.")
             curr_idx = 0
             
-        current_video_path = os.path.join(folder, videos[curr_idx])
+        current_video_path = ensure_video_ready(curr_idx)
         clip = VideoFileClip(current_video_path)
         
         if clip.duration < target_duration:
