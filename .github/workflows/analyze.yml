@@ -1,9 +1,9 @@
-name: 🩺 Doctor — Self-Healing Analytics
+name: ð©º Doctor â Self-Healing Analytics
 
 on:
   schedule:
     # Runs every Sunday at 03:00 UTC by default
-    - cron: '0 3 * * 0'
+    - cron: '0 3 * * 1'
   workflow_dispatch:
     inputs:
       force_analyze:
