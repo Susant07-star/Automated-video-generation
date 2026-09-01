@@ -1,12 +1,26 @@
 import os
+import sys
 import json
 import datetime
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from src.uploader import get_youtube_service, YOUTUBE_SCOPES
 import google.generativeai as genai
 
-# Use existing Gemini key
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Force UTF-8 output so emoji never crash on Windows terminals
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+# Load .env FIRST so secrets are available both locally and in CI
+load_dotenv()
+
+# Support both GEMINI_API_KEY (single) and GEMINI_API_KEYS (comma-separated list used in auto_post)
+_gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEYS", "").split(",")[0].strip()
+if not _gemini_key:
+    print("\u26a0\ufe0f  WARNING: No GEMINI_API_KEY or GEMINI_API_KEYS found in environment. Analysis will fail.")
+genai.configure(api_key=_gemini_key)
 
 HISTORY_FILE = "posted_history.json"
 DIRECTIVES_FILE = "ai_directives.txt"
@@ -123,13 +137,15 @@ def analyze_and_heal():
 
     for vid in pending_videos:
         metrics = fetch_video_metrics(vid["video_id"])
+        # Safely access script_state — it may be a dict or missing entirely
+        script_state = vid.get("script_state") or {}
         analysis_payload.append({
-            "video_id":  vid["video_id"],
-            "posted_on": vid["timestamp"],
-            "script":    vid["script_state"].get("quote", ""),
-            "hook_style": vid["script_state"].get("hook_archetype", "Unknown"),
-            "topic":     vid["script_state"].get("topic_name", "Unknown"),
-            "metrics":   metrics
+            "video_id":   vid["video_id"],
+            "posted_on":  vid["timestamp"],
+            "script":     script_state.get("quote", ""),
+            "hook_style": script_state.get("hook_archetype", "Unknown"),
+            "topic":      script_state.get("topic_name", "Unknown"),
+            "metrics":    metrics
         })
         analyzed_ids.add(vid["video_id"])
         print(f"      - {vid['video_id']} | Views: {metrics['views']} | AVD: {metrics['average_view_duration_seconds']}s")

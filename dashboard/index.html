@@ -298,6 +298,86 @@
     .badge-running { background: rgba(59,130,246,0.15); color: var(--blue); }
     .badge-skipped { background: rgba(100,116,139,0.15); color: var(--text-muted); }
 
+    /* ─── DOCTOR CARD ─── */
+    :root {
+      --teal: #14b8a6;
+      --teal-bright: #2dd4bf;
+      --teal-glow: rgba(20,184,166,0.25);
+    }
+    .doctor-card {
+      border-color: rgba(20,184,166,0.25) !important;
+      background: rgba(20,184,166,0.03) !important;
+    }
+    .doctor-card .card-title { color: var(--teal-bright) !important; }
+
+    .btn-teal {
+      background: linear-gradient(135deg, #0f766e, #14b8a6);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(20,184,166,0.35);
+    }
+    .btn-teal:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(20,184,166,0.5); }
+    .btn-teal:active { transform: translateY(0); }
+    .btn-teal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-orange {
+      background: linear-gradient(135deg, #c2410c, #f97316);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(249,115,22,0.35);
+    }
+    .btn-orange:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(249,115,22,0.5); }
+    .btn-orange:active { transform: translateY(0); }
+    .btn-orange:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .day-select {
+      background: rgba(20,184,166,0.08);
+      border: 1px solid rgba(20,184,166,0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .day-select:focus { border-color: var(--teal-bright); }
+    .day-select option { background: #0d0d1a; }
+
+    .directives-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(20,184,166,0.15);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow-y: auto;
+      font-family: 'Inter', monospace;
+      margin-top: 16px;
+    }
+    .directives-box::-webkit-scrollbar { width: 4px; }
+    .directives-box::-webkit-scrollbar-track { background: transparent; }
+    .directives-box::-webkit-scrollbar-thumb { background: rgba(20,184,166,0.3); border-radius: 4px; }
+
+    .doctor-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 8px;
+    }
+    .doctor-status.success { color: var(--teal-bright); }
+    .doctor-status.error { color: var(--red); }
+
+    .doctor-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .doctor-row-left {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
+
     .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
 
     /* ─── TOGGLE ─── */
@@ -458,6 +538,47 @@
       </div>
     </div>
 
+    <!-- 🩺 Doctor Card — Self-Healing Analytics -->
+    <div style="margin-bottom:28px">
+      <div class="card doctor-card" style="border-radius:20px;padding:28px">
+        <div class="card-title" style="justify-content:space-between;margin-bottom:16px">
+          <span>🩺 The Doctor — Self-Healing Analytics</span>
+          <span id="doctor-last-run" style="font-size:11px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0">Loading last run...</span>
+        </div>
+
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px">
+          Analyzes videos that are 3–20 days old (when YouTube AVD data is ready), generates new AI scriptwriting directives, and saves them back to the repo automatically.
+        </p>
+
+        <div class="doctor-row" style="margin-bottom:16px">
+          <div class="doctor-row-left">
+            <label style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em">Weekly Run Day</label>
+            <select class="day-select" id="analytics-day-select" onchange="saveAnalyticsDay(event)">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-teal" id="run-doctor-btn" style="padding:10px 20px;font-size:13px" onclick="triggerAnalyzeNow(event)">
+              ⚡ Run Doctor Now
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">
+          📋 Current AI Directives
+          <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:6px">(from ai_directives.txt)</span>
+        </div>
+        <div class="directives-box" id="directives-box">Loading directives...</div>
+        <div class="doctor-status" id="doctor-status"></div>
+      </div>
+    </div>
+
     <!-- Activity Feed -->
     <div class="card activity-card">
       <div class="activity-header">
@@ -554,7 +675,7 @@
   async function init() {
     buildHourGrid();
     buildPublishGrid();
-    await Promise.allSettled([ loadSchedule(), loadRuns() ]);
+    await Promise.allSettled([ loadSchedule(), loadRuns(), loadDirectives() ]);
     setInterval(() => { if(document.visibilityState === 'visible') loadRuns(); }, 30000);
   }
 
@@ -684,23 +805,27 @@
     btn.style.opacity = '1';
   }
 
-  async function triggerAnalyzeNow() {
-    const btn = event.target;
-    btn.textContent = '⏳ Analyzing...'; btn.style.opacity = '0.7';
+  async function triggerAnalyzeNow(evt) {
+    const btn = evt ? evt.target : document.getElementById('run-doctor-btn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Triggering...';
     try {
-      // Trigger GitHub Action workflow dispatch for analyze
       await ghFetch(`/repos/${OWNER}/${REPO}/actions/workflows/analyze.yml/dispatches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: 'main' })
+        body: JSON.stringify({ ref: 'main', inputs: { force_analyze: 'yes' } })
       });
-      btn.textContent = '✅ Analysis Triggered';
-      setTimeout(() => btn.textContent = '⚡ Analyze Now', 3000);
+      btn.innerHTML = '✅ Doctor Triggered!';
+      const status = document.getElementById('doctor-status');
+      status.textContent = '🩺 Analysis started — check GitHub Actions for live progress.';
+      status.className = 'doctor-status success';
+      setTimeout(() => loadRuns(), 3000);
     } catch(e) {
-      alert('Error triggering analysis (make sure analyze.yml workflow exists): ' + e.message);
-      btn.textContent = '⚡ Analyze Now';
+      alert('Error triggering Doctor workflow: ' + e.message);
+      btn.innerHTML = originalHTML;
     }
-    btn.style.opacity = '1';
+    setTimeout(() => { btn.disabled = false; btn.innerHTML = originalHTML; }, 6000);
   }
 
   async function toggleEnabled() {
@@ -890,6 +1015,33 @@
       }
 
     }, 1000);
+  }
+
+  // ─── DIRECTIVES LOADER ────────────────────────────────────────────────────
+  async function loadDirectives() {
+    const box = document.getElementById('directives-box');
+    const lastRunEl = document.getElementById('doctor-last-run');
+    try {
+      // Fetch ai_directives.txt raw content from GitHub
+      const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/ai_directives.txt?t=${Date.now()}`);
+      const text = atob(data.content.replace(/\n/g, ''));
+      box.textContent = text || '(No directives yet — run the Doctor to generate them.)';
+      // Show last commit date
+      try {
+        const commits = await ghFetch(`/repos/${OWNER}/${REPO}/commits?path=ai_directives.txt&per_page=1`);
+        if (commits && commits[0]) {
+          const d = new Date(commits[0].commit.committer.date);
+          lastRunEl.textContent = `Last updated: ${timeAgo(d.toISOString())}`;
+        }
+      } catch(_) { lastRunEl.textContent = ''; }
+    } catch(e) {
+      if (e.message && e.message.includes('404')) {
+        box.textContent = '(ai_directives.txt not found — run the Doctor for the first time to generate it.)';
+      } else {
+        box.textContent = 'Could not load directives: ' + e.message;
+      }
+      lastRunEl.textContent = '';
+    }
   }
 
   // ─── POST NOW ─────────────────────────────────────────────────────────────
