@@ -471,13 +471,13 @@
           <div class="doctor-row-left">
             <label style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em">Weekly Run Day</label>
             <select class="day-select" id="analytics-day-select" onchange="saveAnalyticsDay()">
-              <option value="0">Sunday</option>
-              <option value="1">Monday</option>
-              <option value="2">Tuesday</option>
-              <option value="3">Wednesday</option>
-              <option value="4">Thursday</option>
-              <option value="5">Friday</option>
-              <option value="6">Saturday</option>
+              <option value="Sunday">Sunday</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
             </select>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
@@ -615,7 +615,11 @@
       document.getElementById('status-dot').style.background = content.enabled !== false ? 'var(--green)' : 'var(--yellow)';
       document.getElementById('status-text').textContent = content.enabled !== false ? 'Active' : 'Paused';
       if (content.analytics_day) {
-        document.getElementById('analytics-day-select').value = content.analytics_day;
+        // Normalize: old format stored a number (0=Sun), new format stores day name string
+        const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const stored = content.analytics_day;
+        const dayStr = typeof stored === 'number' ? dayNames[stored] : String(stored);
+        document.getElementById('analytics-day-select').value = dayStr;
       }
     } catch(e) {
       console.error('Failed to load schedule:', e);
@@ -675,16 +679,17 @@
   }
 
   async function saveAnalyticsDay() {
-    const day = document.getElementById('analytics-day-select').value;
+    // Read value immediately — the select element is never touched, avoiding the collapse bug
+    const day = document.getElementById('analytics-day-select').value; // day name string e.g. "Sunday"
     const statusEl = document.getElementById('doctor-status');
-    statusEl.textContent = '⏳ Saving day preference...';
+    statusEl.textContent = '⏳ Saving...';
     statusEl.className = 'doctor-status';
     try {
       const { sha } = await getFileContent(SCHEDULE_FILE).catch(() => ({ sha: null }));
       const newConfig = { ...scheduleConfig, analytics_day: day };
       await updateFileContent(SCHEDULE_FILE, newConfig, sha, `chore: update cartoon analytics day to ${day} [skip ci]`);
       scheduleConfig = newConfig;
-      statusEl.textContent = `✅ Weekly run day saved: ${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][day]}`;
+      statusEl.textContent = `✅ Saved: Doctor runs every ${day}`;
       statusEl.className = 'doctor-status success';
       setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'doctor-status'; }, 3000);
     } catch(e) {
@@ -815,14 +820,14 @@
   async function loadDirectives() {
     const box = document.getElementById('directives-box');
     const lastRunEl = document.getElementById('doctor-last-run');
+    // Cartoon Plus uses its own separate directives file
+    const DIRECTIVES_FILE = 'ai_directives_cartoon.txt';
     try {
-      // Fetch ai_directives.txt raw content from GitHub
-      const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/ai_directives.txt?t=${Date.now()}`);
+      const data = await ghFetch(`/repos/${OWNER}/${REPO}/contents/${DIRECTIVES_FILE}?t=${Date.now()}`);
       const text = atob(data.content.replace(/\n/g, ''));
       box.textContent = text || '(No directives yet — run the Doctor to generate them.)';
-      // Show last commit date
       try {
-        const commits = await ghFetch(`/repos/${OWNER}/${REPO}/commits?path=ai_directives.txt&per_page=1`);
+        const commits = await ghFetch(`/repos/${OWNER}/${REPO}/commits?path=${DIRECTIVES_FILE}&per_page=1`);
         if (commits && commits[0]) {
           const d = new Date(commits[0].commit.committer.date);
           lastRunEl.textContent = `Last updated: ${timeAgo(d.toISOString())}`;
@@ -830,7 +835,7 @@
       } catch(_) { lastRunEl.textContent = ''; }
     } catch(e) {
       if (e.message && e.message.includes('404')) {
-        box.textContent = '(ai_directives.txt not found — run the Doctor for the first time to generate it.)';
+        box.textContent = '(ai_directives_cartoon.txt not found — run the Doctor for the first time.)';
       } else {
         box.textContent = 'Could not load directives: ' + e.message;
       }

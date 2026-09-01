@@ -553,14 +553,14 @@
         <div class="doctor-row" style="margin-bottom:16px">
           <div class="doctor-row-left">
             <label style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em">Weekly Run Day</label>
-            <select class="day-select" id="analytics-day-select" onchange="saveAnalyticsDay(event)">
-              <option value="0">Sunday</option>
-              <option value="1">Monday</option>
-              <option value="2">Tuesday</option>
-              <option value="3">Wednesday</option>
-              <option value="4">Thursday</option>
-              <option value="5">Friday</option>
-              <option value="6">Saturday</option>
+            <select class="day-select" id="analytics-day-select" onchange="saveAnalyticsDay()">
+              <option value="Sunday">Sunday</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
             </select>
           </div>
           <div style="display:flex;gap:10px;align-items:center">
@@ -708,7 +708,11 @@
       document.getElementById('status-dot').style.background = content.enabled !== false ? 'var(--green)' : 'var(--yellow)';
       document.getElementById('status-text').textContent = content.enabled !== false ? 'Active' : 'Paused';
       if (content.analytics_day) {
-        document.getElementById('analytics-day-select').value = content.analytics_day;
+        // Normalize: old format stored a number (0=Sun), new format stores day name string
+        const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const stored = content.analytics_day;
+        const dayStr = typeof stored === 'number' ? dayNames[stored] : String(stored);
+        document.getElementById('analytics-day-select').value = dayStr;
       }
     } catch(e) {
       console.error('Failed to load schedule:', e);
@@ -787,22 +791,23 @@
   }
 
   async function saveAnalyticsDay() {
-    const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Saving...'; btn.style.opacity = '0.7';
+    // Read value immediately — the select element is never touched, avoiding the collapse bug
+    const day = document.getElementById('analytics-day-select').value; // now a day name string e.g. "Sunday"
+    const statusEl = document.getElementById('doctor-status');
+    statusEl.textContent = '⏳ Saving...';
+    statusEl.className = 'doctor-status';
     try {
       const { sha } = await getFileContent('schedule_config.json').catch(() => ({ sha: null }));
-      const day = document.getElementById('analytics-day-select').value;
       const newConfig = { ...scheduleConfig, analytics_day: day };
       await updateFileContent('schedule_config.json', newConfig, sha, `chore: update analytics day to ${day} [skip ci]`);
       scheduleConfig = newConfig;
-      btn.textContent = '✅ Saved';
-      setTimeout(() => btn.textContent = originalText, 2000);
+      statusEl.textContent = `✅ Saved: Doctor runs every ${day}`;
+      statusEl.className = 'doctor-status success';
+      setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'doctor-status'; }, 3000);
     } catch(e) {
-      alert('Error saving analytics day: ' + e.message);
-      btn.textContent = originalText;
+      statusEl.textContent = '❌ Error saving: ' + e.message;
+      statusEl.className = 'doctor-status error';
     }
-    btn.style.opacity = '1';
   }
 
   async function triggerAnalyzeNow(evt) {
