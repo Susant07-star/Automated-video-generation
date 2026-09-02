@@ -19,6 +19,6 @@
   "post_hours_utc": [
     14
   ],
-  "enabled": false,
+  "enabled": true,
   "analytics_day": "Monday"
 }
