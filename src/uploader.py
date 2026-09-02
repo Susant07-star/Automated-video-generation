@@ -182,6 +182,23 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list,
     # Ensure title is < 100 chars
     title = title[:95] + "..." if len(title) > 95 else title
     
+    # Clean and truncate tags to meet YouTube API limits (max 500 chars total)
+    valid_tags = []
+    current_len = 0
+    if isinstance(tags, list):
+        for tag in tags:
+            clean_tag = str(tag).replace("<", "").replace(">", "").strip()
+            if not clean_tag:
+                continue
+            # YouTube calculates total length including commas
+            addition = len(clean_tag) if current_len == 0 else len(clean_tag) + 1
+            if current_len + addition <= 500:
+                valid_tags.append(clean_tag)
+                current_len += addition
+            else:
+                break
+    tags = valid_tags
+    
     publish_at_iso = get_next_publish_time_iso(schedule_config_file=schedule_config_file)
     print(f"   Scheduling publishAt for: {publish_at_iso}")
     
