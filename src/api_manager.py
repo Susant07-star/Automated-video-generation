@@ -25,6 +25,12 @@ class KeyRotator:
         if not self.keys:
             raise ValueError("No API keys available.")
         return random.choice(self.keys)
+
+    def get_all_keys(self):
+        """Returns a shuffled copy of all remaining keys."""
+        keys_copy = self.keys.copy()
+        random.shuffle(keys_copy)
+        return keys_copy
         
     def remove_key(self, key):
         """Removes a key that has hit a rate limit or is invalid."""

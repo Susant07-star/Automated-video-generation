@@ -328,116 +328,134 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
             "Now generate a completely fresh, original script."
         )
 
-    max_retries = 5
+    # ── Gemini model priority list: best first, fall back down the chain ────────
+    # Strategy (Model-Outer / Key-Inner): exhaust ALL keys on the best model
+    # before ever downgrading to the next tier. time.sleep() calls prevent
+    # IP-level RPM burn across keys on the same machine (Google enforces
+    # a 60-second sliding window per IP in addition to per-key limits).
+    MODELS_BY_PRIORITY = [
+        'gemini-3.7-flash',          # Most powerful — try first
+        'gemini-3.6-flash',
+        'gemini-3.5-flash',
+        'gemini-3-flash-preview',    # Correct API string for gemini-3-flash
+        'gemini-2.5-flash',          # Reliable fallback
+    ]
+
+    # Track topics rejected THIS SESSION so we can re-inject them into the
+    # prompt. This forces Gemini to pick a genuinely different topic instead
+    # of returning the same cached response.
+    rejected_topics: list[str] = []
+
+    def build_current_prompt() -> str:
+        """Rebuild prompt with any runtime-rejected topics appended."""
+        if not rejected_topics:
+            return prompt
+        rejection_note = (
+            "\n\nDO NOT write about these previously generated topics (rejected this session):\n"
+            + "\n".join(f"- {t}" for t in rejected_topics)
+            + "\n"
+        )
+        return prompt + rejection_note
+
     response = None
     raw_text = ""
-    # Models ordered by preference: try newer/better first, fall back to older ones
-    models_to_try = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
 
-    while gemini_rotator.has_keys() and max_retries > 0 and not response:
-        max_retries -= 1
-        current_key = gemini_rotator.get_random_key()
-        client = genai.Client(api_key=current_key)
+    for model_name in MODELS_BY_PRIORITY:
+        if response:
+            break  # Already succeeded — stop
 
-        all_models_exhausted_on_key = True  # Assume all fail unless one succeeds
+        # Snapshot all currently available keys (shuffled) for this model tier.
+        keys_to_try = gemini_rotator.get_all_keys()
+        if not keys_to_try:
+            print("All Gemini API keys exhausted.")
+            break
 
-        for model_name in models_to_try:
-            try:
-                print(f"Trying model '{model_name}' on key {current_key[:5]}...")
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config={
-                        'tools': [{'google_search': {}}],
-                    }
-                )
-                raw_text = response.text.strip()
-                all_models_exhausted_on_key = False
-                print(f"✅ Success with model '{model_name}'")
-                break  # Success — exit model loop
+        print(f"\n📡 Trying model '{model_name}' across {len(keys_to_try)} key(s)...")
 
-            except errors.APIError as e:
-                print(f"Gemini API Error with model {model_name} on key {current_key[:5]}...: {e}")
-                if e.code in [429, 403]:
-                    # This model's quota is exhausted on this key.
-                    # DO NOT rotate key yet — try the next fallback model first.
-                    print(f"  ↳ Rate/quota limit on '{model_name}'. Trying next fallback model...")
-                    continue  # Try next model in list
-                else:
-                    # Non-quota error (e.g. 400 bad request, 500 server error)
-                    # Still worth trying the next model, but this key may still work
-                    print(f"  ↳ Non-quota error ({e.code}) on '{model_name}'. Trying next fallback model...")
-                    all_models_exhausted_on_key = False  # Key isn't necessarily dead
-                    continue
+        for current_key in keys_to_try:
+            if not gemini_rotator.has_keys():
+                break  # All keys removed mid-loop
 
-            except Exception as e:
-                print(f"Unexpected error with model {model_name}: {e}")
-                all_models_exhausted_on_key = False  # Unknown error, don't kill the key
-                continue
+            client = genai.Client(api_key=current_key)
+            current_prompt = build_current_prompt()
 
-        # After exhausting ALL models on this key, only then remove the key
-        if all_models_exhausted_on_key and not response:
-            print(f"Key {current_key[:5]}... is rate-limited across ALL models. Removing key and rotating...")
-            gemini_rotator.remove_key(current_key)
+            max_attempts_this_key = 3  # Duplicate retries on the same key
+            attempt = 0
+
+            while attempt < max_attempts_this_key:
+                attempt += 1
+                try:
+                    print(f"  Trying key {current_key[:8]}... (attempt {attempt})")
+                    resp = client.models.generate_content(
+                        model=model_name,
+                        contents=current_prompt,
+                        config={
+                            'tools': [{'google_search': {}}],
+                        }
+                    )
+                    raw_text = resp.text.strip()
+                    print(f"  ✅ Raw response received from '{model_name}'")
+
+                    # ── Parse & validate ──────────────────────────────────────
+                    start_idx = raw_text.find('{')
+                    end_idx = raw_text.rfind('}')
+                    if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                        raise json.JSONDecodeError("No JSON object found.", raw_text, 0)
+                    content = json.loads(raw_text[start_idx:end_idx+1].strip())
+
+                    topic_name = content.get('topic_name', content.get('quote', '')[:60])
+
+                    # ── HARD DUPLICATE GUARD ──────────────────────────────────
+                    if _is_topic_duplicate(topic_name, used_topics) or topic_name in rejected_topics:
+                        print(f"  ⚠️  Duplicate topic detected: '{topic_name}'")
+                        print(f"      Adding to session rejection list and sleeping 5s to reset RPM window...")
+                        rejected_topics.append(topic_name)
+                        current_prompt = build_current_prompt()
+                        raw_text = ""
+                        time.sleep(5)   # Let the sliding RPM window partially reset
+                        continue        # Retry same key with updated prompt
+                    # ─────────────────────────────────────────────────────────
+
+                    # Persist only the topic name to history (not the full script).
+                    with open(history_file, "a", encoding="utf-8") as f:
+                        f.write(f"- {topic_name}\n")
+
+                    print(f"  ✅ Fresh topic selected: '{topic_name}'")
+                    response = content
+                    break  # Done — exit duplicate-retry loop
+
+                except errors.APIError as e:
+                    print(f"  Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
+                    if e.code in [429, 403]:
+                        print(f"  ↳ 429 rate/quota limit. Sleeping 3s, then trying next key for this model...")
+                        time.sleep(3)   # Give the IP-level RPM window some breathing room
+                        gemini_rotator.remove_key(current_key)
+                        break           # Move to next key for this model tier
+                    else:
+                        print(f"  ↳ Non-quota error ({e.code}). Moving to next model tier...")
+                        break
+
+                except json.JSONDecodeError:
+                    print("  JSON decode failed. Raw output (first 300 chars):")
+                    print(raw_text[:300])
+                    raw_text = ""
+                    break  # Try next key
+
+                except Exception as e:
+                    print(f"  Unexpected error: {e}")
+                    break  # Try next key
+
+            if response:
+                break  # Exit key loop — we're done
 
         if not response:
-            continue  # Try next key
+            print(f"  ⚠️  Model '{model_name}' exhausted across all keys. Falling back to next model tier...")
 
-        try:
-            start_idx = raw_text.find('{')
-            end_idx = raw_text.rfind('}')
+    if not response:
+        print("All Gemini model tiers and API keys exhausted. Aborting.")
+        return {}
 
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                raw_text = raw_text[start_idx:end_idx+1]
-            else:
-                raise json.JSONDecodeError("No JSON object could be found in the response.", raw_text, 0)
-
-            content = json.loads(raw_text.strip())
-
-            topic_name = content.get('topic_name', content.get('quote', '')[:60])
-
-            # ── HARD DUPLICATE GUARD ──────────────────────────────────────────────
-            # Programmatically reject duplicates — never trust Gemini alone.
-            if _is_topic_duplicate(topic_name, used_topics):
-                print(f"⚠️  Duplicate topic detected ('{topic_name}'). Forcing retry...")
-                response = None  # Reset so the outer while loop retries
-                raw_text = ""
-                max_retries += 1  # Don't waste a retry on Gemini's mistake
-                continue
-            # ─────────────────────────────────────────────────────────────────────
-
-            # Save ONLY the topic name to history — not the full script.
-            with open(history_file, "a", encoding="utf-8") as f:
-                f.write(f"- {topic_name}\n")
-
-            print(f"✅ Fresh topic selected: '{topic_name}'")
-            return content
-
-        except errors.APIError as e:
-            print(f"Gemini API Error during post-processing with key {current_key[:5]}...: {e}")
-            if e.code in [429, 403]:
-                print(f"Key {current_key[:5]}... hit limit. Rotating...")
-                gemini_rotator.remove_key(current_key)
-            else:
-                print("Unknown API error, rotating key anyway.")
-                gemini_rotator.remove_key(current_key)
-            response = None
-            raw_text = ""
-        except json.JSONDecodeError:
-            print("Failed to decode JSON from Gemini response. Raw output was:")
-            print(raw_text)
-            print("Retrying generation...")
-            response = None
-            raw_text = ""
-            continue
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            gemini_rotator.remove_key(current_key)
-            response = None
-            raw_text = ""
-
-    print("All Gemini API keys exhausted or max retries reached.")
-    return {}
+    return response
 
 if __name__ == "__main__":
     print(generate_content())

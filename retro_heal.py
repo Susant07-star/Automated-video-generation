@@ -139,32 +139,47 @@ def process_channel(channel_name, token_file, directives_file, prompt_template):
         
         max_retries = 5
         response = None
-        models_to_try = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash']
+        # Model priority: exhaust ALL keys per model before downgrading.
+        # time.sleep(3) after 429s prevents IP-level RPM exhaustion.
+        models_to_try = [
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-3-flash-preview',
+            'gemini-2.5-flash',
+        ]
         
-        while gemini_rotator.has_keys() and max_retries > 0 and not response:
-            max_retries -= 1
-            current_key = gemini_rotator.get_random_key()
-            client = genai.Client(api_key=current_key)
-            
-            for model_name in models_to_try:
+        for model_name in models_to_try:
+            if response:
+                break
+            keys_to_try = gemini_rotator.get_all_keys()
+            print(f"   🤖 Trying model '{model_name}' across {len(keys_to_try)} key(s)...")
+            for current_key in keys_to_try:
+                if not gemini_rotator.has_keys():
+                    break
+                client = genai.Client(api_key=current_key)
                 try:
                     response = client.models.generate_content(
                         model=model_name,
                         contents=prompt
                     )
-                    break  # Success, break out of model loop
+                    print(f"   ✅ Success with model '{model_name}' on key {current_key[:8]}...")
+                    break  # Success — break out of key loop
                 except errors.APIError as e:
-                    print(f"Gemini API Error with model {model_name} on key {current_key[:5]}...: {e}")
+                    print(f"   Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
                     if e.code in [429, 403]:
-                        print(f"Key {current_key[:5]}... hit limit. Rotating key...")
+                        print(f"   ↳ 429 quota/rate limit. Sleeping 3s, then trying next key...")
+                        time.sleep(3)   # Give the IP-level RPM window some breathing room
                         gemini_rotator.remove_key(current_key)
-                        break  # Break out of model loop to try next key
+                        continue        # Try next key with same model
                     else:
-                        print(f"Falling back to next model...")
-                        continue
+                        print(f"   ↳ Non-quota error ({e.code}). Trying next model tier...")
+                        break           # Try next model
                 except Exception as e:
-                    print(f"Unexpected error with model {model_name}: {e}")
+                    print(f"   Unexpected error with model '{model_name}': {e}")
                     continue
+            if not response:
+                print(f"   ⚠️  Model '{model_name}' exhausted across all keys. Falling back...")
                 
         if not response:
             print("   ❌ Error: Could not get a response from Gemini. All API keys or models exhausted.")
