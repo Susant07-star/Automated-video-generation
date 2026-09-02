@@ -426,11 +426,14 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
 
                 except errors.APIError as e:
                     print(f"  Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
-                    if e.code in [429, 403]:
+                    if e.code == 429:
                         print(f"  ↳ 429 rate/quota limit. Sleeping 3s, then trying next key for this model...")
                         time.sleep(3)   # Give the IP-level RPM window some breathing room
-                        gemini_rotator.remove_key(current_key)
                         break           # Move to next key for this model tier
+                    elif e.code == 403:
+                        print(f"  ↳ 403 Forbidden (Invalid Key). Removing key globally...")
+                        gemini_rotator.remove_key(current_key)
+                        break           # Move to next key
                     else:
                         print(f"  ↳ Non-quota error ({e.code}). Moving to next model tier...")
                         break

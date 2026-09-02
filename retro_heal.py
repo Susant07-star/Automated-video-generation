@@ -167,11 +167,14 @@ def process_channel(channel_name, token_file, directives_file, prompt_template):
                     break  # Success — break out of key loop
                 except errors.APIError as e:
                     print(f"   Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
-                    if e.code in [429, 403]:
+                    if e.code == 429:
                         print(f"   ↳ 429 quota/rate limit. Sleeping 3s, then trying next key...")
                         time.sleep(3)   # Give the IP-level RPM window some breathing room
-                        gemini_rotator.remove_key(current_key)
                         continue        # Try next key with same model
+                    elif e.code == 403:
+                        print(f"   ↳ 403 Forbidden. Removing key globally...")
+                        gemini_rotator.remove_key(current_key)
+                        continue
                     else:
                         print(f"   ↳ Non-quota error ({e.code}). Trying next model tier...")
                         break           # Try next model
