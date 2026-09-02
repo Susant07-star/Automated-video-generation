@@ -372,6 +372,7 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
 
         print(f"\n📡 Trying model '{model_name}' across {len(keys_to_try)} key(s)...")
 
+        skip_model = False
         for current_key in keys_to_try:
             if not gemini_rotator.has_keys():
                 break  # All keys removed mid-loop
@@ -426,16 +427,26 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
 
                 except errors.APIError as e:
                     print(f"  Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
-                    if e.code == 429:
-                        print(f"  ↳ 429 rate/quota limit. Sleeping 3s, then trying next key for this model...")
-                        time.sleep(3)   # Give the IP-level RPM window some breathing room
+                    if getattr(e, 'code', None) == 429:
+                        error_str = str(e).lower()
+                        if "quota" in error_str or "exhausted" in error_str:
+                            print(f"  ↳ 429 Quota exhausted for this model. Moving to next key...")
+                            # Quotas can be per-model, so we don't remove the key globally.
+                            # We also don't sleep, because sleeping won't fix a hard quota limit.
+                        else:
+                            print(f"  ↳ 429 rate limit. Sleeping 3s, then trying next key...")
+                            time.sleep(3)
                         break           # Move to next key for this model tier
-                    elif e.code == 403:
+                    elif getattr(e, 'code', None) == 403:
                         print(f"  ↳ 403 Forbidden (Invalid Key). Removing key globally...")
                         gemini_rotator.remove_key(current_key)
                         break           # Move to next key
+                    elif getattr(e, 'code', None) in (404, 400):
+                        print(f"  ↳ Model error ({getattr(e, 'code', None)}). Moving to next model tier...")
+                        skip_model = True
+                        break           # Exit while loop, flag to skip model
                     else:
-                        print(f"  ↳ Non-quota error ({e.code}). Moving to next model tier...")
+                        print(f"  ↳ Other API error ({getattr(e, 'code', None)}). Moving to next key...")
                         break
 
                 except json.JSONDecodeError:
@@ -448,8 +459,8 @@ Breadcrumbing | Push-Pull Dynamic | Anxious Attachment | Parasocial Relationship
                     print(f"  Unexpected error: {e}")
                     break  # Try next key
 
-            if response:
-                break  # Exit key loop — we're done
+            if response or skip_model:
+                break  # Exit key loop — we're done or model is skipping
 
         if not response:
             print(f"  ⚠️  Model '{model_name}' exhausted across all keys. Falling back to next model tier...")

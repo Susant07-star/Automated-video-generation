@@ -154,6 +154,7 @@ def process_channel(channel_name, token_file, directives_file, prompt_template):
                 break
             keys_to_try = gemini_rotator.get_all_keys()
             print(f"   🤖 Trying model '{model_name}' across {len(keys_to_try)} key(s)...")
+            skip_model = False
             for current_key in keys_to_try:
                 if not gemini_rotator.has_keys():
                     break
@@ -167,20 +168,30 @@ def process_channel(channel_name, token_file, directives_file, prompt_template):
                     break  # Success — break out of key loop
                 except errors.APIError as e:
                     print(f"   Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
-                    if e.code == 429:
-                        print(f"   ↳ 429 quota/rate limit. Sleeping 3s, then trying next key...")
-                        time.sleep(3)   # Give the IP-level RPM window some breathing room
+                    if getattr(e, 'code', None) == 429:
+                        error_str = str(e).lower()
+                        if "quota" in error_str or "exhausted" in error_str:
+                            print(f"   ↳ 429 Quota exhausted for this model. Moving to next key...")
+                        else:
+                            print(f"   ↳ 429 rate limit. Sleeping 3s, then trying next key...")
+                            time.sleep(3)
                         continue        # Try next key with same model
-                    elif e.code == 403:
+                    elif getattr(e, 'code', None) == 403:
                         print(f"   ↳ 403 Forbidden. Removing key globally...")
                         gemini_rotator.remove_key(current_key)
                         continue
+                    elif getattr(e, 'code', None) in (404, 400):
+                        print(f"   ↳ Model error ({getattr(e, 'code', None)}). Moving to next model tier...")
+                        skip_model = True
+                        break           # Exit key loop, flag to skip model
                     else:
-                        print(f"   ↳ Non-quota error ({e.code}). Trying next model tier...")
-                        break           # Try next model
+                        print(f"   ↳ Other API error ({getattr(e, 'code', None)}). Moving to next key...")
+                        continue
                 except Exception as e:
                     print(f"   Unexpected error with model '{model_name}': {e}")
                     continue
+            if response or skip_model:
+                continue
             if not response:
                 print(f"   ⚠️  Model '{model_name}' exhausted across all keys. Falling back...")
                 
