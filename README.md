@@ -46,6 +46,22 @@ Go to your repository settings on GitHub -> **Secrets and variables** -> **Actio
 - `CLIENT_SECRET_JSON_B64` (Base64 encoded Google OAuth client secret)
 - `YOUTUBE_TOKEN_JSON_B64` (Base64 encoded YouTube refresh token)
 
+Optional:
+- `GEMINI_ENABLE_RESEARCH` (`true`/`false`, default `true`). Runs a separate Google Search-grounded research brief before content generation.
+- `GEMINI_RESEARCH_MODELS` (comma separated, optional). Defaults to cheaper/lighter search-capable models first: `gemini-2.5-flash-lite,gemini-3.1-flash-lite,gemini-3.5-flash-lite,gemini-2.5-flash,gemini-3.5-flash`.
+- `GEMINI_WRITER_MODELS` (comma separated, optional). Overrides the content-writing model fallback order.
+- `GEMINI_CARTOON_RESEARCH_MODELS` (comma separated, optional). Overrides only the Cartoon Plus research-model fallback order.
+- `GEMINI_CARTOON_WRITER_MODELS` (comma separated, optional). Overrides only the Cartoon Plus script-writing model fallback order.
+- `GEMINI_CARTOON_HEAL_MODELS` (comma separated, optional). Overrides only the Cartoon Plus analytics-healing model fallback order.
+- `GEMINI_ENABLE_WRITER_GOOGLE_SEARCH` (`true`/`false`, default `false`). Keep this off for normal runs. The writer already receives the research brief, so attaching Search to the writer model usually wastes quota.
+- `GEMINI_REQUEST_TIMEOUT_SECONDS` (integer seconds, default `45`). Caps each Gemini HTTP request so overloaded or deadline-expired models do not stall the whole run.
+- `GEMINI_HTTP_RETRY_ATTEMPTS` (integer, default `1`). Controls the built-in `google-genai` HTTP retry count. Keep at `1` to let the script's model/key fallback handle errors quickly.
+
+Research outputs:
+- `latest_research_brief.json` stores the newest NextGenThoughts research brief.
+- `latest_research_brief_cartoon.json` stores the newest Cartoon Plus research brief.
+- The full brief is also printed in the terminal/GitHub Actions log before script writing starts.
+
 ### 3. Deploy the Dashboard
 1. Go to **Netlify.com** and sign in with GitHub.
 2. Click **Add new site** -> **Import an existing project** -> **GitHub**.
@@ -70,6 +86,12 @@ python main.py
 
 # Run in headless mode (auto-posts, used by the cloud runner)
 python main.py --headless
+
+# Test normal writer-model access
+python test_key.py
+
+# Test Google Search-grounded research-model access
+python test_key.py --search
 ```
 
 ---

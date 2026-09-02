@@ -18,9 +18,8 @@ import datetime
 import time
 from googleapiclient.discovery import build
 from src.uploader import get_youtube_service, YOUTUBE_SCOPES
-from google import genai
 from google.genai import errors
-from src.api_manager import gemini_rotator
+from src.api_manager import create_gemini_client, gemini_rotator, is_gemini_model_overloaded, is_gemini_timeout
 from dotenv import load_dotenv
 
 # Force UTF-8 output so emoji never crash on Windows terminals
@@ -190,14 +189,15 @@ INSTRUCTIONS:
     
     max_retries = 5
     response = None
-    # Model priority: exhaust ALL keys per model before downgrading.
-    # time.sleep(3) after 429s prevents IP-level RPM exhaustion.
+    # Model priority: rotate keys for key/quota errors, but skip a model
+    # quickly on 503/504 backend errors or timeout because keys cannot fix overload.
     models_to_try = [
-        'gemini-3.7-flash',
-        'gemini-3.6-flash',
-        'gemini-3.5-flash',
-        'gemini-3-flash-preview',
-        'gemini-2.5-flash',
+        item.strip()
+        for item in os.getenv(
+            "GEMINI_CARTOON_HEAL_MODELS",
+            "gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3-flash-preview,gemini-2.5-flash",
+        ).split(",")
+        if item.strip()
     ]
     
     for model_name in models_to_try:
@@ -209,7 +209,7 @@ INSTRUCTIONS:
         for current_key in keys_to_try:
             if not gemini_rotator.has_keys():
                 break
-            client = genai.Client(api_key=current_key)
+            client = create_gemini_client(current_key)
             try:
                 response = client.models.generate_content(
                     model=model_name,
@@ -219,7 +219,12 @@ INSTRUCTIONS:
                 break  # Success — break out of key loop
             except errors.APIError as e:
                 print(f"   Gemini API Error — model '{model_name}', key {current_key[:8]}...: {e}")
-                if getattr(e, 'code', None) == 429:
+                code = getattr(e, 'code', None)
+                if is_gemini_model_overloaded(e):
+                    print(f"   ↳ 503/504 backend timeout or high demand on '{model_name}'. Skipping this model tier instead of trying more keys...")
+                    skip_model = True
+                    break
+                if code == 429:
                     error_str = str(e).lower()
                     if "quota" in error_str or "exhausted" in error_str:
                         print(f"   ↳ 429 Quota exhausted for this model. Moving to next key...")
@@ -239,6 +244,10 @@ INSTRUCTIONS:
                     print(f"   ↳ Other API error ({getattr(e, 'code', None)}). Moving to next key...")
                     continue
             except Exception as e:
+                if is_gemini_timeout(e):
+                    print(f"   ↳ Gemini request timed out on '{model_name}'. Skipping this model tier...")
+                    skip_model = True
+                    break
                 print(f"   Unexpected error with model '{model_name}': {e}")
                 continue
         if response or skip_model:

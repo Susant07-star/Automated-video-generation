@@ -104,7 +104,7 @@ jobs:
         git merge -X ours origin/main -m "chore: merge remote history [skip ci]" --no-edit || true
 
         # Now stage and commit the freshly generated files on top
-        git add generated_history_cartoon.txt 2>/dev/null || true
+        git add generated_history_cartoon.txt latest_research_brief_cartoon.json 2>/dev/null || true
         git add video_progress.json 2>/dev/null || true
         git diff --staged --quiet || git commit -m "chore: update cartoon history & progress [skip ci]"
         git push

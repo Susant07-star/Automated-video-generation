@@ -20,6 +20,7 @@ import os
 import sys
 import json
 import argparse
+import datetime
 from dotenv import load_dotenv
 
 # Force UTF-8 output so emoji never crash on Windows cp1252 terminals
@@ -102,10 +103,13 @@ def main():
                 sys.exit(1)
 
             quote       = content.get("quote", "Yaar, sun ek baat...")
+            topic_name  = content.get("topic_name", "Unknown")
             quote_hindi = content.get("quote_hindi", quote)  # Fallback to Roman if missing
             video_kws   = content.get("video_search_keywords", ["soap cutting", "kinetic sand"])
             music_kw    = content.get("music_search_keyword", "funny quirky")
             fomo_overlay = content.get("fomo_overlay", "Wait for it... 🤣")
+            research_brief_file = content.get("research_brief_file", "")
+            research_brief = content.get("research_brief", {})
 
             yt_title       = content.get("yt_title", "Funny Hindi Short 😂")
             yt_description = content.get("yt_description", "")
@@ -120,8 +124,11 @@ def main():
 
             state.update({
                 "content_done": True,
+                "topic_name": topic_name,
                 "quote": quote, "quote_hindi": quote_hindi, "video_kws": video_kws, "music_kw": music_kw,
                 "fomo_overlay": fomo_overlay,
+                "research_brief_file": research_brief_file,
+                "research_brief": research_brief,
                 "yt_title": yt_title, "yt_description": yt_description, "yt_tags": yt_tags,
                 "fb_caption": fb_caption, "fb_hashtags": fb_hashtags,
             })

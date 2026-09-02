@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import argparse
+import datetime
 from dotenv import load_dotenv
 
 # Force UTF-8 output so emoji in print() never crash on Windows cp1252 terminals
@@ -99,6 +100,7 @@ def main():
                 sys.exit(1)
 
             quote    = content.get("quote", "Success is not final, failure is not fatal.")
+            topic_name = content.get("topic_name", "Unknown")
             video_kws = content.get("video_search_keywords", ["success", "motivation", "grind"])
             music_kw = content.get("music_search_keyword", "cinematic")
             
@@ -107,6 +109,12 @@ def main():
             generic_hashtags = content.get("hashtags", "#motivation")
             
             fomo_overlay = content.get("fomo_overlay", "Wait for the end...")
+            hook_archetype = content.get("hook_archetype", "Unknown")
+            creative_angle = content.get("creative_angle", "")
+            audience_pain = content.get("audience_pain", "")
+            retention_beats = content.get("retention_beats", [])
+            research_brief_file = content.get("research_brief_file", "")
+            research_brief = content.get("research_brief", {})
             
             yt_title = content.get("yt_title", generic_caption.split('\n')[0])
             yt_description = content.get("yt_description", f"{generic_caption}\n\n{generic_hashtags}")
@@ -119,13 +127,22 @@ def main():
             ig_hashtags = content.get("ig_hashtags", generic_hashtags)
 
             print(f"   Quote    : {quote}")
+            if creative_angle:
+                print(f"   Angle    : {creative_angle}")
             print(f"   Video kws: {video_kws}")
             print(f"   Music kw : {music_kw}")
 
             state.update({
                 "content_done": True,
+                "topic_name": topic_name,
                 "quote": quote, "video_kws": video_kws, "music_kw": music_kw,
                 "fomo_overlay": fomo_overlay,
+                "hook_archetype": hook_archetype,
+                "creative_angle": creative_angle,
+                "audience_pain": audience_pain,
+                "retention_beats": retention_beats,
+                "research_brief_file": research_brief_file,
+                "research_brief": research_brief,
                 "yt_title": yt_title, "yt_description": yt_description, "yt_tags": yt_tags,
                 "fb_caption": fb_caption, "fb_hashtags": fb_hashtags,
                 "ig_caption": ig_caption, "ig_hashtags": ig_hashtags

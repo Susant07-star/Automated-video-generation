@@ -57,9 +57,22 @@ def get_drive_video_list(drive_folder_id: str):
         creds = Credentials.from_authorized_user_file('drive_token.json', ['https://www.googleapis.com/auth/drive.readonly'])
         service = build('drive', 'v3', credentials=creds)
         query = f"'{drive_folder_id}' in parents and trashed = false and (mimeType contains 'video/mp4' or mimeType contains 'video/quicktime' or mimeType contains 'video/x-matroska')"
-        results = service.files().list(q=query, fields="files(id, name)", pageSize=1000).execute()
-        items = results.get('files', [])
+        items = []
+        page_token = None
+        while True:
+            results = service.files().list(
+                q=query,
+                fields="nextPageToken, files(id, name)",
+                pageSize=1000,
+                pageToken=page_token,
+            ).execute()
+            items.extend(results.get('files', []))
+            page_token = results.get("nextPageToken")
+            if not page_token:
+                break
+
         items.sort(key=lambda x: x['name'])
+        print(f"Found {len(items)} Drive background video(s).")
         return items
     except Exception as e:
         print(f"Failed to list Drive files: {e}")
@@ -73,16 +86,6 @@ def download_single_drive_video(file_id: str, file_name: str, local_folder: str)
     if os.path.exists(local_filepath):
         print(f"Video {file_name} already exists locally.")
         return True
-        
-    # Clean up old videos to save disk space
-    for f in os.listdir(local_folder):
-        old_file = os.path.join(local_folder, f)
-        if os.path.isfile(old_file) and f != file_name:
-            try:
-                os.remove(old_file)
-                print(f"Removed old video to save space: {f}")
-            except Exception:
-                pass
                 
     print(f"Downloading {file_name} from Google Drive...")
     try:
@@ -147,7 +150,8 @@ def fetch_sequential_local_video(target_duration: float, output_filename: str, d
     
     def ensure_video_ready(idx):
         if drive_items:
-            download_single_drive_video(drive_items[idx]['id'], drive_items[idx]['name'], folder)
+            if not download_single_drive_video(drive_items[idx]['id'], drive_items[idx]['name'], folder):
+                raise Exception(f"Could not download Drive video: {drive_items[idx]['name']}")
         return os.path.join(folder, videos[idx])
 
     current_video_path = ensure_video_ready(curr_idx)
