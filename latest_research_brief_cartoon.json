@@ -1,59 +1,84 @@
 {
-  "generated_at": "2026-09-02T15:54:22.187503+00:00",
+  "generated_at": "2026-09-03T13:29:28.078224+00:00",
   "profile": "cartoon",
   "brief": {
     "search_queries_used": [
-      "Hindi comedy shorts trends 2024",
-      "trending Hindi comedy reels language patterns",
-      "relatable everyday situations Hindi comedy shorts",
-      "popular Hindi comedy dialogues for shorts",
-      "Hinglish comedy short form content audience reaction",
-      "what makes Hindi comedy shorts viral",
+      "trending Hindi comedy shorts ideas",
+      "relatable Indian comedy reels",
+      "common relatable situations Hindi comedy",
+      "popular Hindi comedy short dialogues",
+      "short form comedy trends India",
+      "viral Hindi comedy shorts recently",
+      "most engaging Hindi comedy reels",
+      "Hindi comedy shorts audience reaction",
+      "popular short funny videos India",
       "ASMR backgrounds for comedy shorts",
-      "satisfying visuals for YouTube shorts comedy",
-      "trending short form comedy topics India"
+      "satisfying visuals for funny videos",
+      "calming backgrounds for humor shorts",
+      "visual trends for comedy shorts India"
     ],
     "fresh_joke_angles": [
       {
-        "topic_name": "WFH/Online Meeting Distractions",
-        "setup": "Employee is in a video call, visibly distracted by an unrelated activity (e.g., silently eating, playing a mobile game).",
-        "conflict": "Boss suddenly asks them a direct, specific question, expecting an insightful response.",
-        "punchline_direction": "Employee snaps back to attention, gives a generic, corporate buzzword-filled answer that completely misses the point, or accidentally reveals their distraction.",
-        "audience_trigger": "Highly relatable struggle of maintaining professionalism while working from home and the fear of being caught daydreaming during online meetings."
+        "topic_name": "Indian Mom's 'Dolby Atmos' Voice",
+        "setup": "A teenager or young adult tries to avoid chores or calls by hiding in a remote part of the house with loud headphones on.",
+        "conflict": "Despite all barriers, the mother's distinct voice, with a specific chore command or question, clearly penetrates their sanctuary.",
+        "punchline_direction": "The person's startled, defeated reaction, questioning how their mom's voice defied all physics, possibly ending with a sarcastic salute to 'Indian mom's superpower'.",
+        "audience_trigger": "Highly relatable experience for anyone with an Indian mother, tapping into universal themes of parental omniscience and attempts to evade responsibilities."
       },
       {
-        "topic_name": "Diet/Fitness Resolution Fail",
-        "setup": "A character wakes up with newfound motivation, declaring their strict diet and exercise plan to family.",
-        "conflict": "Immediately, the family is enjoying a highly tempting, classic Indian breakfast (e.g., 'garma garam aloo paratha' or 'jalebi') with irresistible aroma.",
-        "punchline_direction": "The character's resolve crumbles instantly, they abandon their diet, making a flimsy, funny excuse to join the family meal.",
-        "audience_trigger": "The universal struggle and relatability of failed diet resolutions, especially when faced with delicious Indian food."
+        "topic_name": "Indian Dad's Fan/AC Economy Drive",
+        "setup": "The family (kids, wife) is visibly uncomfortable due to extreme weather (too hot or too cold), while the dad is meticulously controlling the fan/AC settings.",
+        "conflict": "Family members try subtle ways to adjust the settings or complain, but the dad either catches them immediately or gives a dramatic, illogical lecture on 'saving electricity' for future generations.",
+        "punchline_direction": "The dad's over-the-top, often contradictory, reasoning for his climate control, or the family's exaggerated, silent suffering and side-eye reactions.",
+        "audience_trigger": "A common and humorous household dynamic in Indian families, especially concerning dads and utility bills."
+      },
+      {
+        "topic_name": "AI Taking Over Mundane Indian Jobs",
+        "setup": "A person is shown performing a uniquely tedious, manual, or highly specific everyday Indian task that seems impossible to automate (e.g., haggling with a vegetable vendor, untangling a mountain of festive lights, manually kneading dough for hours, painstakingly peeling garlic).",
+        "conflict": "An on-screen text overlay appears stating, 'AI is going to take your job.'",
+        "punchline_direction": "A quick, exasperated cut to the person's face, looking utterly exhausted or bewildered, with text flashing 'WHEN?!' or a sarcastic remark about AI's inability to handle *this* particular struggle.",
+        "audience_trigger": "Plays on the trending 'AI taking jobs' meme while creating humor from the contrast with very relatable, unglamorous Indian daily life struggles."
+      },
+      {
+        "topic_name": "Modern Bride's 'Signature Dish' for Pehli Rasoi",
+        "setup": "A newlywed bride is in her 'Pehli Rasoi' (first kitchen ritual), expected by eager in-laws to cook a traditional, impressive sweet dish.",
+        "conflict": "She confidently presents her 'specialty' or 'signature dish,' which turns out to be something hilariously simple, instant, or entirely store-bought.",
+        "punchline_direction": "The in-laws' stunned, speechless, or comically forced appreciative reactions to her modern, low-effort culinary offering, highlighting the clash between tradition and contemporary convenience.",
+        "audience_trigger": "Taps into the relatable pressure on new brides in Indian families and the humorous generational gap in culinary expectations."
       }
     ],
     "language_notes": [
-      "Frequent use of Hinglish phrases for authenticity and wider appeal (e.g., 'boss ne pakad liya', 'diet shuru but...', 'total fail ho gaya').",
-      "Incorporate common Hindi interjections and conversational fillers like 'yaar', 'arey', 'bhai' for a natural flow.",
-      "Exaggerated Hindi expressions or slightly dramatic dialogue delivery, reminiscent of Bollywood comedic timing, can enhance punchlines."
+      "Frequent use of Hinglish (mix of Hindi and English) for broader appeal and current language patterns.",
+      "Inclusion of common Indian exclamations and interjections like 'Arre yaar!', 'Oh ho!', 'Kya baat hai!', 'Sach mein?', 'Chalo!', 'Aisa bhi hota hai?'",
+      "Conversational and informal tone, mimicking natural daily dialogue.",
+      "Exaggerated expressions and vocal delivery for enhanced comedic effect.",
+      "Sharp, concise punchlines that land quickly, suitable for short-form content."
     ],
     "metadata_keywords": [
-      "#HindiComedyShorts",
-      "#FunnyReelsIndia",
-      "#DesiComedy",
-      "#IndianHumor",
-      "#RelatableComedy",
-      "#HinglishComedy",
-      "#YouTubeShortsHindi",
-      "#ViralComedy",
-      "#EverydayComedy",
-      "#WFHJokes",
-      "#DietFail",
-      "#FamilyComedy",
-      "#OfficeHumor",
-      "#ComedyShorts"
+      "Hindi Comedy",
+      "Indian Jokes",
+      "Funny Shorts",
+      "Desi Humor",
+      "Relatable India",
+      "Family Comedy",
+      "Indian Parents",
+      "Husband Wife Comedy",
+      "Mom Son Comedy",
+      "Dad Daughter Comedy",
+      "Viral Reels",
+      "Trending Shorts",
+      "Everyday Situations",
+      "Pehli Rasoi Comedy",
+      "AI Funny",
+      "Indian Lifestyle",
+      "Comedy Skit"
     ],
     "visual_pairing_notes": [
-      "Subtle, calming ASMR-style backgrounds such as a softly crackling digital fireplace or a gentle rain on a windowpane (with muted audio to not overshadow the comedy).",
-      "Visually satisfying, repetitive motions like kinetic sand cutting or slow, deliberate abstract animations (e.g., swirling colors, glowing elements) in the background to provide a soothing contrast to the comedic foreground.",
-      "Minimalist, soft-lit environments to keep the focus on the comedic action while offering a modern, aesthetic appeal."
+      "**Slow-motion cooking/food preparation ASMR:** Pairs well with the 'Pehli Rasoi' theme, creating a satisfying visual contrast to the comedic outcome.",
+      "**Kinetic sand cutting or slime manipulation:** Offers a calming, visually satisfying, and popular ASMR background.",
+      "**Lofi/Rainy window ambience or gentle nature scenes:** Provides a soothing and cozy backdrop, creating a humorous contrast with energetic or chaotic comedy.",
+      "**Abstract looping animations or soft gradient shifts:** Offers a clean, calming, and aesthetically pleasing background that keeps focus on the foreground comedy while adding visual interest.",
+      "**Subtle, repetitive patterns or textures:** Engaging visuals that are not distracting but add a layer of 'satisfaction' to the short."
     ]
   }
 }
