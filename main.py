@@ -239,6 +239,7 @@ def main():
                 print("   ⚠️ Facebook credentials not set. Skipping.")
 
             # YouTube
+            yt_success = False
             try:
                 yt_res = upload_to_youtube(final_path, yt_titl, yt_desc, yt_tags)
                 if yt_res and yt_res.get("id"):
@@ -256,6 +257,8 @@ def main():
                     history_data.append(history_entry)
                     with open(history_file, "w") as hf:
                         json.dump(history_data, hf, indent=2)
+                    
+                    yt_success = True
             except Exception as e:
                 print(f"   ❌ YouTube upload failed: {e}")
 
@@ -268,6 +271,13 @@ def main():
                     print(f"   ❌ Instagram upload failed: {e}")
             else:
                 print("   ⚠️ Instagram credentials not set. Skipping.")
+                
+            if yt_success:
+                success = True
+            else:
+                print("   ⚠️ YouTube upload failed. Holding video and checkpoint for auto-retry.")
+                success = False
+                
         else:
             print("   ⚠️  User chose not to post. Skipping uploads.")
             print(f"   🎥 Video saved locally: {final_path}")
@@ -275,8 +285,7 @@ def main():
             with open("final_reel_metadata.json", "w") as f:
                 json.dump(state, f, indent=2)
             print("   📝 Metadata saved to final_reel_metadata.json so you can post it later.")
-
-        success = True
+            success = True
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Run interrupted by user (Ctrl+C).")

@@ -224,7 +224,22 @@ def upload_to_youtube(video_path: str, title: str, description: str, tags: list,
         media_body=MediaFileUpload(video_path, chunksize=-1, resumable=True)
     )
     
-    response = insert_request.execute()
+    try:
+        response = insert_request.execute()
+    except Exception as e:
+        import googleapiclient.errors
+        if isinstance(e, googleapiclient.errors.HttpError) and "invalidTags" in str(e):
+            print("   ⚠️ Tags are still invalid for YouTube. Retrying without tags...")
+            body["snippet"]["tags"] = []
+            insert_request = youtube.videos().insert(
+                part=",".join(body.keys()),
+                body=body,
+                media_body=MediaFileUpload(video_path, chunksize=-1, resumable=True)
+            )
+            response = insert_request.execute()
+        else:
+            raise e
+
     video_id = response.get('id')
     print(f"YouTube upload successful! Video ID: {video_id}")
     print(f"   ✅ Video is PRIVATE. Will go PUBLIC automatically at: {publish_at_iso}")

@@ -261,12 +261,15 @@ def main():
                     with open(history_file, "w") as hf:
                         json.dump(history_data, hf, indent=2)
 
+                success = True
+
             except Exception as e:
                 print(f"   ❌ YouTube upload failed: {e}")
+                print("   ⚠️ Holding video and checkpoint. Will auto-retry on next run.")
+                success = False
         else:
             print(f"   🎥 Video saved locally: {FINAL_PATH}")
-
-        success = True
+            success = True
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted. Checkpoint saved. Run again to resume.")
