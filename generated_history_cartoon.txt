@@ -64,3 +64,4 @@
 - Papa's smart-watch jogging lie exposed by Chintu
 - Papa's Fake WFH Meeting Exposed
 - Papa's Midnight Food Delivery Note Exposed
+- Papa Ki Alexa Voice History Exposed
