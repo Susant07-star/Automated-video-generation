@@ -158,6 +158,7 @@
       "voice_done": true,
       "assembly_done": true,
       "thumbnail_path": "final_reel_thumbnail.jpg"
-    }
+    },
+    "analyzed": true
   }
 ]
