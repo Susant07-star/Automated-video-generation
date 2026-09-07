@@ -1,84 +1,79 @@
 {
-  "generated_at": "2026-09-03T13:29:28.078224+00:00",
+  "generated_at": "2026-09-07T15:27:21.692455+00:00",
   "profile": "cartoon",
   "brief": {
     "search_queries_used": [
-      "trending Hindi comedy shorts ideas",
-      "relatable Indian comedy reels",
-      "common relatable situations Hindi comedy",
-      "popular Hindi comedy short dialogues",
-      "short form comedy trends India",
-      "viral Hindi comedy shorts recently",
-      "most engaging Hindi comedy reels",
-      "Hindi comedy shorts audience reaction",
-      "popular short funny videos India",
-      "ASMR backgrounds for comedy shorts",
-      "satisfying visuals for funny videos",
-      "calming backgrounds for humor shorts",
-      "visual trends for comedy shorts India"
+      "current Hindi comedy shorts language patterns joke setups relatable everyday situations",
+      "trending Hindi comedy shorts audience reaction",
+      "satisfying ASMR background formats for comedy shorts",
+      "Hindi comedy reels viral topics",
+      "popular Hindi comedy dialogue styles",
+      "new relatable Indian family comedy scenarios"
     ],
     "fresh_joke_angles": [
       {
-        "topic_name": "Indian Mom's 'Dolby Atmos' Voice",
-        "setup": "A teenager or young adult tries to avoid chores or calls by hiding in a remote part of the house with loud headphones on.",
-        "conflict": "Despite all barriers, the mother's distinct voice, with a specific chore command or question, clearly penetrates their sanctuary.",
-        "punchline_direction": "The person's startled, defeated reaction, questioning how their mom's voice defied all physics, possibly ending with a sarcastic salute to 'Indian mom's superpower'.",
-        "audience_trigger": "Highly relatable experience for anyone with an Indian mother, tapping into universal themes of parental omniscience and attempts to evade responsibilities."
+        "topic_name": "Gen Z Slang Misunderstanding",
+        "setup": "Teenager uses a new, obscure Gen Z slang word in front of their parent.",
+        "conflict": "Parent overhears and tries to incorporate the slang into their own conversation, completely misusing its meaning.",
+        "punchline_direction": "The parent's awkward and incorrect usage leads to humorous confusion or embarrassment for the child.",
+        "audience_trigger": "Relatable generational gap humor, appealing to both teens (seeing parents try) and parents (trying to stay 'cool')."
       },
       {
-        "topic_name": "Indian Dad's Fan/AC Economy Drive",
-        "setup": "The family (kids, wife) is visibly uncomfortable due to extreme weather (too hot or too cold), while the dad is meticulously controlling the fan/AC settings.",
-        "conflict": "Family members try subtle ways to adjust the settings or complain, but the dad either catches them immediately or gives a dramatic, illogical lecture on 'saving electricity' for future generations.",
-        "punchline_direction": "The dad's over-the-top, often contradictory, reasoning for his climate control, or the family's exaggerated, silent suffering and side-eye reactions.",
-        "audience_trigger": "A common and humorous household dynamic in Indian families, especially concerning dads and utility bills."
+        "topic_name": "Trivial Sibling Warfare",
+        "setup": "Two adult siblings discover there's only one piece of a desired item left (e.g., last gulab jamun, last charging cable).",
+        "conflict": "They engage in an overly dramatic, almost theatrical 'fight' for the item, using exaggerated gestures and Bollywood-esque dialogues.",
+        "punchline_direction": "The intense battle culminates in a petty, anticlimactic 'win' or an unexpected, mundane resolution, highlighting the absurdity of their rivalry.",
+        "audience_trigger": "Evokes personal memories of sibling squabbles, offering a lighthearted take on common household conflicts."
       },
       {
-        "topic_name": "AI Taking Over Mundane Indian Jobs",
-        "setup": "A person is shown performing a uniquely tedious, manual, or highly specific everyday Indian task that seems impossible to automate (e.g., haggling with a vegetable vendor, untangling a mountain of festive lights, manually kneading dough for hours, painstakingly peeling garlic).",
-        "conflict": "An on-screen text overlay appears stating, 'AI is going to take your job.'",
-        "punchline_direction": "A quick, exasperated cut to the person's face, looking utterly exhausted or bewildered, with text flashing 'WHEN?!' or a sarcastic remark about AI's inability to handle *this* particular struggle.",
-        "audience_trigger": "Plays on the trending 'AI taking jobs' meme while creating humor from the contrast with very relatable, unglamorous Indian daily life struggles."
+        "topic_name": "Tech Jugaad Gone Wrong (or right?)",
+        "setup": "An older family member (e.g., uncle or aunt) faces a common minor tech issue, like a smart TV remote not working.",
+        "conflict": "Instead of logical troubleshooting, they attempt a bizarre 'jugaad' (improvised solution) based on superstition, old wives' tales, or completely unrelated mechanics.",
+        "punchline_direction": "The 'jugaad' surprisingly (and comically) seems to fix the problem for a brief, illogical moment, or creates an even bigger, funnier mess.",
+        "audience_trigger": "Taps into the widely recognized Indian cultural trait of 'jugaad' and the universal struggle of elders with technology."
       },
       {
-        "topic_name": "Modern Bride's 'Signature Dish' for Pehli Rasoi",
-        "setup": "A newlywed bride is in her 'Pehli Rasoi' (first kitchen ritual), expected by eager in-laws to cook a traditional, impressive sweet dish.",
-        "conflict": "She confidently presents her 'specialty' or 'signature dish,' which turns out to be something hilariously simple, instant, or entirely store-bought.",
-        "punchline_direction": "The in-laws' stunned, speechless, or comically forced appreciative reactions to her modern, low-effort culinary offering, highlighting the clash between tradition and contemporary convenience.",
-        "audience_trigger": "Taps into the relatable pressure on new brides in Indian families and the humorous generational gap in culinary expectations."
+        "topic_name": "Cooking Show Disaster",
+        "setup": "A family member (often a young adult) attempts to recreate an elaborate, visually stunning recipe they saw on a viral cooking reel.",
+        "conflict": "Despite their best efforts and following instructions, the cooking process devolves into chaos with ingredients misbehaving, kitchen mishaps, and unexpected results.",
+        "punchline_direction": "The final dish is a hilarious, unrecognizable failure compared to the reel's perfection, met with an exaggerated, defeated reaction.",
+        "audience_trigger": "Highly relatable for anyone who has tried (and failed) to replicate social media food trends, highlighting the difference between expectation and reality."
+      },
+      {
+        "topic_name": "Melodramatic Mundane Moment",
+        "setup": "A 'saas' (mother-in-law) asks her 'bahu' (daughter-in-law) a very simple, everyday question about household items or chores.",
+        "conflict": "The 'bahu' responds with an overly dramatic, emotional monologue worthy of a TV soap opera, lamenting her life, struggles, or indirect grievances, completely disproportionate to the question.",
+        "punchline_direction": "The 'saas' delivers a dry, unimpressed, or equally dramatic (but grounded) counter-response, cutting through the melodrama with comedic effect.",
+        "audience_trigger": "Parodies popular Indian TV serial tropes, relatable for viewers familiar with the exaggerated dynamics in such shows."
       }
     ],
     "language_notes": [
-      "Frequent use of Hinglish (mix of Hindi and English) for broader appeal and current language patterns.",
-      "Inclusion of common Indian exclamations and interjections like 'Arre yaar!', 'Oh ho!', 'Kya baat hai!', 'Sach mein?', 'Chalo!', 'Aisa bhi hota hai?'",
-      "Conversational and informal tone, mimicking natural daily dialogue.",
-      "Exaggerated expressions and vocal delivery for enhanced comedic effect.",
-      "Sharp, concise punchlines that land quickly, suitable for short-form content."
+      "Frequent use of Hinglish (mix of Hindi and English) like 'Kya scene hai?', 'Full on drama!', 'Chill kar bhai'.",
+      "Exaggerated Hindi phrases and dialogues for comedic effect, often inspired by Bollywood movies and daily soaps.",
+      "Use of common Indian colloquialisms and interjections like 'Arey!', 'Hain?', 'Oho!'.",
+      "Inclusion of terms like 'Jugaad' and 'Desi' to enhance relatability."
     ],
     "metadata_keywords": [
-      "Hindi Comedy",
-      "Indian Jokes",
-      "Funny Shorts",
-      "Desi Humor",
-      "Relatable India",
-      "Family Comedy",
-      "Indian Parents",
-      "Husband Wife Comedy",
-      "Mom Son Comedy",
-      "Dad Daughter Comedy",
-      "Viral Reels",
-      "Trending Shorts",
-      "Everyday Situations",
-      "Pehli Rasoi Comedy",
-      "AI Funny",
-      "Indian Lifestyle",
-      "Comedy Skit"
+      "Hindi Comedy Shorts",
+      "Indian Comedy Reels",
+      "Relatable Indian Humor",
+      "Desi Funny Videos",
+      "Family Comedy India",
+      "Viral Comedy Shorts",
+      "Funny Skits Hindi",
+      "Trending Jokes India",
+      "Gen Z vs Parents Comedy",
+      "Kitchen Fail Comedy",
+      "Jugaad Comedy",
+      "Saas Bahu Comedy New"
     ],
     "visual_pairing_notes": [
-      "**Slow-motion cooking/food preparation ASMR:** Pairs well with the 'Pehli Rasoi' theme, creating a satisfying visual contrast to the comedic outcome.",
-      "**Kinetic sand cutting or slime manipulation:** Offers a calming, visually satisfying, and popular ASMR background.",
-      "**Lofi/Rainy window ambience or gentle nature scenes:** Provides a soothing and cozy backdrop, creating a humorous contrast with energetic or chaotic comedy.",
-      "**Abstract looping animations or soft gradient shifts:** Offers a clean, calming, and aesthetically pleasing background that keeps focus on the foreground comedy while adding visual interest.",
-      "**Subtle, repetitive patterns or textures:** Engaging visuals that are not distracting but add a layer of 'satisfaction' to the short."
+      "Kinetic sand cutting, pouring, or molding for a satisfying visual element.",
+      "Close-up shots of slicing various objects (e.g., stylized fruits, play-doh, or even unexpected items like soap) with crisp, clear sound effects.",
+      "Slow-motion mixing or spreading of colorful, textured materials (e.g., 'slime' or dough).",
+      "Gentle tapping sounds, such as keyboard clicks or rhythmic tapping on a wooden surface, paired with relevant visuals.",
+      "Calming, looping backgrounds like animated rain, flowing water, or serene nature scenes (forest, clouds) to provide a soothing contrast to the comedy.",
+      "Utilize cinematic lighting and shallow depth of field to highlight the satisfying ASMR action."
     ]
   }
 }
