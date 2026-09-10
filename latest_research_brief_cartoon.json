@@ -1,79 +1,49 @@
 {
-  "generated_at": "2026-09-07T15:27:21.692455+00:00",
+  "generated_at": "2026-09-10T05:16:51.836560+00:00",
   "profile": "cartoon",
   "brief": {
     "search_queries_used": [
-      "current Hindi comedy shorts language patterns joke setups relatable everyday situations",
-      "trending Hindi comedy shorts audience reaction",
-      "satisfying ASMR background formats for comedy shorts",
-      "Hindi comedy reels viral topics",
-      "popular Hindi comedy dialogue styles",
-      "new relatable Indian family comedy scenarios"
+      "trending Hindi comedy shorts",
+      "popular Hindi comedy reels themes",
+      "relatable everyday situations Indian comedy",
+      "Hindi comedy audience reaction trends",
+      "viral short form Hindi comedy jokes",
+      "ASMR background for comedy videos",
+      "satisfying visuals for short videos",
+      "Hindi comedy dialogue patterns",
+      "current Hinglish slang comedy",
+      "funny misunderstandings in Indian daily life"
     ],
     "fresh_joke_angles": [
       {
-        "topic_name": "Gen Z Slang Misunderstanding",
-        "setup": "Teenager uses a new, obscure Gen Z slang word in front of their parent.",
-        "conflict": "Parent overhears and tries to incorporate the slang into their own conversation, completely misusing its meaning.",
-        "punchline_direction": "The parent's awkward and incorrect usage leads to humorous confusion or embarrassment for the child.",
-        "audience_trigger": "Relatable generational gap humor, appealing to both teens (seeing parents try) and parents (trying to stay 'cool')."
-      },
-      {
-        "topic_name": "Trivial Sibling Warfare",
-        "setup": "Two adult siblings discover there's only one piece of a desired item left (e.g., last gulab jamun, last charging cable).",
-        "conflict": "They engage in an overly dramatic, almost theatrical 'fight' for the item, using exaggerated gestures and Bollywood-esque dialogues.",
-        "punchline_direction": "The intense battle culminates in a petty, anticlimactic 'win' or an unexpected, mundane resolution, highlighting the absurdity of their rivalry.",
-        "audience_trigger": "Evokes personal memories of sibling squabbles, offering a lighthearted take on common household conflicts."
-      },
-      {
-        "topic_name": "Tech Jugaad Gone Wrong (or right?)",
-        "setup": "An older family member (e.g., uncle or aunt) faces a common minor tech issue, like a smart TV remote not working.",
-        "conflict": "Instead of logical troubleshooting, they attempt a bizarre 'jugaad' (improvised solution) based on superstition, old wives' tales, or completely unrelated mechanics.",
-        "punchline_direction": "The 'jugaad' surprisingly (and comically) seems to fix the problem for a brief, illogical moment, or creates an even bigger, funnier mess.",
-        "audience_trigger": "Taps into the widely recognized Indian cultural trait of 'jugaad' and the universal struggle of elders with technology."
-      },
-      {
-        "topic_name": "Cooking Show Disaster",
-        "setup": "A family member (often a young adult) attempts to recreate an elaborate, visually stunning recipe they saw on a viral cooking reel.",
-        "conflict": "Despite their best efforts and following instructions, the cooking process devolves into chaos with ingredients misbehaving, kitchen mishaps, and unexpected results.",
-        "punchline_direction": "The final dish is a hilarious, unrecognizable failure compared to the reel's perfection, met with an exaggerated, defeated reaction.",
-        "audience_trigger": "Highly relatable for anyone who has tried (and failed) to replicate social media food trends, highlighting the difference between expectation and reality."
-      },
-      {
-        "topic_name": "Melodramatic Mundane Moment",
-        "setup": "A 'saas' (mother-in-law) asks her 'bahu' (daughter-in-law) a very simple, everyday question about household items or chores.",
-        "conflict": "The 'bahu' responds with an overly dramatic, emotional monologue worthy of a TV soap opera, lamenting her life, struggles, or indirect grievances, completely disproportionate to the question.",
-        "punchline_direction": "The 'saas' delivers a dry, unimpressed, or equally dramatic (but grounded) counter-response, cutting through the melodrama with comedic effect.",
-        "audience_trigger": "Parodies popular Indian TV serial tropes, relatable for viewers familiar with the exaggerated dynamics in such shows."
+        "topic_name": "OTP Race",
+        "setup": "A person urgently needs to complete an online transaction or form requiring an OTP.",
+        "conflict": "The OTP arrives late, is misread, or expires before it can be entered, leading to exaggerated panic and a frantic struggle against time.",
+        "punchline_direction": "The task fails or is completed in an absurdly stressful way, highlighting the universal frustration with the OTP system in a humorous, over-the-top manner.",
+        "audience_trigger": "The situation is incredibly relatable to almost every Indian adult who uses online services, evoking shared frustration and recognition."
       }
     ],
     "language_notes": [
-      "Frequent use of Hinglish (mix of Hindi and English) like 'Kya scene hai?', 'Full on drama!', 'Chill kar bhai'.",
-      "Exaggerated Hindi phrases and dialogues for comedic effect, often inspired by Bollywood movies and daily soaps.",
-      "Use of common Indian colloquialisms and interjections like 'Arey!', 'Hain?', 'Oho!'.",
-      "Inclusion of terms like 'Jugaad' and 'Desi' to enhance relatability."
+      "Frequent use of Hinglish phrases like 'OTP nahi aaya?', 'Kya yaar!', 'jaldi kar!', 'server down hai kya?', 'meri kismat hi kharab hai'.",
+      "Exaggerated Hindi expressions for panic/frustration: 'Haye Bhagwan!', 'Ho gaya kaam!' (sarcastically).",
+      "Inclusion of relatable Indian vocalizations for exasperation or urgency."
     ],
     "metadata_keywords": [
-      "Hindi Comedy Shorts",
-      "Indian Comedy Reels",
-      "Relatable Indian Humor",
-      "Desi Funny Videos",
-      "Family Comedy India",
-      "Viral Comedy Shorts",
-      "Funny Skits Hindi",
-      "Trending Jokes India",
-      "Gen Z vs Parents Comedy",
-      "Kitchen Fail Comedy",
-      "Jugaad Comedy",
-      "Saas Bahu Comedy New"
+      "Hindi Comedy",
+      "Indian Jokes",
+      "OTP Fail",
+      "Relatable",
+      "Everyday Frustration",
+      "Online Shopping Fail",
+      "Hinglish Comedy",
+      "Funny Shorts",
+      "Indian Parents",
+      "Digital India Problems"
     ],
     "visual_pairing_notes": [
-      "Kinetic sand cutting, pouring, or molding for a satisfying visual element.",
-      "Close-up shots of slicing various objects (e.g., stylized fruits, play-doh, or even unexpected items like soap) with crisp, clear sound effects.",
-      "Slow-motion mixing or spreading of colorful, textured materials (e.g., 'slime' or dough).",
-      "Gentle tapping sounds, such as keyboard clicks or rhythmic tapping on a wooden surface, paired with relevant visuals.",
-      "Calming, looping backgrounds like animated rain, flowing water, or serene nature scenes (forest, clouds) to provide a soothing contrast to the comedy.",
-      "Utilize cinematic lighting and shallow depth of field to highlight the satisfying ASMR action."
+      "Subtle kinetic sand cutting in the background, contrasting the on-screen chaos with a calming, repetitive visual.",
+      "Mesmerizing liquid pouring or paint mixing as a looping background element.",
+      "A dimly lit, cozy room aesthetic with soft, low lighting to create an ASMR-like calming ambiance, juxtaposed with the comedic panic."
     ]
   }
 }
