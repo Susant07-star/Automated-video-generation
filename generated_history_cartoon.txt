@@ -70,3 +70,4 @@
 - Papa's Google Maps Location Secret Expose
 - Papa's Glow-up App Face Lock Expose
 - Papa Ka Incognito Mode Expose
+- Papa's AI Search History Expose
