@@ -1,49 +1,60 @@
 {
-  "generated_at": "2026-09-10T05:16:51.836560+00:00",
+  "generated_at": "2026-09-14T16:18:26.681822+00:00",
   "profile": "cartoon",
   "brief": {
     "search_queries_used": [
-      "trending Hindi comedy shorts",
-      "popular Hindi comedy reels themes",
-      "relatable everyday situations Indian comedy",
-      "Hindi comedy audience reaction trends",
-      "viral short form Hindi comedy jokes",
-      "ASMR background for comedy videos",
-      "satisfying visuals for short videos",
-      "Hindi comedy dialogue patterns",
-      "current Hinglish slang comedy",
-      "funny misunderstandings in Indian daily life"
+      "trending hindi comedy shorts common themes",
+      "popular everyday situations for hindi comedy reels",
+      "hindi short comedy audience reaction trends",
+      "viral hindi comedy dialogues and punchlines",
+      "hindi comedy shorts relatable content",
+      "satisfying background videos for comedy shorts",
+      "ASMR trends for short videos comedy",
+      "current hindi slang comedy shorts"
     ],
     "fresh_joke_angles": [
       {
-        "topic_name": "OTP Race",
-        "setup": "A person urgently needs to complete an online transaction or form requiring an OTP.",
-        "conflict": "The OTP arrives late, is misread, or expires before it can be entered, leading to exaggerated panic and a frantic struggle against time.",
-        "punchline_direction": "The task fails or is completed in an absurdly stressful way, highlighting the universal frustration with the OTP system in a humorous, over-the-top manner.",
-        "audience_trigger": "The situation is incredibly relatable to almost every Indian adult who uses online services, evoking shared frustration and recognition."
+        "topic_name": "Online Shopping Return Frustration",
+        "setup": "A person attempts to return a seemingly simple item bought online, expecting an easy process.",
+        "conflict": "The online return system (or a customer service representative) presents absurd, hyper-specific, or literally interpreted instructions that are impossible to follow for a common person.",
+        "punchline_direction": "The protagonist's exasperation leads to a comically exaggerated reaction, or they find an utterly 'desi jugaad' to bypass the absurd rules, involving an unwilling delivery agent or family member.",
+        "audience_trigger": "Relates to almost every Indian online shopper's pain of dealing with complicated return policies, customer service jargon, and logistical nightmares."
+      },
+      {
+        "topic_name": "Influencer Culture Misunderstood by Older Generation",
+        "setup": "An older family member (e.g., an uncle or aunt) observes a young person creating social media content, misunderstanding the trend.",
+        "conflict": "The older relative decides to mimic the 'influencer' style, but applies it to mundane, traditional, or hilariously inappropriate everyday situations, using their own traditional props and settings.",
+        "punchline_direction": "Their attempt at being 'viral' or 'trending' is a complete, accidental parody of modern influencer culture, executed with earnestness, creating an ironic and wholesome laugh.",
+        "audience_trigger": "Taps into the generational gap in understanding social media, highlighting the innocent yet hilarious attempts of elders to adapt to new trends."
       }
     ],
     "language_notes": [
-      "Frequent use of Hinglish phrases like 'OTP nahi aaya?', 'Kya yaar!', 'jaldi kar!', 'server down hai kya?', 'meri kismat hi kharab hai'.",
-      "Exaggerated Hindi expressions for panic/frustration: 'Haye Bhagwan!', 'Ho gaya kaam!' (sarcastically).",
-      "Inclusion of relatable Indian vocalizations for exasperation or urgency."
+      "Frequent use of Hinglish (Hindi + English) is crucial, mirroring current trends in digital communication.",
+      "Incorporate popular relatable Hindi phrases and exclamations like 'Oh bete!', 'Kya se kya ho gaya...', 'Yeh toh dhokha ho gaya', 'Arre yaar!'",
+      "Blend of urban and semi-urban colloquialisms for broader appeal, ensuring natural conversational flow.",
+      "Utilize exaggerated expressions and reactions, both verbal and non-verbal, to amplify humor, common in popular short-form comedy."
     ],
     "metadata_keywords": [
-      "Hindi Comedy",
-      "Indian Jokes",
-      "OTP Fail",
-      "Relatable",
-      "Everyday Frustration",
+      "Hindi Comedy Shorts",
+      "Desi Jokes",
+      "Indian Family Humor",
+      "Relatable Reels",
+      "Funny Skits",
       "Online Shopping Fail",
-      "Hinglish Comedy",
-      "Funny Shorts",
-      "Indian Parents",
-      "Digital India Problems"
+      "Influencer Parody",
+      "Generational Gap Comedy",
+      "Everyday Indian Humor",
+      "Trending Comedy"
     ],
     "visual_pairing_notes": [
-      "Subtle kinetic sand cutting in the background, contrasting the on-screen chaos with a calming, repetitive visual.",
-      "Mesmerizing liquid pouring or paint mixing as a looping background element.",
-      "A dimly lit, cozy room aesthetic with soft, low lighting to create an ASMR-like calming ambiance, juxtaposed with the comedic panic."
+      "**Oddly Satisfying/ASMR Backgrounds:** Seamlessly looping, calming visual animations to contrast the comedic dialogue.",
+      "**Examples:**",
+      "- Kinetic sand cutting/shaping",
+      "- Slow-motion fluid dynamics (e.g., paint mixing, liquids pouring)",
+      "- Perfectly organized objects aligning or falling",
+      "- Continuous motion of abstract 3D geometric shapes or balls rolling on a track",
+      "- Macro shots of repetitive, delicate actions (e.g., bubbling, smooth surfaces)",
+      "Ensure the background is subtle and doesn't distract from the foreground comedy."
     ]
   }
 }
