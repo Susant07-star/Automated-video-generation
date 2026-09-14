@@ -71,3 +71,4 @@
 - Papa's Glow-up App Face Lock Expose
 - Papa Ka Incognito Mode Expose
 - Papa's AI Search History Expose
+- Papa's Bluetooth Auto-Connect Food Order Exposed
