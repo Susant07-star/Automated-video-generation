@@ -1,60 +1,77 @@
 {
-  "generated_at": "2026-09-14T16:18:26.681822+00:00",
+  "generated_at": "2026-09-15T05:30:37.850660+00:00",
   "profile": "cartoon",
   "brief": {
     "search_queries_used": [
-      "trending hindi comedy shorts common themes",
-      "popular everyday situations for hindi comedy reels",
-      "hindi short comedy audience reaction trends",
-      "viral hindi comedy dialogues and punchlines",
-      "hindi comedy shorts relatable content",
-      "satisfying background videos for comedy shorts",
-      "ASMR trends for short videos comedy",
-      "current hindi slang comedy shorts"
+      "trending hindi comedy shorts ideas",
+      "hindi comedy reels relatable situations",
+      "popular hindi short comedy dialogue",
+      "viral short form comedy content India",
+      "everyday funny situations hindi shorts",
+      "current hindi comedy tropes youtube shorts",
+      "hindi comedy reels trending topics",
+      "relatable family comedy hindi shorts",
+      "student teacher comedy hindi shorts",
+      "friendship comedy hindi shorts",
+      "office comedy hindi shorts",
+      "what makes hindi comedy shorts go viral",
+      "audience reaction hindi comedy youtube shorts",
+      "most engaging hindi comedy reels",
+      "comedy shorts audience engagement india",
+      "trending audio for hindi comedy shorts",
+      "satisfying background visuals for comedy shorts",
+      "asmr sounds for funny videos",
+      "minimalist background for youtube shorts comedy",
+      "visual trends for short form comedy",
+      "relieving background videos for reels"
     ],
     "fresh_joke_angles": [
       {
-        "topic_name": "Online Shopping Return Frustration",
-        "setup": "A person attempts to return a seemingly simple item bought online, expecting an easy process.",
-        "conflict": "The online return system (or a customer service representative) presents absurd, hyper-specific, or literally interpreted instructions that are impossible to follow for a common person.",
-        "punchline_direction": "The protagonist's exasperation leads to a comically exaggerated reaction, or they find an utterly 'desi jugaad' to bypass the absurd rules, involving an unwilling delivery agent or family member.",
-        "audience_trigger": "Relates to almost every Indian online shopper's pain of dealing with complicated return policies, customer service jargon, and logistical nightmares."
+        "topic_name": "Modern Parental Expectations vs. Reality (Career)",
+        "setup": "A parent asks their child about their future career, expecting a traditional answer.",
+        "conflict": "The child provides a highly practical, yet comically unconventional, modern-day career aspiration.",
+        "punchline_direction": "The parent's bewildered reaction to the child's digitally-influenced or mundane (but logical) career choice.",
+        "audience_trigger": "Relatability for both parents observing shifting aspirations and younger audiences living these new realities."
       },
       {
-        "topic_name": "Influencer Culture Misunderstood by Older Generation",
-        "setup": "An older family member (e.g., an uncle or aunt) observes a young person creating social media content, misunderstanding the trend.",
-        "conflict": "The older relative decides to mimic the 'influencer' style, but applies it to mundane, traditional, or hilariously inappropriate everyday situations, using their own traditional props and settings.",
-        "punchline_direction": "Their attempt at being 'viral' or 'trending' is a complete, accidental parody of modern influencer culture, executed with earnestness, creating an ironic and wholesome laugh.",
-        "audience_trigger": "Taps into the generational gap in understanding social media, highlighting the innocent yet hilarious attempts of elders to adapt to new trends."
+        "topic_name": "The 'Desi Jugaad' Gone Wild",
+        "setup": "A character attempts to fix a common household or tech problem using an improvised, 'desi jugaad' method.",
+        "conflict": "The jugaad leads to an unexpectedly chaotic outcome, an absurdly effective solution, or creates a funnier new problem.",
+        "punchline_direction": "The exaggerated effort, the surprising success/failure, and the ridiculousness of the 'Indian hack'.",
+        "audience_trigger": "Shared experience of 'jugaad' in daily life and the humor in its unpredictable results."
+      },
+      {
+        "topic_name": "Indian Wedding Quirks: Unwanted Relatives/Rituals",
+        "setup": "A character navigates the social maze of an Indian wedding event, encountering specific, often intrusive, family or ritualistic situations.",
+        "conflict": "The character's internal (or subtle external) struggle with persistent questions from relatives, forced participation in silly rituals, or the overall chaos.",
+        "punchline_direction": "An exasperated reaction or witty retort highlighting the humor in social pressure and over-the-top wedding dynamics.",
+        "audience_trigger": "Universal experience of navigating family and social pressures at Indian weddings."
       }
     ],
     "language_notes": [
-      "Frequent use of Hinglish (Hindi + English) is crucial, mirroring current trends in digital communication.",
-      "Incorporate popular relatable Hindi phrases and exclamations like 'Oh bete!', 'Kya se kya ho gaya...', 'Yeh toh dhokha ho gaya', 'Arre yaar!'",
-      "Blend of urban and semi-urban colloquialisms for broader appeal, ensuring natural conversational flow.",
-      "Utilize exaggerated expressions and reactions, both verbal and non-verbal, to amplify humor, common in popular short-form comedy."
+      "Frequent use of Hinglish (Hindi + English) for relatable dialogue.",
+      "Incorporation of common Hindi idioms and phrases, sometimes used literally for comedic effect.",
+      "Casual, conversational tone with typical Indian accents and intonations.",
+      "Direct addresses to the audience like 'Aisa hota hai na aapke saath bhi?' to boost engagement."
     ],
     "metadata_keywords": [
-      "Hindi Comedy Shorts",
-      "Desi Jokes",
-      "Indian Family Humor",
-      "Relatable Reels",
-      "Funny Skits",
-      "Online Shopping Fail",
-      "Influencer Parody",
-      "Generational Gap Comedy",
-      "Everyday Indian Humor",
-      "Trending Comedy"
+      "Hindi comedy shorts",
+      "Indian funny reels",
+      "relatable comedy India",
+      "desi comedy shorts",
+      "viral Hindi jokes",
+      "family comedy",
+      "wedding humor",
+      "jugaad comedy",
+      "parent child funny",
+      "YouTube Shorts Hindi"
     ],
     "visual_pairing_notes": [
-      "**Oddly Satisfying/ASMR Backgrounds:** Seamlessly looping, calming visual animations to contrast the comedic dialogue.",
-      "**Examples:**",
-      "- Kinetic sand cutting/shaping",
-      "- Slow-motion fluid dynamics (e.g., paint mixing, liquids pouring)",
-      "- Perfectly organized objects aligning or falling",
-      "- Continuous motion of abstract 3D geometric shapes or balls rolling on a track",
-      "- Macro shots of repetitive, delicate actions (e.g., bubbling, smooth surfaces)",
-      "Ensure the background is subtle and doesn't distract from the foreground comedy."
+      "Text overlays and subtitles are crucial for silent viewing and engagement.",
+      "Clean, minimalist backgrounds to keep focus on the comedic performance.",
+      "Satisfying visual elements can include smooth, repetitive actions or aesthetically pleasing organization contrasting with the joke's chaos.",
+      "ASMR elements could be subtle background sounds like crisp unwrapping, gentle tapping, or distant, calming ambient noise, if not distracting.",
+      "Dynamic camera angles and quick cuts for punchlines to maintain fast pacing."
     ]
   }
 }
