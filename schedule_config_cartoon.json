@@ -14,6 +14,6 @@
     "16:00",
     "19:00"
   ],
-  "enabled": true,
+  "enabled": false,
   "analytics_day": "Monday"
 }
