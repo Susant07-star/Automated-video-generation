@@ -112,6 +112,8 @@
       "video_done": true,
       "music_done": true,
       "assembly_done": true
-    }
+    },
+    "analyzed": true,
+    "analyzed_note": "Auto-expired: older than 20 days"
   }
 ]
