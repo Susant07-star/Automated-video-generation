@@ -94,3 +94,4 @@
 - Influence — Commitment and Consistency Trap
 - Influence — Authority Illusion
 - Influence (Robert Cialdini) — Unity: The We Principle
+- Thinking Fast and Slow (Kahneman) — Loss Aversion
